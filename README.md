@@ -79,24 +79,25 @@ ov --repo overthinkos/cachyos update ov-cachyos
 (Before the 2026-05 migration this lived in the main repo and ran as
 `ov update ov-cachyos` from the repo root.)
 
-## Known limitation
+## pacstrap-from-scratch (`cachyos-pacstrap` / `cachyos-vm`)
 
-`cachyos-pacstrap` and `cachyos-vm` (the pacstrap-from-scratch paths) are **not
-currently usable**. The privileged pacstrap step fails in two pre-existing,
-config/environment-inherent ways (both observed during R10):
+These build end-to-end as of **ov 2026.141.1850**. The shared pacstrap
+pacman.conf renderer (`renderPacstrapExtraConf` in `ov/build.go`, used by both
+the image and VM bootstrap paths) now:
 
-1. An intermittent GPGME keyring/DB-sync error — `GPGME error: No data` /
-   `failed to synchronize all databases (corrupted PGP signature)`.
-2. When keyring init succeeds, a CachyOS `x86_64_v3` architecture rejection —
-   `package architecture is not valid`. The `cachyos-v3` repos serve
-   `x86_64_v3`-optimized packages (e.g. `linux-cachyos`) but the bootstrap
-   pacman.conf never sets `Architecture = x86_64_v3`.
+1. emits an `[options] Architecture` directive derived from the cachyos-v3
+   repos' microarch token, so pacman accepts the `x86_64_v3` packages (e.g.
+   `linux-cachyos`) it previously rejected with `package architecture is not
+   valid`; and
+2. emits each repo's `SigLevel` (the VM path previously dropped it), so
+   `SigLevel = Never` cachyos repos don't trip GPGME signature verification.
 
-Both originate in the shared `build.yml` cachyos distro config (proven unchanged
-by the submodule split — empty `git diff main` on `build.yml` + the pacstrap
-runner), so they would fail identically from the old in-main location. Fixing
-them is a separate upstream enhancement. The Docker-Hub-based `cachyos` base
-(`cachyos-base.yml`) builds cleanly and is the recommended path.
+Verified live: `cachyos-pacstrap` produces a rootfs with `linux-cachyos`
+(`%ARCH% = x86_64_v3`) installed, and `cachyos-vm` produces a bootable
+`disk.qcow2`. The Docker-Hub-based `cachyos` base (`cachyos-base.yml`) is still
+the faster default (no privileged build); the pacstrap variants are for offline
+/ air-gapped builds. (A newer `ov` than the published release is required, since
+the renderer fix lives in the binary.)
 
 ## Requirements
 
