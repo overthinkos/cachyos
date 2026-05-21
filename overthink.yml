@@ -1,0 +1,40 @@
+#  overthinkos/cachyos — the CachyOS image family, split out of the main
+#  overthink repo (2026-05). Mounted as a git submodule at image/cachyos.
+#
+#  This repo VENDORS NOTHING. It composes the canonical ov layers and the
+#  shared build-config (distro/builder/init) entirely by GITHUB REFERENCE into
+#  github.com/overthinkos/overthink — every layer in image.yml / deploy.yml /
+#  local.yml is an `@github.com/...` ref, and build.yml + arch-base.yml are
+#  remote includes. There is no duplicated config.
+#
+#  CachyOS is Arch-based: cachyos-pacstrap-builder is `base: arch`, so this repo
+#  remote-includes the main repo's arch-base.yml (the `arch` base + builder).
+#  The cachyos base image itself is OWNED here (cachyos-base.yml) and is
+#  consumed by the main repo's `versa` image via a remote include back into
+#  this repo — see README "main ↔ cachyos coupling".
+#
+#  Directly buildable: `ov image build cachyos` (the build verb defaults to this
+#  overthink.yml). From the parent repo: `ov -C image/cachyos image build
+#  cachyos`, or anywhere: `ov --repo overthinkos/cachyos image build cachyos`.
+version: 2026.141.1600
+defaults:
+    platform:
+        - linux/amd64
+    tag: auto
+    registry: ghcr.io/overthinkos
+    build:
+        - pac
+    merge:
+        auto: false
+        max_mb: 128
+include:
+    # Local per-kind entries (CachyOS base, images, VM, deploy beds, workstation profile).
+    - cachyos-base.yml
+    - image.yml
+    - vm.yml
+    - deploy.yml
+    - local.yml
+    # Shared build-config + arch base/builder pair — pulled from the main repo
+    # by github reference (single source of truth, pinned to one tag).
+    - '@github.com/overthinkos/overthink/build.yml:v2026.141.1600'
+    - '@github.com/overthinkos/overthink/arch-base.yml:v2026.141.1600'

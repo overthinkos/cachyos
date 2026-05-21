@@ -1,0 +1,38 @@
+#  SINGLE SOURCE OF TRUTH for the CachyOS base image (`cachyos`). There is
+#  exactly ONE copy of this definition — it was moved OUT of the main repo's
+#  image.yml in the 2026-05 CachyOS migration — so there is no duplication.
+#
+#  Included by BOTH this repo's overthink.yml (locally) AND the main
+#  `overthink` repo (remotely, via
+#  `include: '@github.com/overthinkos/cachyos/cachyos-base.yml:<tag>'`),
+#  because main's `versa` image is `base: cachyos`. This is the deliberate
+#  main → cachyos coupling described in README ("main ↔ cachyos coupling").
+#
+#  The builder: map points pixi/npm/cargo/aur at `arch-builder` (CachyOS is
+#  Arch-based and has no builder of its own); arch-builder is resolved from the
+#  main repo's arch-base.yml, which this repo also remote-includes and which
+#  main provides locally. Downstream consumers (versa, any future
+#  base: cachyos image) inherit this map — there is no per-image builder
+#  override anywhere. The cachyos base has no layers, so this file carries no
+#  github layer refs.
+version: 2026.141.1600
+image:
+    cachyos:
+        # Canonical CachyOS base: pulls the upstream-published OCI image from
+        # Docker Hub (cachyos-v3 — optimized for modern x86_64_v3 CPUs, matching
+        # the operator's host CPU family). The CachyOS project itself uses this
+        # approach — see https://github.com/CachyOS/docker for the reference
+        # Dockerfile. The pacstrap-from-scratch variant is preserved as
+        # `cachyos-pacstrap` (image.yml) for environments where pulling from
+        # Docker Hub isn't possible.
+        base: docker.io/cachyos/cachyos-v3:latest
+        distro:
+            - cachyos
+            - arch
+        build:
+            - pac
+        builder:
+            aur: arch-builder
+            cargo: arch-builder
+            npm: arch-builder
+            pixi: arch-builder
