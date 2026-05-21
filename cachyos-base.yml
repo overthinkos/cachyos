@@ -36,3 +36,23 @@ image:
             cargo: arch-builder
             npm: arch-builder
             pixi: arch-builder
+        # Build-scope eval probes — run via `ov eval image cachyos` (disposable
+        # container). Assert the upstream OCI base really is CachyOS, pacman is
+        # present, and the x86_64_v3 cachyos repos are configured. Inherited by
+        # downstream consumers (e.g. main's `versa`) via the base chain.
+        eval:
+            - id: cachyos-os-release
+              command: cat /etc/os-release
+              exit_status: 0
+              stdout:
+                - contains: "ID=cachyos"
+            - id: cachyos-pacman
+              command: pacman --version
+              exit_status: 0
+              stdout:
+                - contains: "Pacman v"
+            - id: cachyos-v3-repo-configured
+              command: pacman-conf --repo-list
+              exit_status: 0
+              stdout:
+                - contains: "cachyos-v3"

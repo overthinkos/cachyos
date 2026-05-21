@@ -14,6 +14,22 @@ image:
             - pac
         layer:
             - '@github.com/overthinkos/overthink/layers/pacstrap-builder:v2026.141.1600'
+        # Build-scope eval probes — run via `ov eval image cachyos-pacstrap-builder`
+        # (disposable container). Assert the pacstrap toolchain the builder must
+        # ship (the pacstrap-builder layer's payload) is actually present.
+        eval:
+            - id: cpb-pacstrap-binary
+              file: /usr/sbin/pacstrap
+              exists: true
+            - id: cpb-arch-install-scripts
+              package: arch-install-scripts
+              installed: true
+            - id: cpb-grub-install
+              file: /usr/sbin/grub-install
+              exists: true
+            - id: cpb-parted
+              file: /usr/sbin/parted
+              exists: true
     cachyos-pacstrap:
         # Bootstrap-from-scratch CachyOS rootfs via pacstrap inside a
         # privileged builder container. The canonical `cachyos` base
