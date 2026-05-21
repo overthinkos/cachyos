@@ -81,10 +81,22 @@ ov --repo overthinkos/cachyos update ov-cachyos
 
 ## Known limitation
 
-`cachyos-pacstrap` and `cachyos-vm` (the pacstrap-from-scratch paths) are known
-to fail end-to-end under sudo podman + pacman 7.x because of a GPGME context
-initialization issue inside the privileged builder container. The
-Docker-Hub-based `cachyos` base (`cachyos-base.yml`) is the recommended path.
+`cachyos-pacstrap` and `cachyos-vm` (the pacstrap-from-scratch paths) are **not
+currently usable**. The privileged pacstrap step fails in two pre-existing,
+config/environment-inherent ways (both observed during R10):
+
+1. An intermittent GPGME keyring/DB-sync error — `GPGME error: No data` /
+   `failed to synchronize all databases (corrupted PGP signature)`.
+2. When keyring init succeeds, a CachyOS `x86_64_v3` architecture rejection —
+   `package architecture is not valid`. The `cachyos-v3` repos serve
+   `x86_64_v3`-optimized packages (e.g. `linux-cachyos`) but the bootstrap
+   pacman.conf never sets `Architecture = x86_64_v3`.
+
+Both originate in the shared `build.yml` cachyos distro config (proven unchanged
+by the submodule split — empty `git diff main` on `build.yml` + the pacstrap
+runner), so they would fail identically from the old in-main location. Fixing
+them is a separate upstream enhancement. The Docker-Hub-based `cachyos` base
+(`cachyos-base.yml`) builds cleanly and is the recommended path.
 
 ## Requirements
 

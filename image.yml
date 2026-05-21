@@ -21,11 +21,17 @@ image:
         # Hub, which is the path the CachyOS project itself recommends. This
         # pacstrap variant is retained for offline / air-gapped builds and as a
         # worked example of the `from: builder:pacstrap` +
-        # `bootstrap_builder_image:` pattern. NOTE: known to fail end-to-end
-        # under sudo podman + pacman 7.x because of a GPGME context
-        # initialization issue inside the privileged container; the install
-        # template's keyring init may need environment-specific debugging
-        # before this variant is usable.
+        # `bootstrap_builder_image:` pattern. NOTE: NOT currently usable — the
+        # privileged pacstrap step fails in two pre-existing ways (both
+        # config/environment-inherent, orthogonal to this repo): (1) an
+        # intermittent GPGME keyring/DB-sync error ("GPGME error: No data" /
+        # "corrupted PGP signature"), and (2) when keyring init succeeds, a
+        # CachyOS x86_64_v3 architecture rejection ("package architecture is not
+        # valid") — the cachyos-v3 repos serve x86_64_v3 packages (e.g.
+        # linux-cachyos) but the bootstrap pacman.conf sets no
+        # `Architecture = x86_64_v3`. Both live in the shared build.yml cachyos
+        # distro config (unchanged by the submodule split). Fixing them is a
+        # separate upstream enhancement. Prefer the Docker-Hub `cachyos` base.
         from: builder:pacstrap
         bootstrap_builder_image: cachyos-pacstrap-builder
         distro:
