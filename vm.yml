@@ -31,10 +31,9 @@ vm:
             port: 12226
             key_source: generate
         cloud_init:
-            user:
-                - name: cachy
-                  sudo: true
-                  shell: /bin/bash
+            # The cachy account (sudo NOPASSWD + /bin/bash + ssh key + wheel) is
+            # provisioned from ssh.user via the cloud-init create-pattern
+            # (composeUsers), so no explicit users: block is needed here.
             runcmd:
                 - systemctl enable --now sshd
                 - systemctl enable --now qemu-guest-agent
