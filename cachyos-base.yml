@@ -36,6 +36,18 @@ image:
             cargo: arch-builder
             npm: arch-builder
             pixi: arch-builder
+        # Builder-capability advertisement, identical to the `arch` base (every
+        # base distro — arch/fedora/debian/ubuntu — declares this; cachyos is
+        # Arch-derived and routes all four formats to arch-builder, so it can
+        # serve as a builder substrate for the same set). aur is included so a
+        # downstream image declaring `build: [pac, aur]` (e.g. selkies-desktop,
+        # any chrome/AUR-consuming cachyos image) has the same AUR capability
+        # profile as an arch-based image.
+        produce:
+            - pixi
+            - npm
+            - cargo
+            - aur
         # Build-scope eval probes — run via `ov eval image cachyos` (disposable
         # container). Assert the upstream OCI base really is CachyOS, pacman is
         # present, and the x86_64_v3 cachyos repos are configured. Inherited by
