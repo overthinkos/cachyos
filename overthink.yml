@@ -4,8 +4,9 @@
 #  SINGLE-FILE config (2026-05 import-namespace cutover): every local entity
 #  (the cachyos base + pacstrap family, the cachyos VM, the disposable eval bed,
 #  the ov-cachyos operator profile + its kind:local template) is inlined here.
-#  This repo VENDORS NOTHING — every layer is an `@github.com/...` ref, and the
-#  shared build-config + the main repo's base entities arrive via `import:`.
+#  This repo VENDORS its cachyos-exclusive layers locally under layers/ (resolved
+#  via the discover: block); every shared layer is an `@github.com/...` ref, and
+#  the shared build-config + the main repo's base entities arrive via `import:`.
 #
 #  import: has two shapes —
 #    * flat string  → build.yml (shared distro/builder/init vocabulary), merged
@@ -37,6 +38,14 @@ import:
     # builder base) + ov.arch-builder (cachyos base builder). Mutual import with
     # main (main mounts this repo under `cachyos`); cycle-broken at load.
     - ov: '@github.com/overthinkos/overthink:v2026.143.844'
+discover:
+    # Layers vendored locally by THIS repo — the cachyos-exclusive layers
+    # (ghostty, keepassxc-keyring, wheel-nopasswd) relocated out of main's shared
+    # layers/. Bare layer names resolve here; every shared layer (yay, chrome,
+    # gnupg, keepassxc, nvidia, …) still arrives by @github ref into main.
+    layer:
+        - path: layers
+          recursive: true
 image:
     cachyos:
         # Canonical CachyOS base: the upstream-published OCI image (cachyos-v3 —
@@ -187,12 +196,13 @@ deploy:
             tag: [testing]
 local:
     #  ov-cachyos — the operator CachyOS workstation profile (kind:local
-    #  template). Every layer is pulled by GITHUB REFERENCE from the main
-    #  overthink repo; nothing is vendored. The builder_image is a published OCI
-    #  ref (arch-builder), not a layer.
+    #  template). Shared layers are pulled by GITHUB REFERENCE from the main
+    #  overthink repo; the cachyos-exclusive layers (ghostty, keepassxc-keyring,
+    #  wheel-nopasswd) are vendored locally under layers/. The builder_image is a
+    #  published OCI ref (arch-builder), not a layer.
     ov-cachyos:
         layer:
-            - '@github.com/overthinkos/overthink/layers/wheel-nopasswd:v2026.141.1600'
+            - wheel-nopasswd
             - '@github.com/overthinkos/overthink/layers/yay:v2026.141.1600'
             - '@github.com/overthinkos/overthink/layers/dev-tools:v2026.141.1600'
             - '@github.com/overthinkos/overthink/layers/gh:v2026.141.1600'
@@ -201,7 +211,7 @@ local:
             - '@github.com/overthinkos/overthink/layers/direnv:v2026.141.1600'
             - '@github.com/overthinkos/overthink/layers/gnupg:v2026.141.1600'
             - '@github.com/overthinkos/overthink/layers/keepassxc:v2026.141.1600'
-            - '@github.com/overthinkos/overthink/layers/keepassxc-keyring:v2026.141.1600'
+            - keepassxc-keyring
             - '@github.com/overthinkos/overthink/layers/tailscale:v2026.141.1600'
             - '@github.com/overthinkos/overthink/layers/tailscale-up:v2026.141.1600'
             - '@github.com/overthinkos/overthink/layers/build-toolchain:v2026.141.1600'
@@ -218,7 +228,7 @@ local:
             - '@github.com/overthinkos/overthink/layers/docker-ce:v2026.141.1600'
             - '@github.com/overthinkos/overthink/layers/kubernetes:v2026.141.1600'
             - '@github.com/overthinkos/overthink/layers/vscode:v2026.141.1600'
-            - '@github.com/overthinkos/overthink/layers/ghostty:v2026.141.1600'
+            - ghostty
             - '@github.com/overthinkos/overthink/layers/chrome:v2026.141.1600'
             - '@github.com/overthinkos/overthink/layers/nvidia:v2026.141.1600'
             - '@github.com/overthinkos/overthink/layers/ov-full:v2026.141.1600'
