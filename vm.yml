@@ -1,0 +1,42 @@
+#  Per-kind file for vm entries. Sibling of overthink.yml — included via
+#  overthink.yml's `includes:` list. The schema kind discriminator is
+#  `kind: vm` for kind-keyed entries; root-shape map is `vm:` (this file).
+#  2026-05 kind-files cutover.
+version: 2026.144.1443
+vm:
+    cachyos-vm:
+        # Bootstrap-from-scratch via cachyos-pacstrap-builder (local). The cachyos
+        # distro config (pacstrap base packages, keyring, mirrors, repos) lives in
+        # the main repo's build.yml, imported above.
+        source:
+            kind: bootstrap
+            builder: pacstrap
+            builder_image: cachyos-pacstrap-builder
+            distro: cachyos
+            package:
+                - sudo
+                - openssh
+                - qemu-guest-agent
+                - cloud-init
+                - grub
+                - efibootmgr
+            rootfs: btrfs
+            kernel_args: console=tty0 console=ttyS0,115200
+        disk_size: 25G
+        ram: 4G
+        cpu: 2
+        machine: q35
+        firmware: uefi-insecure
+        network:
+            mode: user
+        ssh:
+            user: cachy
+            port: 12226
+            key_source: generate
+        cloud_init:
+            # The cachy account (sudo NOPASSWD + /bin/bash + ssh key + wheel) is
+            # provisioned from ssh.user via the cloud-init create-pattern
+            # (composeUsers), so no explicit users: block is needed here.
+            runcmd:
+                - systemctl enable --now sshd
+                - systemctl enable --now qemu-guest-agent

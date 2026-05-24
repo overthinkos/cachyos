@@ -20,7 +20,7 @@
 #  Directly buildable: `ov image build cachyos` (from the parent repo:
 #  `ov -C image/cachyos image build cachyos`; anywhere:
 #  `ov --repo overthinkos/cachyos image build cachyos`).
-version: 2026.143.844
+version: 2026.144.1443
 defaults:
     platform:
         - linux/amd64
@@ -33,11 +33,15 @@ defaults:
         max_mb: 128
 import:
     # Shared build-config vocabulary (distro/builder/init) — flat root import.
-    - '@github.com/overthinkos/overthink/build.yml:v2026.141.1600'
+    - '@github.com/overthinkos/overthink/build.yml:v2026.144.1622'
     # Main repo entities under the `ov` namespace — ov.arch (cachyos-pacstrap-
     # builder base) + ov.arch-builder (cachyos base builder). Mutual import with
     # main (main mounts this repo under `cachyos`); cycle-broken at load.
-    - ov: '@github.com/overthinkos/overthink:v2026.143.844'
+    - ov: '@github.com/overthinkos/overthink:v2026.144.1622'
+    - image.yml
+    - vm.yml
+    - pod.yml
+    - k8s.yml
 discover:
     # Layers vendored locally by THIS repo — the cachyos-exclusive layers
     # (ghostty, keepassxc-keyring, wheel-nopasswd) relocated out of main's shared
@@ -46,122 +50,6 @@ discover:
     layer:
         - path: layers
           recursive: true
-image:
-    cachyos:
-        # Canonical CachyOS base: the upstream-published OCI image (cachyos-v3 —
-        # x86_64_v3-optimized). The pacstrap-from-scratch variant is preserved as
-        # `cachyos-pacstrap` for environments where pulling from Docker Hub isn't
-        # possible.
-        base: docker.io/cachyos/cachyos-v3:latest
-        distro:
-            - cachyos
-            - arch
-        build:
-            - pac
-        # CachyOS is Arch-derived and has no builder of its own; route all four
-        # formats to ov.arch-builder (main's arch-builder, via the `ov` import
-        # namespace). Builder maps do NOT cross a namespace boundary, so a
-        # consumer of this base (e.g. main's versa) declares its own builder map.
-        builder:
-            aur: ov.arch-builder
-            cargo: ov.arch-builder
-            npm: ov.arch-builder
-            pixi: ov.arch-builder
-        produce:
-            - pixi
-            - npm
-            - cargo
-            - aur
-        # Build-scope eval probes — `ov eval image cachyos`. Inherited by
-        # downstream consumers (main's versa) via the base chain.
-        eval:
-            - id: cachyos-os-release
-              command: cat /etc/os-release
-              exit_status: 0
-              stdout:
-                - contains: "ID=cachyos"
-            - id: cachyos-pacman
-              command: pacman --version
-              exit_status: 0
-              stdout:
-                - contains: "Pacman v"
-            - id: cachyos-v3-repo-configured
-              command: pacman-conf --repo-list
-              exit_status: 0
-              stdout:
-                - contains: "cachyos-v3"
-    cachyos-pacstrap-builder:
-        # base: ov.arch — the `arch` base from main's base.yml, via the `ov`
-        # import namespace. Its only layer (pacstrap-builder) is pulled by github
-        # reference (it stays in the main repo, shared with arch-pacstrap-builder).
-        base: ov.arch
-        distro:
-            - arch
-        build:
-            - pac
-        layer:
-            - '@github.com/overthinkos/overthink/layers/pacstrap-builder:v2026.141.1600'
-        eval:
-            - id: cpb-pacstrap-binary
-              file: /usr/sbin/pacstrap
-              exists: true
-            - id: cpb-arch-install-scripts
-              package: arch-install-scripts
-              installed: true
-            - id: cpb-grub-install
-              file: /usr/sbin/grub-install
-              exists: true
-            - id: cpb-parted
-              file: /usr/sbin/parted
-              exists: true
-    cachyos-pacstrap:
-        # Bootstrap-from-scratch CachyOS rootfs via pacstrap inside a privileged
-        # builder container. Retained for offline / air-gapped builds; the
-        # Docker-Hub `cachyos` base is the faster default.
-        from: builder:pacstrap
-        bootstrap_builder_image: cachyos-pacstrap-builder
-        distro:
-            - cachyos
-            - arch
-        build:
-            - pac
-vm:
-    cachyos-vm:
-        # Bootstrap-from-scratch via cachyos-pacstrap-builder (local). The cachyos
-        # distro config (pacstrap base packages, keyring, mirrors, repos) lives in
-        # the main repo's build.yml, imported above.
-        source:
-            kind: bootstrap
-            builder: pacstrap
-            builder_image: cachyos-pacstrap-builder
-            distro: cachyos
-            package:
-                - sudo
-                - openssh
-                - qemu-guest-agent
-                - cloud-init
-                - grub
-                - efibootmgr
-            rootfs: btrfs
-            kernel_args: console=tty0 console=ttyS0,115200
-        disk_size: 25G
-        ram: 4G
-        cpu: 2
-        machine: q35
-        firmware: uefi-insecure
-        network:
-            mode: user
-        ssh:
-            user: cachy
-            port: 12226
-            key_source: generate
-        cloud_init:
-            # The cachy account (sudo NOPASSWD + /bin/bash + ssh key + wheel) is
-            # provisioned from ssh.user via the cloud-init create-pattern
-            # (composeUsers), so no explicit users: block is needed here.
-            runcmd:
-                - systemctl enable --now sshd
-                - systemctl enable --now qemu-guest-agent
 eval:
     # Disposable R10 test bed for the cachyos bootstrap VM (kind:eval — the
     # 2026-05 deploy→eval unification moved repo-shipped disposable beds out of
@@ -172,6 +60,79 @@ eval:
         vm: cachyos-vm
         disposable: true
         lifecycle: dev
+    # Disposable R10 pod beds for the CachyOS GPU image family. Each drives the
+    # full `ov eval run` sequence (build → eval image → deploy → eval live →
+    # fresh update → tear down) on the cachyos-namespace image of the same name.
+    # Host ports are remapped into a dedicated 45xxx range so the beds never
+    # collide with an operator's production services on the canonical ports.
+    # Deploy- and build-scope eval coverage is inherited from the composed
+    # layers (the "lowest level" principle) — the beds carry no eval: of their
+    # own. The GPU base (nvidia) and python-ml carry no service, so they are
+    # proved by `ov eval image` alone and need no pod bed.
+    eval-cachyos-jupyter-ml-pod:
+        target: pod
+        image: jupyter-ml
+        disposable: true
+        lifecycle: dev
+        port:
+            - 45888:8888
+        description:
+            feature: R10 bed for the CachyOS GPU jupyter-ml image — JupyterLab + ML stack on the Arch CUDA base
+            tag: [testing]
+    eval-cachyos-ollama-pod:
+        target: pod
+        image: ollama
+        disposable: true
+        lifecycle: dev
+        port:
+            - 45434:11434
+        description:
+            feature: R10 bed for the CachyOS GPU ollama image — ollama server on the Arch CUDA base
+            tag: [testing]
+    eval-cachyos-comfyui-pod:
+        target: pod
+        image: comfyui
+        disposable: true
+        lifecycle: dev
+        port:
+            - 45188:8188
+        description:
+            feature: R10 bed for the CachyOS GPU comfyui image — ComfyUI server on the Arch CUDA base
+            tag: [testing]
+    eval-cachyos-unsloth-studio-pod:
+        target: pod
+        image: unsloth-studio
+        disposable: true
+        lifecycle: dev
+        port:
+            - 45889:8888
+            - 45800:8000
+        description:
+            feature: R10 bed for the CachyOS GPU unsloth-studio image — fine-tuning notebook + API on the Arch CUDA base
+            tag: [testing]
+    eval-cachyos-immich-ml-pod:
+        target: pod
+        image: immich-ml
+        disposable: true
+        lifecycle: dev
+        port:
+            - 45283:2283
+        description:
+            feature: R10 bed for the CachyOS GPU immich-ml image — full Immich + PostgreSQL + VectorChord + Redis + ML stack on the Arch CUDA base
+            tag: [testing]
+    eval-cachyos-selkies-desktop-nvidia-pod:
+        target: pod
+        image: selkies-desktop-nvidia
+        disposable: true
+        lifecycle: dev
+        port:
+            - 45300:3000
+            - 45222:9222
+            - 45224:9224
+            - 45022:2222
+        description:
+            feature: R10 bed for the CachyOS GPU selkies-desktop-nvidia image — GPU streaming desktop (HTTPS + CDP + MCP + sshd) on the Arch CUDA base
+            tag: [testing]
 deploy:
     # ov-cachyos — the operator CachyOS workstation profile (target: local +
     # host: local). NOT a zero-side-effect test bed (it mutates the operator's
@@ -203,35 +164,35 @@ local:
     ov-cachyos:
         layer:
             - wheel-nopasswd
-            - '@github.com/overthinkos/overthink/layers/yay:v2026.141.1600'
-            - '@github.com/overthinkos/overthink/layers/dev-tools:v2026.141.1600'
-            - '@github.com/overthinkos/overthink/layers/gh:v2026.141.1600'
-            - '@github.com/overthinkos/overthink/layers/pre-commit:v2026.141.1600'
-            - '@github.com/overthinkos/overthink/layers/tmux:v2026.141.1600'
-            - '@github.com/overthinkos/overthink/layers/direnv:v2026.141.1600'
-            - '@github.com/overthinkos/overthink/layers/gnupg:v2026.141.1600'
-            - '@github.com/overthinkos/overthink/layers/keepassxc:v2026.141.1600'
+            - '@github.com/overthinkos/overthink/layers/yay:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/dev-tools:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/gh:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/pre-commit:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/tmux:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/direnv:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/gnupg:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/keepassxc:v2026.144.1622'
             - keepassxc-keyring
-            - '@github.com/overthinkos/overthink/layers/tailscale:v2026.141.1600'
-            - '@github.com/overthinkos/overthink/layers/tailscale-up:v2026.141.1600'
-            - '@github.com/overthinkos/overthink/layers/build-toolchain:v2026.141.1600'
-            - '@github.com/overthinkos/overthink/layers/golang:v2026.141.1600'
-            - '@github.com/overthinkos/overthink/layers/rust:v2026.141.1600'
-            - '@github.com/overthinkos/overthink/layers/nodejs:v2026.141.1600'
-            - '@github.com/overthinkos/overthink/layers/uv:v2026.141.1600'
-            - '@github.com/overthinkos/overthink/layers/claude-code:v2026.141.1600'
-            - '@github.com/overthinkos/overthink/layers/codex:v2026.141.1600'
-            - '@github.com/overthinkos/overthink/layers/gemini:v2026.141.1600'
-            - '@github.com/overthinkos/overthink/layers/oracle:v2026.141.1600'
-            - '@github.com/overthinkos/overthink/layers/forgecode:v2026.141.1600'
-            - '@github.com/overthinkos/overthink/layers/devops-tools:v2026.141.1600'
-            - '@github.com/overthinkos/overthink/layers/docker-ce:v2026.141.1600'
-            - '@github.com/overthinkos/overthink/layers/kubernetes:v2026.141.1600'
-            - '@github.com/overthinkos/overthink/layers/vscode:v2026.141.1600'
+            - '@github.com/overthinkos/overthink/layers/tailscale:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/tailscale-up:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/build-toolchain:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/golang:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/rust:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/nodejs:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/uv:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/claude-code:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/codex:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/gemini:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/oracle:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/forgecode:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/devops-tools:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/docker-ce:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/kubernetes:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/vscode:v2026.144.1622'
             - ghostty
-            - '@github.com/overthinkos/overthink/layers/chrome:v2026.141.1600'
-            - '@github.com/overthinkos/overthink/layers/nvidia:v2026.141.1600'
-            - '@github.com/overthinkos/overthink/layers/ov-full:v2026.141.1600'
+            - '@github.com/overthinkos/overthink/layers/chrome:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/nvidia:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/ov-full:v2026.144.1622'
         install_opts:
             with_service: true
             allow_repo_changes: true
