@@ -33,11 +33,11 @@ defaults:
         max_mb: 128
 import:
     # Shared build-config vocabulary (distro/builder/init) — flat root import.
-    - '@github.com/overthinkos/overthink/build.yml:v2026.144.1622'
+    - '@github.com/overthinkos/overthink/build.yml:v2026.145.1105'
     # Main repo entities under the `ov` namespace — ov.arch (cachyos-pacstrap-
     # builder base) + ov.arch-builder (cachyos base builder). Mutual import with
     # main (main mounts this repo under `cachyos`); cycle-broken at load.
-    - ov: '@github.com/overthinkos/overthink:v2026.144.1622'
+    - ov: '@github.com/overthinkos/overthink:v2026.145.1105'
     - image.yml
     - vm.yml
     - pod.yml
@@ -164,35 +164,35 @@ local:
     ov-cachyos:
         layer:
             - wheel-nopasswd
-            - '@github.com/overthinkos/overthink/layers/yay:v2026.144.1622'
-            - '@github.com/overthinkos/overthink/layers/dev-tools:v2026.144.1622'
-            - '@github.com/overthinkos/overthink/layers/gh:v2026.144.1622'
-            - '@github.com/overthinkos/overthink/layers/pre-commit:v2026.144.1622'
-            - '@github.com/overthinkos/overthink/layers/tmux:v2026.144.1622'
-            - '@github.com/overthinkos/overthink/layers/direnv:v2026.144.1622'
-            - '@github.com/overthinkos/overthink/layers/gnupg:v2026.144.1622'
-            - '@github.com/overthinkos/overthink/layers/keepassxc:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/yay:v2026.145.1105'
+            - '@github.com/overthinkos/overthink/layers/dev-tools:v2026.145.1105'
+            - '@github.com/overthinkos/overthink/layers/gh:v2026.145.1105'
+            - '@github.com/overthinkos/overthink/layers/pre-commit:v2026.145.1105'
+            - '@github.com/overthinkos/overthink/layers/tmux:v2026.145.1105'
+            - '@github.com/overthinkos/overthink/layers/direnv:v2026.145.1105'
+            - '@github.com/overthinkos/overthink/layers/gnupg:v2026.145.1105'
+            - '@github.com/overthinkos/overthink/layers/keepassxc:v2026.145.1105'
             - keepassxc-keyring
-            - '@github.com/overthinkos/overthink/layers/tailscale:v2026.144.1622'
-            - '@github.com/overthinkos/overthink/layers/tailscale-up:v2026.144.1622'
-            - '@github.com/overthinkos/overthink/layers/build-toolchain:v2026.144.1622'
-            - '@github.com/overthinkos/overthink/layers/golang:v2026.144.1622'
-            - '@github.com/overthinkos/overthink/layers/rust:v2026.144.1622'
-            - '@github.com/overthinkos/overthink/layers/nodejs:v2026.144.1622'
-            - '@github.com/overthinkos/overthink/layers/uv:v2026.144.1622'
-            - '@github.com/overthinkos/overthink/layers/claude-code:v2026.144.1622'
-            - '@github.com/overthinkos/overthink/layers/codex:v2026.144.1622'
-            - '@github.com/overthinkos/overthink/layers/gemini:v2026.144.1622'
-            - '@github.com/overthinkos/overthink/layers/oracle:v2026.144.1622'
-            - '@github.com/overthinkos/overthink/layers/forgecode:v2026.144.1622'
-            - '@github.com/overthinkos/overthink/layers/devops-tools:v2026.144.1622'
-            - '@github.com/overthinkos/overthink/layers/docker-ce:v2026.144.1622'
-            - '@github.com/overthinkos/overthink/layers/kubernetes:v2026.144.1622'
-            - '@github.com/overthinkos/overthink/layers/vscode:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/tailscale:v2026.145.1105'
+            - '@github.com/overthinkos/overthink/layers/tailscale-up:v2026.145.1105'
+            - '@github.com/overthinkos/overthink/layers/build-toolchain:v2026.145.1105'
+            - '@github.com/overthinkos/overthink/layers/golang:v2026.145.1105'
+            - '@github.com/overthinkos/overthink/layers/rust:v2026.145.1105'
+            - '@github.com/overthinkos/overthink/layers/nodejs:v2026.145.1105'
+            - '@github.com/overthinkos/overthink/layers/uv:v2026.145.1105'
+            - '@github.com/overthinkos/overthink/layers/claude-code:v2026.145.1105'
+            - '@github.com/overthinkos/overthink/layers/codex:v2026.145.1105'
+            - '@github.com/overthinkos/overthink/layers/gemini:v2026.145.1105'
+            - '@github.com/overthinkos/overthink/layers/oracle:v2026.145.1105'
+            - '@github.com/overthinkos/overthink/layers/forgecode:v2026.145.1105'
+            - '@github.com/overthinkos/overthink/layers/devops-tools:v2026.145.1105'
+            - '@github.com/overthinkos/overthink/layers/docker-ce:v2026.145.1105'
+            - '@github.com/overthinkos/overthink/layers/kubernetes:v2026.145.1105'
+            - '@github.com/overthinkos/overthink/layers/vscode:v2026.145.1105'
             - ghostty
-            - '@github.com/overthinkos/overthink/layers/chrome:v2026.144.1622'
-            - '@github.com/overthinkos/overthink/layers/nvidia:v2026.144.1622'
-            - '@github.com/overthinkos/overthink/layers/ov-full:v2026.144.1622'
+            - '@github.com/overthinkos/overthink/layers/chrome:v2026.145.1105'
+            - '@github.com/overthinkos/overthink/layers/nvidia:v2026.145.1105'
+            - '@github.com/overthinkos/overthink/layers/ov-full:v2026.145.1105'
         install_opts:
             with_service: true
             allow_repo_changes: true
