@@ -216,12 +216,31 @@ local:
               command: sudo -n true
               exit_status: 0
               in_container: false
+            # The nvidia toolkit + CDI checks are gated on an ACTIVE host NVIDIA
+            # driver (/dev/nvidiactl present, or nvidia-smi answers). On a host
+            # that binds the GPU to vfio-pci for VM passthrough — or has no NVIDIA
+            # GPU at all — the host driver never loads, /dev/nvidia* never appears,
+            # and `nvidia-ctk cdi generate` cannot enumerate a device, so
+            # /etc/cdi/nvidia.yaml is structurally impossible. In that case these
+            # checks are N/A and pass with an explanatory message rather than
+            # failing on a correctly-configured passthrough host.
             - id: nvidia-ctk-present
               scope: deploy
-              command: command -v nvidia-ctk
+              command: |
+                if [ -e /dev/nvidiactl ] || nvidia-smi >/dev/null 2>&1; then
+                  command -v nvidia-ctk
+                else
+                  echo "host NVIDIA driver not active (vfio passthrough or no GPU) — toolkit check N/A"
+                fi
               exit_status: 0
               in_container: false
             - id: nvidia-cdi-spec
               scope: deploy
-              file: /etc/cdi/nvidia.yaml
+              command: |
+                if [ -e /dev/nvidiactl ] || nvidia-smi >/dev/null 2>&1; then
+                  test -f /etc/cdi/nvidia.yaml
+                else
+                  echo "host NVIDIA driver not active (vfio passthrough or no GPU) — CDI spec N/A"
+                fi
+              exit_status: 0
               in_container: false
