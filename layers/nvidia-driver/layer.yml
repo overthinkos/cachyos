@@ -1,0 +1,45 @@
+layer:
+    version: 2026.148.1900
+    name: nvidia-driver
+    description: |
+        NVIDIA kernel driver (open module) for a CachyOS VM guest that has a
+        physical GPU passed through via VFIO. This is the KERNEL-side companion
+        to the `nvidia` layer (which installs only the userspace container
+        toolkit): it installs the open kernel module, blacklists the in-tree
+        nouveau driver so it can't claim the passed-through GPU, regenerates the
+        initramfs, and requests a reboot so the module loads on a clean boot.
+
+        Only meaningful on a bare host / VM guest — never inside a container (a
+        container shares the host kernel and cannot load modules). The reboot is
+        honored by target:vm (reboot guest + wait); skipped at image build and on
+        target:local.
+
+        Pins the CachyOS prebuilt module (linux-cachyos-nvidia-open), which is
+        version-matched to the linux-cachyos kernel the bootstrap guest runs — no
+        dkms build, no kernel-headers, no prebuilt-vs-running skew. Lives in this
+        submodule alongside the GPU eval bed.
+    distro:
+        arch:
+            package:
+                - linux-cachyos-nvidia-open
+                - nvidia-utils
+    task:
+        # Runtime module config. The EARLY (initramfs/boot) nouveau blacklist is
+        # done via the guest kernel cmdline (`modprobe.blacklist=nouveau` on the
+        # kind:vm entity) so no `mkinitcpio -P` regen is needed here — the open
+        # module's own pacman hook already rebuilds the base initramfs, and an
+        # explicit `mkinitcpio -P` would fail the deploy on the non-fatal
+        # kms/sd-vconsole build warnings.
+        - write: /etc/modprobe.d/ov-nvidia.conf
+          user: root
+          mode: "0644"
+          content: |
+            # Belt-and-suspenders nouveau blacklist (the kernel cmdline does the
+            # early one) + enable nvidia KMS.
+            blacklist nouveau
+            options nvidia-drm modeset=1
+    reboot: true
+    eval:
+        - id: nvidia-modprobe-conf
+          file: /etc/modprobe.d/ov-nvidia.conf
+          contains: "blacklist nouveau"

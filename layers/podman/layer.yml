@@ -1,0 +1,20 @@
+layer:
+    version: 2026.148.1730
+    name: podman
+    description: |
+        Rootful podman container engine for a VM guest, so the guest can run
+        containers (e.g. a CUDA container via CDI with `--device
+        nvidia.com/gpu=all`). Minimal on purpose — unlike `container-nesting`
+        (which configures ROOTLESS nested podman with unmask=/proc and crun
+        tuning), a VM guest runs podman as root directly, so it needs only the
+        engine + its runtime deps.
+    distro:
+        arch:
+            package:
+                - podman
+                - crun
+                - netavark
+    eval:
+        - id: podman-binary
+          file: /usr/bin/podman
+          exists: true

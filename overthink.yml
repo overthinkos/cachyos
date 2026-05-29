@@ -60,6 +60,101 @@ eval:
         vm: cachyos-vm
         disposable: true
         lifecycle: dev
+    # Disposable R10 bed for the FULL NESTED GPU stack:
+    #   host (IOMMU on) → cachyos-gpu-vm (VFIO GPU passthrough, nvidia-open
+    #   kernel module) → CUDA container (cuda-eval, real device compute).
+    # The bed applies the nvidia toolkit + nvidia-driver kernel layer to the
+    # guest (the driver layer reboots the guest, via the RebootStep), then the
+    # bed runner loads the locally-built cuda-eval image into the guest's podman
+    # as localhost/ov-cuda-pod:latest (the `nested: cuda-pod` entry names that
+    # image). The deploy-scope checks below run inside the guest over SSH.
+    #
+    # PORTABLE: every GPU/CUDA check gates on an active in-guest NVIDIA driver
+    # and passes with an explanatory N/A when none is present — so the bed runs
+    # anywhere. On a host with the cachyos-gpu-vm hostdev block added locally,
+    # the same checks assert real GPU compute. See cachyos-gpu-vm in vm.yml.
+    eval-cachyos-gpu-vm:
+        target: vm
+        vm: cachyos-gpu-vm
+        disposable: true
+        lifecycle: dev
+        add_layer:
+            # Order matters: podman + nvidia (toolkit) first, then nvidia-driver
+            # — whose reboot: true emits a trailing RebootStep, so the guest
+            # reboots ONCE after the whole GPU stack is installed. All packages
+            # arrive via these layers (never the VM bootstrap package list).
+            - podman
+            - '@github.com/overthinkos/overthink/layers/nvidia:v2026.146.0727'
+            - nvidia-driver
+        install_opts:
+            allow_repo_changes: true
+            allow_root_tasks: true
+            skip_incompatible: true
+            verify: true
+        nested:
+            # Names the image the bed runner builds on the host and loads into
+            # the guest as localhost/ov-cuda-pod:latest. (No managed pod is
+            # started in the guest — the CUDA check below runs it transiently.)
+            cuda-pod:
+                target: pod
+                image: cuda-eval
+        description:
+            feature: R10 bed for nested GPU — CachyOS VM with VFIO GPU passthrough running a CUDA container
+            tag: [testing]
+        eval:
+            - id: gpu-guest-cachyos-kernel
+              scope: deploy
+              command: pacman -Q linux-cachyos 2>/dev/null && echo CACHYOS-KERNEL
+              stdout:
+                  contains: CACHYOS-KERNEL
+            - id: gpu-podman-present
+              scope: deploy
+              command: command -v podman
+              exit_status: 0
+            - id: gpu-nvidia-ctk-present
+              scope: deploy
+              command: command -v nvidia-ctk
+              exit_status: 0
+            - id: gpu-nouveau-blacklisted
+              scope: deploy
+              command: |
+                if lsmod | grep -q nouveau; then echo NOUVEAU-LOADED; else echo nouveau-blacklisted; fi
+              stdout:
+                  contains: nouveau-blacklisted
+            # GPU presence is decided by HARDWARE (sysfs PCI vendor 0x10de = a
+            # passed-through NVIDIA device), NOT by whether the driver happens to
+            # have initialised yet. When the GPU is present the check WAITS for
+            # the driver (bounded readiness poll — the nvidia module loads a few
+            # seconds into boot via `nvidia-drm.modeset=1`, and device nodes are
+            # created on first `nvidia-smi`), THEN asserts for real. So a GPU host
+            # can never silently take the N/A path on a slow driver (a false
+            # green), and a no-GPU host returns N/A immediately (no poll penalty).
+            - id: gpu-driver-active
+              scope: deploy
+              command: |
+                if ! grep -ql 0x10de /sys/bus/pci/devices/*/vendor 2>/dev/null; then
+                  echo "GPU driver N/A: no NVIDIA GPU passed through to this guest"
+                else
+                  for i in $(seq 1 30); do { [ -e /dev/nvidia0 ] || nvidia-smi >/dev/null 2>&1; } && break; sleep 2; done
+                  nvidia-smi -L
+                fi
+              exit_status: 0
+            # The headline check: a CUDA container actually computes on the GPU
+            # inside the VM. On a GPU host this DETERMINISTICALLY runs cuda-smoke
+            # (whose nonzero exit fails the check if compute is broken); N/A only
+            # when no NVIDIA hardware is present, so the bed stays portable.
+            - id: gpu-cuda-container
+              scope: deploy
+              command: |
+                if ! grep -ql 0x10de /sys/bus/pci/devices/*/vendor 2>/dev/null; then
+                  echo "CUDA-OK (N/A: no NVIDIA GPU passed through to this guest)"
+                else
+                  for i in $(seq 1 30); do { [ -e /dev/nvidia0 ] || nvidia-smi >/dev/null 2>&1; } && break; sleep 2; done
+                  sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml >/dev/null 2>&1 || true
+                  sudo podman run --rm --device nvidia.com/gpu=all localhost/ov-cuda-pod:latest cuda-smoke
+                fi
+              stdout:
+                  contains: CUDA-OK
     # Disposable R10 pod beds for the CachyOS GPU image family. Each drives the
     # full `ov eval run` sequence (build → eval image → deploy → eval live →
     # fresh update → tear down) on the cachyos-namespace image of the same name.
