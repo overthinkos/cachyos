@@ -87,6 +87,13 @@ eval:
             - podman
             - '@github.com/overthinkos/overthink/layers/qemu-guest-agent:v2026.149.0613'
             - '@github.com/overthinkos/overthink/layers/workspace-mount:v2026.149.0613'
+            # nodejs + claude-code exercise the cross-host npm builder on a VM:
+            # the npm builder runs on the host and the ~/.npm-global artifacts are
+            # tarred into the guest home. Proves the AI-CLI stack installs on a VM
+            # (the bug that made claude/codex/etc. silently absent) plus the
+            # deploy-time {{.Home}} env.d resolution + env.d-sourcing managed block.
+            - '@github.com/overthinkos/overthink/layers/nodejs:v2026.149.0613'
+            - '@github.com/overthinkos/overthink/layers/claude-code:v2026.149.0613'
             - '@github.com/overthinkos/overthink/layers/nvidia:v2026.149.0613'
             - nvidia-driver
         install_opts:
@@ -94,6 +101,7 @@ eval:
             allow_root_tasks: true
             skip_incompatible: true
             verify: true
+            builder_image: ghcr.io/overthinkos/arch-builder:2026.122.2252
         nested:
             # Names the image the bed runner builds on the host and loads into
             # the guest as localhost/ov-cuda-pod:latest. (No managed pod is
@@ -158,19 +166,53 @@ eval:
                 fi
               stdout:
                 contains: CUDA-OK
-            # virtiofs /workspace share (host /tmp → guest /workspace via the
-            # workspace-mount layer) — proves the virtiofs auto-shared-mem pairing
-            # + the systemd .mount unit end-to-end. The bed always declares the
-            # share, so this asserts strictly (no N/A path): /workspace MUST be a
-            # writable virtiofs mount.
-            - id: workspace-virtiofs-rw
+            # virtiofs /workspace share + guest-user idmap. The host source is an
+            # operator-owned mode-0700 dir, so the guest user can read the marker
+            # AND write a probe ONLY when the auto-injected idmap maps
+            # guest-uid-1000 → the host operator. The check runs over SSH as the
+            # guest user (cachy); under libvirt's DEFAULT (guest-root) idmap this
+            # FAILS (root-owned, mode 700) — so it strictly proves D4. Also asserts
+            # the share is OWNED by the guest user in-guest (the ownership remap).
+            - id: workspace-virtiofs-idmap-rw
               scope: deploy
               command: |
                 fstype=$(findmnt -n -o FSTYPE /workspace 2>/dev/null || echo MISSING)
                 [ "$fstype" = "virtiofs" ] || { echo "FAIL: /workspace fstype=$fstype (want virtiofs)"; exit 1; }
-                touch /workspace/.ov-probe 2>/dev/null && rm -f /workspace/.ov-probe && echo WORKSPACE-RW
+                owner=$(stat -c %U /workspace 2>/dev/null)
+                [ "$owner" = "$(id -un)" ] || { echo "FAIL: /workspace owned by '$owner', not the guest user '$(id -un)' — guest-user idmap not applied (libvirt default maps guest-root)"; exit 1; }
+                touch /workspace/.ov-probe 2>/dev/null && rm -f /workspace/.ov-probe && echo WORKSPACE-IDMAP-RW
               stdout:
-                contains: WORKSPACE-RW
+                contains: WORKSPACE-IDMAP-RW
+            # Cross-host npm builder (D3): claude-code installs into the GUEST home
+            # via the host-side npm builder + tar transfer. Proves the AI-CLI stack
+            # now installs on a VM at all.
+            - id: ai-cli-claude-installed
+              scope: deploy
+              command: |
+                test -x "$HOME/.npm-global/bin/claude" || { echo "FAIL: ~/.npm-global/bin/claude missing — cross-host npm builder did not install it"; exit 1; }
+                "$HOME/.npm-global/bin/claude" --version >/dev/null 2>&1 && echo CLAUDE-INSTALLED
+              stdout:
+                contains: CLAUDE-INSTALLED
+            # Deploy-time {{.Home}} env.d resolution (D1): the nodejs env.d points
+            # at the GUEST home, NOT the host operator's /home/atrawog (the bug).
+            - id: envd-guest-home
+              scope: deploy
+              command: |
+                f="$HOME/.config/overthink/env.d/nodejs.env"
+                test -f "$f" || { echo "FAIL: $f missing"; exit 1; }
+                grep -q "$HOME/.npm-global" "$f" || { echo "FAIL: env.d NPM prefix not the guest home"; cat "$f"; exit 1; }
+                grep -q "/home/atrawog" "$f" && { echo "FAIL: env.d baked the HOST operator home (the \$HOME bug)"; cat "$f"; exit 1; }
+                echo ENVD-GUEST-HOME
+              stdout:
+                contains: ENVD-GUEST-HOME
+            # env.d-sourcing managed block (D2): the block was written to the
+            # guest's detected login-shell init so env.d is actually sourced.
+            - id: envd-sourcing-block
+              scope: deploy
+              command: |
+                grep -lq 'overthink:begin' "$HOME"/.profile "$HOME"/.bashrc "$HOME"/.zshenv "$HOME"/.config/fish/conf.d/overthink.fish 2>/dev/null && echo ENVD-SOURCING-BLOCK || { echo "FAIL: no env.d-sourcing managed block in any guest rc file"; exit 1; }
+              stdout:
+                contains: ENVD-SOURCING-BLOCK
             # qemu-guest-agent: full-RPC config present + the service running
             # (so the host can drive guest-exec / guest-fsfreeze over the channel).
             - id: qemu-ga-active

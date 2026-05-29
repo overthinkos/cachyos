@@ -1,5 +1,5 @@
 layer:
-    version: 2026.148.1900
+    version: 2026.149.1200
     name: nvidia-driver
     description: |
         NVIDIA kernel driver (open module) for a CachyOS VM guest that has a
@@ -38,8 +38,42 @@ layer:
             # early one) + enable nvidia KMS.
             blacklist nouveau
             options nvidia-drm modeset=1
+        # CDI generation belongs AFTER the driver loads, not at toolkit-install
+        # time. The VM bootstrap disables nvidia-container-toolkit's install-time
+        # CDI alpm hook (which fails "NVML: Driver Not Loaded" pre-reboot and
+        # aborts the deploy); this oneshot regenerates the CDI spec on every boot
+        # once the GPU device node exists, so `podman run --device
+        # nvidia.com/gpu=all` works post-reboot without any manual step.
+        - write: /etc/systemd/system/ov-nvidia-cdi.service
+          user: root
+          mode: "0644"
+          content: |
+            [Unit]
+            Description=Generate NVIDIA CDI spec once the GPU driver is loaded
+            After=multi-user.target
+
+            [Service]
+            Type=oneshot
+            RemainAfterExit=yes
+            # Wait (bounded) for the GPU device node — the open module loads
+            # early via nvidia-drm.modeset=1, usually well before this runs.
+            ExecStartPre=/bin/sh -c 'for i in $(seq 1 30); do [ -e /dev/nvidia0 ] && exit 0; sleep 1; done; exit 0'
+            ExecStart=/usr/bin/nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
+
+            [Install]
+            WantedBy=multi-user.target
+        # Enable for boot (runs on the post-reboot boot when the driver is up).
+        # NOT --now: pre-reboot the driver isn't loaded yet. Tolerant so an
+        # image-build chroot (no systemd) doesn't fail the layer.
+        - cmd: |
+            systemctl daemon-reload || true
+            systemctl enable ov-nvidia-cdi.service || true
+          user: root
     reboot: true
     eval:
         - id: nvidia-modprobe-conf
           file: /etc/modprobe.d/ov-nvidia.conf
           contains: "blacklist nouveau"
+        - id: nvidia-cdi-service
+          file: /etc/systemd/system/ov-nvidia-cdi.service
+          contains: "nvidia-ctk cdi generate"

@@ -40,6 +40,16 @@ vm:
             runcmd:
                 - systemctl enable --now sshd
                 - systemctl enable --now qemu-guest-agent
+                # Disable nvidia-container-toolkit's install-time CDI-generate
+                # alpm hook. On a VM the passed-through GPU's driver only loads
+                # AFTER the nvidia-driver layer's reboot, so `nvidia-ctk cdi
+                # generate` at toolkit-install time fails ("NVML: Driver Not
+                # Loaded"), pacman exits non-zero, and the deploy aborts at the
+                # nvidia layer. CDI is (re)generated post-reboot by the
+                # nvidia-driver layer's ov-nvidia-cdi oneshot once the driver is
+                # up. Symlinking a hook to /dev/null is pacman's canonical
+                # "disable this hook". Runs at first boot, before any deploy.
+                - sh -c 'mkdir -p /etc/pacman.d/hooks && ln -sf /dev/null /etc/pacman.d/hooks/nvidia-ctk-cdi.hook'
     cachyos-gpu-vm:
         # GPU-passthrough VM guest that receives a physical NVIDIA GPU via a VFIO
         # <hostdev> and runs a CUDA container (the cuda-eval image) inside it.
@@ -111,14 +121,21 @@ vm:
                     Architecture = x86_64 x86_64_v3
                     SigLevel = Never
                     ParallelDownloads = 5
+                    # cachyos-v3 + cachyos-core-v3 (x86_64_v3) + cachyos ($arch)
+                    # + Arch core/extra. Deliberately NO cachyos-extra-v3 AND NO
+                    # cachyos-extra: neither publishes a usable DB on
+                    # mirror.cachyos.org — the v3 overlay 404s a malformed libyuv
+                    # (filed as plain x86_64 under the v3 path), and cachyos-extra
+                    # at $arch returns an HTML listing, not a .db ("unrecognized
+                    # archive format"). libyuv/gcc and other "extra" packages
+                    # resolve from Arch `extra`; cachyos-v3/core-v3 supply the
+                    # v3-optimized core set. (Verified in-guest: libyuv → extra.)
                     [cachyos-v3]
-                    Server = https://cdn77.cachyos.org/repo/x86_64_v3/$repo
+                    Server = https://mirror.cachyos.org/repo/x86_64_v3/$repo
                     [cachyos-core-v3]
-                    Server = https://cdn77.cachyos.org/repo/x86_64_v3/$repo
-                    [cachyos-extra-v3]
-                    Server = https://cdn77.cachyos.org/repo/x86_64_v3/$repo
+                    Server = https://mirror.cachyos.org/repo/x86_64_v3/$repo
                     [cachyos]
-                    Server = https://cdn77.cachyos.org/repo/x86_64/$repo
+                    Server = https://mirror.cachyos.org/repo/$arch/$repo
                     [core]
                     Include = /etc/pacman.d/mirrorlist
                     [extra]
@@ -126,6 +143,16 @@ vm:
             runcmd:
                 - systemctl enable --now sshd
                 - systemctl enable --now qemu-guest-agent
+                # Disable nvidia-container-toolkit's install-time CDI-generate
+                # alpm hook. On a VM the passed-through GPU's driver only loads
+                # AFTER the nvidia-driver layer's reboot, so `nvidia-ctk cdi
+                # generate` at toolkit-install time fails ("NVML: Driver Not
+                # Loaded"), pacman exits non-zero, and the deploy aborts at the
+                # nvidia layer. CDI is (re)generated post-reboot by the
+                # nvidia-driver layer's ov-nvidia-cdi oneshot once the driver is
+                # up. Symlinking a hook to /dev/null is pacman's canonical
+                # "disable this hook". Runs at first boot, before any deploy.
+                - sh -c 'mkdir -p /etc/pacman.d/hooks && ln -sf /dev/null /etc/pacman.d/hooks/nvidia-ctk-cdi.hook'
         libvirt:
             # memfd/shared backing is auto-paired by the renderer for the virtiofs
             # share; declared here too so the bed asserts the explicit path works.
@@ -142,10 +169,17 @@ vm:
                 # the virtiofs auto-shared-mem pairing + the workspace-mount layer
                 # end-to-end on a disposable target. NOT a real home dir (unlike
                 # the ov-cachyos-gpu operator VM, which shares /home/atrawog).
+                # Source is an operator-provisioned, mode-0700 scratch dir (NOT
+                # world-writable /tmp) so the guest-user idmap is actually
+                # exercised: the guest user owns + can write it ONLY when the
+                # auto-injected idmap maps guest-uid-1000 → the host operator
+                # (libvirt's default maps guest-ROOT → operator, leaving it
+                # root-owned + unreadable to the guest user). The operator creates
+                # the dir once (like the host-specific GPU hostdevs below).
                 filesystems:
                     - driver: virtiofs
                       accessmode: passthrough
-                      source: /tmp
+                      source: /home/atrawog/.cache/ov/eval-workspace
                       target: workspace
                 # LOCAL-ONLY (do NOT commit): this host's NVIDIA GPU (10de:2702,
                 # IOMMU group 13 = 01:00.0 + 01:00.1) for the live R10 GPU run.
@@ -228,14 +262,21 @@ vm:
                     Architecture = x86_64 x86_64_v3
                     SigLevel = Never
                     ParallelDownloads = 5
+                    # cachyos-v3 + cachyos-core-v3 (x86_64_v3) + cachyos ($arch)
+                    # + Arch core/extra. Deliberately NO cachyos-extra-v3 AND NO
+                    # cachyos-extra: neither publishes a usable DB on
+                    # mirror.cachyos.org — the v3 overlay 404s a malformed libyuv
+                    # (filed as plain x86_64 under the v3 path), and cachyos-extra
+                    # at $arch returns an HTML listing, not a .db ("unrecognized
+                    # archive format"). libyuv/gcc and other "extra" packages
+                    # resolve from Arch `extra`; cachyos-v3/core-v3 supply the
+                    # v3-optimized core set. (Verified in-guest: libyuv → extra.)
                     [cachyos-v3]
-                    Server = https://cdn77.cachyos.org/repo/x86_64_v3/$repo
+                    Server = https://mirror.cachyos.org/repo/x86_64_v3/$repo
                     [cachyos-core-v3]
-                    Server = https://cdn77.cachyos.org/repo/x86_64_v3/$repo
-                    [cachyos-extra-v3]
-                    Server = https://cdn77.cachyos.org/repo/x86_64_v3/$repo
+                    Server = https://mirror.cachyos.org/repo/x86_64_v3/$repo
                     [cachyos]
-                    Server = https://cdn77.cachyos.org/repo/x86_64/$repo
+                    Server = https://mirror.cachyos.org/repo/$arch/$repo
                     [core]
                     Include = /etc/pacman.d/mirrorlist
                     [extra]
@@ -243,6 +284,16 @@ vm:
             runcmd:
                 - systemctl enable --now sshd
                 - systemctl enable --now qemu-guest-agent
+                # Disable nvidia-container-toolkit's install-time CDI-generate
+                # alpm hook. On a VM the passed-through GPU's driver only loads
+                # AFTER the nvidia-driver layer's reboot, so `nvidia-ctk cdi
+                # generate` at toolkit-install time fails ("NVML: Driver Not
+                # Loaded"), pacman exits non-zero, and the deploy aborts at the
+                # nvidia layer. CDI is (re)generated post-reboot by the
+                # nvidia-driver layer's ov-nvidia-cdi oneshot once the driver is
+                # up. Symlinking a hook to /dev/null is pacman's canonical
+                # "disable this hook". Runs at first boot, before any deploy.
+                - sh -c 'mkdir -p /etc/pacman.d/hooks && ln -sf /dev/null /etc/pacman.d/hooks/nvidia-ctk-cdi.hook'
         libvirt:
             # memfd/shared is auto-paired for the virtiofs share by the renderer;
             # declared explicitly here for clarity on a persistent operator entity.
