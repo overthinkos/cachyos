@@ -1,0 +1,50 @@
+layer:
+    version: 2026.149.1210
+    name: cachyos-kde-settings
+    description: |
+        CachyOS desktop look-and-feel: the cachyos-* settings, theming, SDDM
+        theme, wallpapers, Plymouth boot theme and shell configs that the CachyOS
+        Calamares "CachyOS Packages" + KDE-Desktop netinstall groups ship. Pairs
+        with the generic kde-desktop layer (Plasma + SDDM) to reproduce a stock
+        CachyOS KDE workstation. Vendored in this submodule because every package
+        here lives in the CachyOS repo (not generic Arch); the VM bootstrap
+        already has the cachyos repos configured.
+
+        Host-specific entries from the netinstall (cachyos-kernel-manager,
+        mirrorlists, keyring, hooks, chwd) are intentionally omitted — the VM
+        manages its own kernel/repos and those would be inert or conflict.
+    distro:
+        arch:
+            package:
+                # Settings / integration
+                - cachyos-settings
+                - cachyos-kde-settings
+                - cachyos-micro-settings
+                - cachyos-hello
+                - cachyos-packageinstaller
+                - cachyos-fish-config
+                - cachyos-zsh-config
+                # Theming
+                - cachyos-emerald-kde-theme-git
+                - cachyos-iridescent-kde
+                - cachyos-nord-kde-theme-git
+                - cachyos-themes-sddm
+                - cachyos-wallpapers
+                - char-white
+                # Plymouth boot splash
+                - cachyos-plymouth-theme
+                - cachyos-plymouth-bootanimation
+                - plymouth-kcm
+    eval:
+        - id: cachyos-settings-installed
+          package: cachyos-settings
+          installed: true
+        - id: cachyos-kde-settings-installed
+          package: cachyos-kde-settings
+          installed: true
+        - id: cachyos-wallpapers-installed
+          package: cachyos-wallpapers
+          installed: true
+        - id: cachyos-themes-sddm-installed
+          package: cachyos-themes-sddm
+          installed: true

@@ -33,11 +33,11 @@ defaults:
         max_mb: 128
 import:
     # Shared build-config vocabulary (distro/builder/init) — flat root import.
-    - '@github.com/overthinkos/overthink/build.yml:v2026.149.0613'
+    - '@github.com/overthinkos/overthink/build.yml:v2026.149.1626'
     # Main repo entities under the `ov` namespace — ov.arch (cachyos-pacstrap-
     # builder base) + ov.arch-builder (cachyos base builder). Mutual import with
     # main (main mounts this repo under `cachyos`); cycle-broken at load.
-    - ov: '@github.com/overthinkos/overthink:v2026.149.0613'
+    - ov: '@github.com/overthinkos/overthink:v2026.149.1626'
     - image.yml
     - vm.yml
     - pod.yml
@@ -73,7 +73,7 @@ eval:
     # and passes with an explanatory N/A when none is present — so the bed runs
     # anywhere. On a host with the cachyos-gpu-vm hostdev block added locally,
     # the same checks assert real GPU compute. See cachyos-gpu-vm in vm.yml.
-    eval-cachyos-gpu-vm:
+    eval-cachyos-coder-vm:
         target: vm
         vm: cachyos-gpu-vm
         disposable: true
@@ -85,23 +85,42 @@ eval:
             # agent come back clean on the fresh boot. All packages arrive via
             # these layers (never the VM bootstrap package list).
             - podman
-            - '@github.com/overthinkos/overthink/layers/qemu-guest-agent:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/workspace-mount:v2026.149.0613'
+            - '@github.com/overthinkos/overthink/layers/qemu-guest-agent:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/workspace-mount:v2026.149.1626'
             # nodejs + claude-code exercise the cross-host npm builder on a VM:
             # the npm builder runs on the host and the ~/.npm-global artifacts are
             # tarred into the guest home. Proves the AI-CLI stack installs on a VM
             # (the bug that made claude/codex/etc. silently absent) plus the
             # deploy-time {{.Home}} env.d resolution + env.d-sourcing managed block.
-            - '@github.com/overthinkos/overthink/layers/nodejs:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/claude-code:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/nvidia:v2026.149.0613'
+            - '@github.com/overthinkos/overthink/layers/nodejs:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/claude-code:v2026.149.1626'
+            # Full KDE desktop + GPU display/stream stack — the cachyos-coder
+            # functionality under test. kde-desktop (Plasma + SDDM + graphical
+            # .target), CachyOS theming, fonts/codecs/dev-gap, the KDE-selkies
+            # WebRTC stream (NVENC via the cuda-arch-builder), and the Looking
+            # Glass guest. Proven on this disposable bed before the operator VM.
+            - '@github.com/overthinkos/overthink/layers/kde-desktop:v2026.149.1626'
+            - cachyos-kde-settings
+            - '@github.com/overthinkos/overthink/layers/fonts-extended:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/desktop-media:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/cachyos-extras:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/kde-selkies:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/looking-glass-host:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/nvidia:v2026.149.1626'
             - nvidia-driver
         install_opts:
+            # with_service gates the systemd unit enable for sddm + the selkies/
+            # kde-selkies services (ServicePackagedStep + ServiceCustomStep). The
+            # persistent cachyos-coder deploy sets it; the bed must too, or the
+            # desktop/stream services install but never enable (the R10 failure).
+            with_service: true
             allow_repo_changes: true
             allow_root_tasks: true
             skip_incompatible: true
             verify: true
-            builder_image: ghcr.io/overthinkos/arch-builder:2026.122.2252
+            # CUDA builder so the cross-host pixi build of pixelflux links real
+            # NVENC (the stock arch-builder has no CUDA → NVENC stub).
+            builder_image: ghcr.io/overthinkos/cuda-arch-builder:2026.149.1401
         nested:
             # Names the image the bed runner builds on the host and loads into
             # the guest as localhost/ov-cuda-pod:latest. (No managed pod is
@@ -227,6 +246,50 @@ eval:
                 test -f /etc/qemu/qemu-ga.conf && systemctl is-active --quiet qemu-guest-agent && echo QGA-ACTIVE
               stdout:
                 contains: QGA-ACTIVE
+            # KDE Plasma desktop: plasma-desktop pulled the stack, SDDM is the
+            # enabled display manager, and the default target is graphical.
+            - id: kde-plasma-binaries
+              scope: deploy
+              command: |
+                command -v plasmashell >/dev/null && command -v kwin_wayland >/dev/null && command -v startplasma-wayland >/dev/null && echo KDE-PRESENT
+              stdout:
+                contains: KDE-PRESENT
+            - id: sddm-graphical-default
+              scope: deploy
+              command: |
+                systemctl is-enabled sddm.service >/dev/null 2>&1 && [ "$(systemctl get-default)" = "graphical.target" ] && echo SDDM-GRAPHICAL
+              stdout:
+                contains: SDDM-GRAPHICAL
+            # KDE-selkies stream: NVENC GStreamer element built (GPU encode) +
+            # the WebRTC web UI answering on :3000. On a no-GPU host nvh264enc
+            # is N/A; the stream port still serves (CPU/VAAPI fallback).
+            - id: kde-selkies-nvenc
+              scope: deploy
+              command: |
+                if ! grep -ql 0x10de /sys/bus/pci/devices/*/vendor 2>/dev/null; then
+                  echo "NVENC-OK (N/A: no NVIDIA GPU passed through)"
+                else
+                  for i in $(seq 1 30); do { [ -e /dev/nvidia0 ] || nvidia-smi >/dev/null 2>&1; } && break; sleep 2; done
+                  gst-inspect-1.0 nvh264enc >/dev/null 2>&1 && echo NVENC-OK || { echo "FAIL: nvh264enc GStreamer element missing — pixelflux/gst NVENC not built"; exit 1; }
+                fi
+              stdout:
+                contains: NVENC-OK
+            - id: kde-selkies-stream-https
+              scope: deploy
+              command: |
+                for i in $(seq 1 30); do curl -ksf https://127.0.0.1:3000/ >/dev/null 2>&1 && break; sleep 2; done
+                curl -ksf -o /dev/null -w '%{http_code}' https://127.0.0.1:3000/ | grep -q 200 && echo SELKIES-STREAM-200
+              stdout:
+                contains: SELKIES-STREAM-200
+            # Looking Glass guest: the IVSHMEM region is present (kvmfr node or
+            # the /dev/shm fallback) and the capture app is installed.
+            - id: looking-glass-guest
+              scope: deploy
+              command: |
+                command -v looking-glass-host >/dev/null || { echo "FAIL: looking-glass-host not installed"; exit 1; }
+                { [ -e /dev/kvmfr0 ] || [ -e /dev/shm/looking-glass ]; } && echo LOOKING-GLASS-SHMEM || { echo "FAIL: no IVSHMEM node (/dev/kvmfr0 or /dev/shm/looking-glass)"; exit 1; }
+              stdout:
+                contains: LOOKING-GLASS-SHMEM
     # Disposable R10 pod beds for the CachyOS GPU image family. Each drives the
     # full `ov eval run` sequence (build → eval image → deploy → eval live →
     # fresh update → tear down) on the cachyos-namespace image of the same name.
@@ -322,61 +385,81 @@ deploy:
         description:
             feature: Apply ov-cachyos to this workstation
             tag: [testing]
-    # ov-cachyos-gpu — the PERSISTENT operator GPU workstation VM (target: vm,
-    # vm: ov-cachyos-gpu). The VM analog of the ov-cachyos local profile:
-    # the full ov-cachyos dev stack provisioned ONCE over SSH into the
-    # GPU-passthrough VM (persisted on the guest disk, survives the autostart
-    # reboot), plus the VM-only layers — nvidia-driver (kernel module + reboot),
-    # qemu-guest-agent (full RPC surface), and workspace-mount (/workspace).
+    # cachyos-coder — the PERSISTENT operator GPU workstation VM (target: vm,
+    # vm: cachyos-coder). The VM analog of the ov-cachyos local profile, evolved
+    # into a full graphical <distro>-coder workstation: the full ov-cachyos dev
+    # stack PLUS a complete KDE Plasma desktop synced to the host, provisioned
+    # ONCE over SSH into the GPU-passthrough VM (persisted on the guest disk,
+    # survives the autostart reboot), plus the VM-only layers — nvidia-driver
+    # (kernel module + KDE/Wayland userspace + reboot), qemu-guest-agent (full
+    # RPC surface), workspace-mount (/workspace), kde-selkies (remote WebRTC KDE
+    # stream, NVENC), and looking-glass-host (local low-latency view).
+    # Supersedes the earlier headless ov-cachyos-gpu.
     #
     # NOT disposable: this is a real workstation, not a rebuildable test bed. The
-    # generic autostart / virtiofs / guest-agent machinery is R10-proven on the
-    # disposable eval-cachyos-gpu-vm bed; this entry just composes it.
+    # full machinery is R10-proven on the disposable eval-cachyos-coder-vm bed;
+    # this entry just composes it. builder_image is the cuda-arch-builder so the
+    # cross-host pixi build of pixelflux links the real NVENC encoder.
     #
-    # The @github layer pins mirror local.ov-cachyos and are aligned to the
-    # newest main tag by `ov image reconcile` (the two new main-repo layers,
-    # qemu-guest-agent + workspace-mount, resolve only at the post-landing tag).
-    ov-cachyos-gpu:
+    # The @github layer pins are aligned to the newest main tag by
+    # `ov image reconcile` (the new main-repo desktop/stream layers — kde-desktop,
+    # fonts-extended, desktop-media, cachyos-extras, kde-selkies, looking-glass
+    # -host — resolve only at the post-landing tag).
+    cachyos-coder:
         target: vm
-        vm: ov-cachyos-gpu
+        vm: cachyos-coder
         add_layer:
             - wheel-nopasswd
-            - '@github.com/overthinkos/overthink/layers/yay:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/dev-tools:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/gh:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/pre-commit:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/tmux:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/direnv:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/gnupg:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/keepassxc:v2026.149.0613'
+            - '@github.com/overthinkos/overthink/layers/yay:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/dev-tools:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/gh:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/pre-commit:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/tmux:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/direnv:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/gnupg:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/keepassxc:v2026.149.1626'
             - keepassxc-keyring
-            - '@github.com/overthinkos/overthink/layers/tailscale:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/tailscale-up:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/build-toolchain:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/golang:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/rust:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/nodejs:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/uv:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/claude-code:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/codex:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/gemini:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/oracle:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/forgecode:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/devops-tools:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/docker-ce:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/kubernetes:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/vscode:v2026.149.0613'
+            - '@github.com/overthinkos/overthink/layers/tailscale:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/tailscale-up:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/build-toolchain:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/golang:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/rust:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/nodejs:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/uv:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/claude-code:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/codex:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/gemini:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/oracle:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/forgecode:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/devops-tools:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/docker-ce:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/kubernetes:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/vscode:v2026.149.1626'
             - ghostty
-            - '@github.com/overthinkos/overthink/layers/chrome:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/nvidia:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/ov-full:v2026.149.0613'
+            - '@github.com/overthinkos/overthink/layers/chrome:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/nvidia:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/ov-full:v2026.149.1626'
+            # Full KDE Plasma desktop synced to the host + GPU display/stream
+            # stack. kde-desktop pulls the whole Plasma/KF6/Qt stack via
+            # plasma-desktop (deps) + SDDM + graphical.target; cachyos-kde-settings
+            # (vendored) adds the CachyOS theming; fonts-extended + desktop-media
+            # sync the host font/codec set; cachyos-extras fills the dev/CLI gap.
+            # kde-selkies streams a nested Plasma over WebRTC (NVENC, :3000);
+            # looking-glass-host serves the local low-latency view.
+            - '@github.com/overthinkos/overthink/layers/kde-desktop:v2026.149.1626'
+            - cachyos-kde-settings
+            - '@github.com/overthinkos/overthink/layers/fonts-extended:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/desktop-media:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/cachyos-extras:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/kde-selkies:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/looking-glass-host:v2026.149.1626'
             # VM-only additions. podman for GPU/CUDA containers; the guest agent +
             # workspace mount; nvidia-driver LAST — its reboot: true emits a
             # trailing RebootStep, so the guest reboots ONCE after everything is in
             # place, and the enabled workspace.mount + guest agent come back clean.
             - podman
-            - '@github.com/overthinkos/overthink/layers/qemu-guest-agent:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/workspace-mount:v2026.149.0613'
+            - '@github.com/overthinkos/overthink/layers/qemu-guest-agent:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/workspace-mount:v2026.149.1626'
             - nvidia-driver
         install_opts:
             with_service: true
@@ -384,12 +467,14 @@ deploy:
             allow_root_tasks: true
             skip_incompatible: true
             verify: true
-            builder_image: ghcr.io/overthinkos/arch-builder:2026.122.2252
+            # CUDA builder so the cross-host pixi build of pixelflux links the real
+            # NVENC encoder (the stock arch-builder has no CUDA → NVENC stub).
+            builder_image: ghcr.io/overthinkos/cuda-arch-builder:2026.149.1401
         env:
             - EDITOR=nvim
             - PAGER=less
         description:
-            feature: Persistent GPU CachyOS dev workstation VM (autostart + /workspace + guest agent)
+            feature: Persistent GPU CachyOS KDE coder workstation VM (KDE + monitor + Looking Glass + KDE-selkies stream + /workspace + autostart)
             tag: [working]
 local:
     #  ov-cachyos — the operator CachyOS workstation profile (kind:local
@@ -400,35 +485,35 @@ local:
     ov-cachyos:
         layer:
             - wheel-nopasswd
-            - '@github.com/overthinkos/overthink/layers/yay:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/dev-tools:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/gh:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/pre-commit:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/tmux:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/direnv:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/gnupg:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/keepassxc:v2026.149.0613'
+            - '@github.com/overthinkos/overthink/layers/yay:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/dev-tools:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/gh:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/pre-commit:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/tmux:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/direnv:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/gnupg:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/keepassxc:v2026.149.1626'
             - keepassxc-keyring
-            - '@github.com/overthinkos/overthink/layers/tailscale:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/tailscale-up:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/build-toolchain:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/golang:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/rust:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/nodejs:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/uv:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/claude-code:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/codex:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/gemini:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/oracle:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/forgecode:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/devops-tools:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/docker-ce:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/kubernetes:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/vscode:v2026.149.0613'
+            - '@github.com/overthinkos/overthink/layers/tailscale:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/tailscale-up:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/build-toolchain:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/golang:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/rust:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/nodejs:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/uv:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/claude-code:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/codex:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/gemini:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/oracle:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/forgecode:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/devops-tools:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/docker-ce:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/kubernetes:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/vscode:v2026.149.1626'
             - ghostty
-            - '@github.com/overthinkos/overthink/layers/chrome:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/nvidia:v2026.149.0613'
-            - '@github.com/overthinkos/overthink/layers/ov-full:v2026.149.0613'
+            - '@github.com/overthinkos/overthink/layers/chrome:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/nvidia:v2026.149.1626'
+            - '@github.com/overthinkos/overthink/layers/ov-full:v2026.149.1626'
         install_opts:
             with_service: true
             allow_repo_changes: true

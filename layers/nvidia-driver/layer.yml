@@ -1,13 +1,21 @@
 layer:
-    version: 2026.149.1200
+    version: 2026.149.1500
     name: nvidia-driver
     description: |
-        NVIDIA kernel driver (open module) for a CachyOS VM guest that has a
-        physical GPU passed through via VFIO. This is the KERNEL-side companion
-        to the `nvidia` layer (which installs only the userspace container
-        toolkit): it installs the open kernel module, blacklists the in-tree
-        nouveau driver so it can't claim the passed-through GPU, regenerates the
-        initramfs, and requests a reboot so the module loads on a clean boot.
+        NVIDIA kernel driver (open module) + graphical-session userspace for a
+        CachyOS VM guest that has a physical GPU passed through via VFIO. The
+        KERNEL-side companion to the `nvidia` layer (which installs only the
+        userspace container toolkit): it installs the open kernel module,
+        blacklists the in-tree nouveau driver so it can't claim the passed-through
+        GPU, regenerates the initramfs, and requests a reboot so the module loads
+        on a clean boot.
+
+        Also installs the userspace bits a full KDE Plasma WAYLAND session on the
+        passthrough GPU needs: egl-wayland (the nvidia EGLStream external-platform
+        — without it kwin_wayland/SDDM-wayland fail on nvidia), the OpenCL ICD,
+        nvidia-settings, and the VA-API driver (decode + the streaming encode
+        path). nvidia-drm modeset=1 (set below) gives KMS so the compositor can
+        scan out to the real GPU output (physical monitor or Looking Glass dummy).
 
         Only meaningful on a bare host / VM guest — never inside a container (a
         container shares the host kernel and cannot load modules). The reboot is
@@ -23,6 +31,10 @@ layer:
             package:
                 - linux-cachyos-nvidia-open
                 - nvidia-utils
+                - egl-wayland
+                - opencl-nvidia
+                - nvidia-settings
+                - libva-nvidia-driver
     task:
         # Runtime module config. The EARLY (initramfs/boot) nouveau blacklist is
         # done via the guest kernel cmdline (`modprobe.blacklist=nouveau` on the
@@ -69,6 +81,16 @@ layer:
             systemctl daemon-reload || true
             systemctl enable ov-nvidia-cdi.service || true
           user: root
+        # Device-group access for the desktop user's session services. The KDE
+        # compositor + pixelflux NVENC run as user-scope services in the deploy
+        # user's session; /dev/dri/render* + /dev/nvidia* are video/render-owned
+        # and /dev/kvmfr0 (Looking Glass IVSHMEM) is kvm-owned, so the deploy
+        # user (uid 1000) must be in all three or the user-session
+        # compositor/encoder and looking-glass-host can't open the devices.
+        - cmd: |
+            u="$(getent passwd 1000 | cut -d: -f1)"
+            [ -n "$u" ] && usermod -aG video,render,kvm "$u" || true
+          user: root
     reboot: true
     eval:
         - id: nvidia-modprobe-conf
@@ -77,3 +99,9 @@ layer:
         - id: nvidia-cdi-service
           file: /etc/systemd/system/ov-nvidia-cdi.service
           contains: "nvidia-ctk cdi generate"
+        - id: egl-wayland-installed
+          package: egl-wayland
+          installed: true
+        - id: opencl-nvidia-installed
+          package: opencl-nvidia
+          installed: true

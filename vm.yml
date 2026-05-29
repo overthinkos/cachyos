@@ -101,7 +101,7 @@ vm:
         # Exercises the autostart code path (DomainSetAutostart + linger +
         # virtqemud.socket) on a disposable target — the bed is torn down, so
         # nothing persistently autostarts. This is the R10 vehicle for the
-        # generic autostart machinery the ov-cachyos-gpu operator VM relies on.
+        # generic autostart machinery the cachyos-coder operator VM relies on.
         autostart: true
         network:
             mode: user
@@ -160,6 +160,20 @@ vm:
                 source: memfd
                 access: shared
             devices:
+                # Looking Glass IVSHMEM + dummy scanout — exercises the same
+                # shmem/video render path the cachyos-coder operator VM uses, so
+                # the bed R10 proves the Looking-Glass wiring (libvirt <shmem> +
+                # <video> + the looking-glass-host guest layer) on a disposable
+                # target.
+                shmem:
+                    - name: looking-glass
+                      model:
+                          type: ivshmem-plain
+                      size: "64"
+                video:
+                    - model: vga
+                      vram: 16384
+                      heads: 1
                 # Guest-agent control channel — exercises the structured unix
                 # channel render + the qemu-guest-agent layer's full-RPC config.
                 channels:
@@ -168,7 +182,7 @@ vm:
                 # Throwaway virtiofs share (host /tmp → guest /workspace) — proves
                 # the virtiofs auto-shared-mem pairing + the workspace-mount layer
                 # end-to-end on a disposable target. NOT a real home dir (unlike
-                # the ov-cachyos-gpu operator VM, which shares /home/atrawog).
+                # the cachyos-coder operator VM, which shares /home/atrawog).
                 # Source is an operator-provisioned, mode-0700 scratch dir (NOT
                 # world-writable /tmp) so the guest-user idmap is actually
                 # exercised: the guest user owns + can write it ONLY when the
@@ -199,19 +213,26 @@ vm:
                           bus: "0x01"
                           slot: "0x00"
                           function: "0x1"
-    ov-cachyos-gpu:
+    cachyos-coder:
         # PERSISTENT operator GPU workstation VM — the full ov-cachyos dev stack
-        # running inside a GPU-passthrough VM that auto-starts with the host.
-        # The VM analog of the `ov-cachyos` local workstation profile; provisioned
-        # once via the `ov-cachyos-gpu` kind:deploy (full layer stack over SSH,
-        # persisted on the guest disk), then it just boots.
+        # PLUS a complete KDE Plasma desktop synced to the host, inside a
+        # GPU-passthrough VM that auto-starts with the host. The VM analog of the
+        # `ov-cachyos` local workstation profile, evolved into a full graphical
+        # `<distro>-coder` workstation; provisioned once via the `cachyos-coder`
+        # kind:deploy (full layer stack over SSH, persisted on the guest disk),
+        # then it just boots. Supersedes the earlier headless ov-cachyos-gpu.
+        #
+        # Three ways to use the SAME GPU: a physical monitor on the RTX 4080
+        # (SDDM/Plasma on DRM), Looking Glass locally (IVSHMEM + dummy scanout
+        # below, looking-glass-host layer in guest, client on host), and a remote
+        # KDE-selkies WebRTC browser stream (port 3000, NVENC) of a nested Plasma.
         #
         # OPERATOR/HOST-SPECIFIC BY DESIGN (like local.ov-cachyos): this committed
         # entity carries this host's NVIDIA PCI address and the operator's
         # /home/atrawog share. `ov vm gpu list` regenerates the hostdevs block if
         # the host changes. NOT a disposable test bed — there is no disposable
-        # deploy for it; the generic autostart/virtiofs/guest-agent machinery is
-        # R10-proven on the disposable eval-cachyos-gpu-vm bed instead.
+        # deploy for it; the full machinery is R10-proven on the disposable
+        # eval-cachyos-coder-vm bed instead.
         #
         # SUBSTRATE = CachyOS pacstrap under UEFI/OVMF (same rationale as
         # cachyos-gpu-vm: the RTX 4080's 64-bit large BAR needs UEFI). The NVIDIA
@@ -301,6 +322,21 @@ vm:
                 source: memfd
                 access: shared
             devices:
+                # Looking Glass IVSHMEM region (guest looking-glass-host pushes
+                # frames here; host looking-glass-client reads them). 64 MiB fits
+                # up to 4K. Paired with memory_backing shared above.
+                shmem:
+                    - name: looking-glass
+                      model:
+                          type: ivshmem-plain
+                      size: "64"
+                # Dummy virtual display so the GPU/compositor has a scanout target
+                # with no physical monitor attached — required for Looking Glass
+                # capture and for an SDDM/Plasma session to start headless.
+                video:
+                    - model: vga
+                      vram: 16384
+                      heads: 1
                 # qemu-guest-agent control channel (host↔guest); the layer enables
                 # the service + full RPC surface + fsfreeze hook.
                 channels:
