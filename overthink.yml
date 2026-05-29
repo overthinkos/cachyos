@@ -205,14 +205,20 @@ eval:
                 echo ENVD-GUEST-HOME
               stdout:
                 contains: ENVD-GUEST-HOME
-            # env.d-sourcing managed block (D2): the block was written to the
-            # guest's detected login-shell init so env.d is actually sourced.
-            - id: envd-sourcing-block
+            # env.d-sourcing managed block (D2) — verify it actually TAKES EFFECT
+            # in the user's login shell, not merely that the block exists. The
+            # env.d aggregator must land where the login shell sources it
+            # (~/.bashrc for bash, since a bash login prefers ~/.bash_profile →
+            # ~/.bashrc over ~/.profile); a block in ~/.profile silently never
+            # loads. The authoritative check: claude (installed under
+            # ~/.npm-global/bin via the npm builder) resolves on the PATH of an
+            # interactive login shell.
+            - id: envd-on-login-path
               scope: deploy
               command: |
-                grep -lq 'overthink:begin' "$HOME"/.profile "$HOME"/.bashrc "$HOME"/.zshenv "$HOME"/.config/fish/conf.d/overthink.fish 2>/dev/null && echo ENVD-SOURCING-BLOCK || { echo "FAIL: no env.d-sourcing managed block in any guest rc file"; exit 1; }
+                bash -lic 'command -v claude >/dev/null 2>&1' && echo CLAUDE-ON-LOGIN-PATH || { echo "FAIL: claude not on the interactive-login PATH — env.d aggregator not sourced by the login shell"; exit 1; }
               stdout:
-                contains: ENVD-SOURCING-BLOCK
+                contains: CLAUDE-ON-LOGIN-PATH
             # qemu-guest-agent: full-RPC config present + the service running
             # (so the host can drive guest-exec / guest-fsfreeze over the channel).
             - id: qemu-ga-active
