@@ -1,5 +1,5 @@
 layer:
-    version: 2026.149.1210
+    version: 2026.149.2017
     name: cachyos-kde-settings
     description: |
         CachyOS desktop look-and-feel: the cachyos-* settings, theming, SDDM
@@ -35,7 +35,26 @@ layer:
                 - cachyos-plymouth-theme
                 - cachyos-plymouth-bootanimation
                 - plymouth-kcm
+    task:
+        # SDDM auto-login the deploy user (uid 1000) into the Plasma Wayland
+        # session. A headless GPU-passthrough workstation has no keyboard at the
+        # greeter; auto-login starts the REAL KDE session so the physical monitor,
+        # Looking Glass, and the SPICE virtual monitor all show the desktop (not
+        # the SDDM greeter) — and, critically, so the user's
+        # graphical-session.target activates, which is what pulls the
+        # looking-glass-host service (WantedBy=graphical-session.target). $USER is
+        # unset in a cmd RUN context, so resolve the deploy user via getent.
+        # Plasma 6's Wayland session is plasma.desktop.
+        - cmd: |
+            u="$(getent passwd 1000 | cut -d: -f1)"
+            mkdir -p /etc/sddm.conf.d
+            printf '[Autologin]\nUser=%s\nSession=plasma.desktop\n' "$u" > /etc/sddm.conf.d/10-ov-autologin.conf
+          user: root
     eval:
+        - id: sddm-autologin-configured
+          scope: deploy
+          file: /etc/sddm.conf.d/10-ov-autologin.conf
+          contains: "Autologin"
         - id: cachyos-settings-installed
           package: cachyos-settings
           installed: true

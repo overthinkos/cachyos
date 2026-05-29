@@ -170,15 +170,29 @@ vm:
                       model:
                           type: ivshmem-plain
                       size: "64"
+                # SPICE virtual monitor: the headless display the GPU-passthrough
+                # KDE session renders to, so `ov eval spice screenshot` captures the
+                # live desktop (the bed asserts a non-uniform frame = it rendered).
+                # The virtio-gpu head is the seat-0 primary scanout — the passed-
+                # through NVIDIA GPU has no connected output; looking-glass-host
+                # captures whichever head the compositor drives, so LG is unaffected.
+                graphics:
+                    - type: spice
+                      listen:
+                          - type: socket
                 video:
-                    - model: vga
-                      vram: 16384
+                    - model: virtio
+                      vram: 65536
                       heads: 1
-                # Guest-agent control channel — exercises the structured unix
-                # channel render + the qemu-guest-agent layer's full-RPC config.
+                      accel3d: false
+                      primary: true
+                # Guest-agent control channel + the SPICE agent channel (spicevmc) —
+                # exercises the structured unix channel render + qemu-guest-agent.
                 channels:
                     - type: unix
                       name: org.qemu.guest_agent.0
+                    - type: spicevmc
+                      name: com.redhat.spice.0
                 # Throwaway virtiofs share (host /tmp → guest /workspace) — proves
                 # the virtiofs auto-shared-mem pairing + the workspace-mount layer
                 # end-to-end on a disposable target. NOT a real home dir (unlike
@@ -330,18 +344,30 @@ vm:
                       model:
                           type: ivshmem-plain
                       size: "64"
-                # Dummy virtual display so the GPU/compositor has a scanout target
-                # with no physical monitor attached — required for Looking Glass
-                # capture and for an SDDM/Plasma session to start headless.
+                # SPICE virtual monitor + virtio-gpu scanout. The passed-through
+                # NVIDIA GPU has no connected output, so the virtio-gpu head is the
+                # seat-0 primary the SDDM/Plasma session renders to headless; SPICE
+                # serves it as a 4th access path + headless recovery console (and the
+                # disposable bed screenshots it to prove the desktop rendered).
+                # looking-glass-host captures whichever head the compositor drives.
+                graphics:
+                    - type: spice
+                      listen:
+                          - type: socket
                 video:
-                    - model: vga
-                      vram: 16384
+                    - model: virtio
+                      vram: 65536
                       heads: 1
-                # qemu-guest-agent control channel (host↔guest); the layer enables
-                # the service + full RPC surface + fsfreeze hook.
+                      accel3d: false
+                      primary: true
+                # qemu-guest-agent control channel (host↔guest) + the SPICE agent
+                # channel (spicevmc, clipboard/resize); the qemu-guest-agent layer
+                # enables the service + full RPC surface + fsfreeze hook.
                 channels:
                     - type: unix
                       name: org.qemu.guest_agent.0
+                    - type: spicevmc
+                      name: com.redhat.spice.0
                 # Operator's home shared into the guest at /workspace (mounted by
                 # the workspace-mount layer). passthrough preserves uid/gid.
                 filesystems:
