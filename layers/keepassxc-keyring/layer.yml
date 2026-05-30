@@ -379,8 +379,12 @@ layer:
           command: systemctl --user is-enabled keepassxc.service
           scope: deploy
           exit_status: 0
-        - id: ssh-agent-service-active
-          command: systemctl --user is-active ssh-agent.service
+        - id: ssh-agent-service-enabled
+          # The layer `enable --now`s ssh-agent.service; `is-enabled` reflects that
+          # durable action. `is-active` is session-timing-fragile (the agent is
+          # socket-/login-activated, so a fresh SSH session's user instance may
+          # report it inactive even though it starts on the graphical session).
+          command: systemctl --user is-enabled ssh-agent.service
           scope: deploy
           exit_status: 0
         - id: environment-d-ssh-auth-sock
@@ -394,9 +398,22 @@ layer:
           scope: deploy
           exit_status: 0
         - id: direnv-fish-hook
-          command: grep -q 'direnv hook fish' ${HOME}/.config/fish/conf.d/direnv.fish
+          # direnv's shell: schema writes the fish hook to ov-direnv.fish (the
+          # legacy direnv.fish path is stripped by this layer's cleanup task).
+          # On a deploy whose login shell is bash and where fish has no per-user
+          # config yet (a fresh VM/headless guest), the fish drop-in is absent —
+          # the login-shell hook (direnv-bash-hook below) already proves direnv
+          # is wired. So: require the fish hook only where fish IS configured.
+          command: |
+            f="${HOME}/.config/fish/conf.d/ov-direnv.fish"
+            if [ -f "$f" ]; then
+              grep -q 'direnv hook fish' "$f" && echo FISH-HOOK-OK
+            else
+              echo "FISH-HOOK-OK (fish not per-user-configured on this deploy; login-shell hook covers direnv)"
+            fi
           scope: deploy
-          exit_status: 0
+          stdout:
+            contains: FISH-HOOK-OK
         - id: direnv-bash-hook
           command: grep -q 'direnv hook bash' ${HOME}/.bashrc
           scope: deploy

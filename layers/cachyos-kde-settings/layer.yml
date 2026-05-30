@@ -1,5 +1,5 @@
 layer:
-    version: 2026.149.2017
+    version: 2026.150.0947
     name: cachyos-kde-settings
     description: |
         CachyOS desktop look-and-feel: the cachyos-* settings, theming, SDDM
@@ -44,7 +44,10 @@ layer:
         # graphical-session.target activates, which is what pulls the
         # looking-glass-host service (WantedBy=graphical-session.target). $USER is
         # unset in a cmd RUN context, so resolve the deploy user via getent.
-        # Plasma 6's Wayland session is plasma.desktop.
+        # Plasma 6's Wayland session is plasma.desktop. KWin-Wayland drives a
+        # GPU-backed virtual output (kscreen-doctor enumerable) even with no
+        # physical monitor attached — an X11 seat falls back to the virtio head
+        # (0 GPU outputs) without a forced EDID, so Wayland is the headless choice.
         - cmd: |
             u="$(getent passwd 1000 | cut -d: -f1)"
             mkdir -p /etc/sddm.conf.d
@@ -54,7 +57,7 @@ layer:
         - id: sddm-autologin-configured
           scope: deploy
           file: /etc/sddm.conf.d/10-ov-autologin.conf
-          contains: "Autologin"
+          contains: "Session=plasma.desktop"
         - id: cachyos-settings-installed
           package: cachyos-settings
           installed: true

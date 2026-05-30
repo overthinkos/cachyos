@@ -10,7 +10,7 @@ of the main repo.
 |---|---|
 | `image:` | `cachyos` (base, in `cachyos-base.yml`), `cachyos-pacstrap-builder`, `cachyos-pacstrap` |
 | `vm:` | `cachyos-vm` (bootstrap-from-scratch via pacstrap) |
-| `deploy:` | `cachyos-vm-deploy`, `ov-cachyos` (operator workstation profile) |
+| `deploy:` | `eval-cachyos-vm`, `ov-cachyos` (operator workstation profile) |
 | `local:` | `ov-cachyos` (kind:local template — the workstation layer-stack) |
 
 ## Composition by reference — nothing is vendored
