@@ -160,9 +160,15 @@ eval:
             # have initialised yet. When the GPU is present the check WAITS for
             # the driver (bounded readiness poll — the nvidia module loads a few
             # seconds into boot via `nvidia-drm.modeset=1`, and device nodes are
-            # created on first `nvidia-smi`), THEN asserts for real. So a GPU host
-            # can never silently take the N/A path on a slow driver (a false
+            # created on first `nvidia-smi`), THEN asserts for real. So a slow
+            # driver can never make a GPU host silently take the N/A path (a false
             # green), and a no-GPU host returns N/A immediately (no poll penalty).
+            # A DIFFERENT silent failure — a <hostdev> configured for the VM but
+            # not actually passed through — is caught by the
+            # `gpu-passthrough-intent-honored` gate (cachyos-gpu-desktop-eval
+            # layer), which HARD-FAILS when VM_HOSTDEV_COUNT>0 yet no 0x10de
+            # reaches the guest. So these checks' N/A branch is reachable ONLY on a
+            # genuinely card-less host, never on a GPU host whose passthrough broke.
             - id: gpu-driver-active
               scope: deploy
               command: |

@@ -1,6 +1,6 @@
 layer:
   name: cachyos-gpu-desktop-eval
-  version: 2026.150.1444
+  version: 2026.150.2056
   # Shared desktop/GPU-stream verification layer for the CachyOS GPU workstation.
   # It carries NO install beyond the desktop-interaction TEST TOOLS (R9) and a
   # deploy-scope `eval:` block. Both the disposable bed (eval-cachyos-gpu-vm, on
@@ -74,6 +74,30 @@ layer:
         systemctl is-enabled sddm.service >/dev/null 2>&1 && [ "$(systemctl get-default)" = "graphical.target" ] && echo SDDM-GRAPHICAL
       stdout:
         contains: SDDM-GRAPHICAL
+
+    # --- GPU passthrough INTENT gate (closes the silent-failure false-green).
+    # The GPU checks below N/A-pass when no NVIDIA device (0x10de) is in the
+    # guest — correct on a portable host with no card. But when a <hostdev> WAS
+    # configured for this VM (VM_HOSTDEV_COUNT>0, resolved host-side from the
+    # VmSpec by `ov eval live`) yet the guest still has no 0x10de, the passthrough
+    # SILENTLY FAILED and every GPU check below would N/A-pass into a false green
+    # (the eval-cachyos-gpu-vm run that motivated this gate). This single check
+    # HARD-FAILS that case (R3: one gate, not a duplicated guard in every check),
+    # so a GPU host can never silently pass without the GPU. Sourced from the
+    # VmSpec INTENT, not the running domain — a libvirt drop would zero the live
+    # count and re-mask the failure.
+    - id: gpu-passthrough-intent-honored
+      scope: deploy
+      command: |
+        if [ "${VM_HOSTDEV_COUNT}" -gt 0 ] 2>/dev/null; then
+          grep -ql 0x10de /sys/bus/pci/devices/*/vendor 2>/dev/null \
+            && echo "GPU-PASSTHROUGH-OK (${VM_HOSTDEV_COUNT} hostdev(s) configured; NVIDIA device present in guest)" \
+            || { echo "FAIL: ${VM_HOSTDEV_COUNT} GPU hostdev(s) configured for this VM but no NVIDIA device (0x10de) in guest PCI — passthrough silently failed"; exit 1; }
+        else
+          echo "GPU-PASSTHROUGH-OK (N/A: no GPU hostdev configured for this VM)"
+        fi
+      stdout:
+        contains: GPU-PASSTHROUGH-OK
 
     # --- Monitor output: the GPU-passthrough KDE session drives the NVIDIA
     # outputs (GPU-gated; N/A when no NVIDIA GPU is passed through). nvidia-smi
