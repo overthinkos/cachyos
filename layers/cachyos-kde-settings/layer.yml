@@ -1,5 +1,5 @@
 layer:
-    version: 2026.150.0947
+    version: 2026.150.1339
     name: cachyos-kde-settings
     description: |
         CachyOS desktop look-and-feel: the cachyos-* settings, theming, SDDM
@@ -35,6 +35,9 @@ layer:
                 - cachyos-plymouth-theme
                 - cachyos-plymouth-bootanimation
                 - plymouth-kcm
+                # qt6-tools provides qdbus6 — the Plasma scripting CLI driven by
+                # the all-monitors panel autostart below (R9 explicit dep).
+                - qt6-tools
     task:
         # SDDM auto-login the deploy user (uid 1000) into the Plasma Wayland
         # session. A headless GPU-passthrough workstation has no keyboard at the
@@ -53,11 +56,50 @@ layer:
             mkdir -p /etc/sddm.conf.d
             printf '[Autologin]\nUser=%s\nSession=plasma.desktop\n' "$u" > /etc/sddm.conf.d/10-ov-autologin.conf
           user: root
+        # The KDE Plasma panel (menu bar) must appear on EVERY monitor. On a
+        # GPU-passthrough workstation the SPICE virtio output owns Plasma screen 0
+        # (the 0,0 origin), so the single default panel lands there and is invisible
+        # on the physical HDMI/DP monitors. Install an idempotent ensure-script + an
+        # XDG autostart entry (KDE phase 2) that adds a bottom panel to any screen
+        # lacking one — on every login and after a monitor hotplug.
+        - copy: ov-kde-panels-all-screens.sh
+          to: /usr/local/bin/ov-kde-panels-all-screens.sh
+          mode: "0755"
+          user: root
+        - copy: ov-kde-panels-all-screens.desktop
+          to: /etc/xdg/autostart/ov-kde-panels-all-screens.desktop
+          mode: "0644"
+          user: root
     eval:
         - id: sddm-autologin-configured
           scope: deploy
           file: /etc/sddm.conf.d/10-ov-autologin.conf
           contains: "Session=plasma.desktop"
+        - id: kde-panel-autostart-installed
+          scope: deploy
+          command: |
+            test -x /usr/local/bin/ov-kde-panels-all-screens.sh || { echo "FAIL: panel ensure-script missing or not executable"; exit 1; }
+            test -f /etc/xdg/autostart/ov-kde-panels-all-screens.desktop || { echo "FAIL: panel autostart .desktop missing"; exit 1; }
+            echo PANEL-AUTOSTART-INSTALLED
+          stdout:
+            contains: PANEL-AUTOSTART-INSTALLED
+        - id: kde-panel-on-every-screen
+          scope: deploy
+          command: |
+            export XDG_RUNTIME_DIR=/run/user/$(id -u)
+            export DBUS_SESSION_BUS_ADDRESS="unix:path=${XDG_RUNTIME_DIR}/bus"
+            QDBUS=qdbus6; command -v qdbus6 >/dev/null 2>&1 || QDBUS=qdbus
+            # Drive the deployed ensure-script (idempotent), then assert that no
+            # screen is left without a Plasma panel.
+            [ -x /usr/local/bin/ov-kde-panels-all-screens.sh ] && /usr/local/bin/ov-kde-panels-all-screens.sh >/dev/null 2>&1
+            out=$("$QDBUS" org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript 'var have={}; panels().forEach(function(p){have[p.screen]=true;}); var missing=[]; for(var s=0;s<screenCount;s++){ if(!have[s]) missing.push(s); } print("screens="+screenCount+" panels="+panels().length+" missing=["+missing.join(",")+"]");' 2>/dev/null)
+            echo "$out"
+            case "$out" in
+              *"missing=[]"*) echo PANEL-ON-EVERY-SCREEN ;;
+              *) echo "FAIL: some screens have no Plasma panel"; exit 1 ;;
+            esac
+          stdout:
+            contains: PANEL-ON-EVERY-SCREEN
         - id: cachyos-settings-installed
           package: cachyos-settings
           installed: true
