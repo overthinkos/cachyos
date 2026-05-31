@@ -1,13 +1,13 @@
 layer:
   name: cachyos-gpu-desktop-eval
-  version: 2026.150.2056
+  version: 2026.151.0543
   # Shared desktop/GPU-stream verification layer for the CachyOS GPU workstation.
   # It carries NO install beyond the desktop-interaction TEST TOOLS (R9) and a
   # deploy-scope `eval:` block. Both the disposable bed (eval-cachyos-gpu-vm, on
   # cachyos-gpu-vm) AND the persistent operator deploy (cachyos-gpu) add_layer
   # this, and `ov eval live <vm>` collects an applied layer's deploy-scope checks
-  # (collectAddLayerDeployEval) — so the SAME monitor / SPICE / Looking-Glass /
-  # selkies checks run against BOTH deployments from ONE source (R3), satisfying
+  # (collectAddLayerDeployEval) — so the SAME monitor / SPICE / selkies checks
+  # run against BOTH deployments from ONE source (R3), satisfying
   # "all eval tests work on both the eval and the prod deployment".
   #
   # The mouse/keyboard/screenshot checks drive the seat-0 session over the SPICE
@@ -166,16 +166,6 @@ layer:
       stdout:
         contains: WL-SHOT-OK
 
-    # --- Looking Glass guest wiring (shared). Frame-flow is validated separately
-    # via the looking-glass-host layer's own check (headless zero-auth capture). ---
-    - id: looking-glass-guest
-      scope: deploy
-      command: |
-        command -v looking-glass-host >/dev/null || { echo "FAIL: looking-glass-host not installed"; exit 1; }
-        { [ -e /dev/kvmfr0 ] || [ -e /dev/shm/looking-glass ]; } && echo LOOKING-GLASS-SHMEM || { echo "FAIL: no IVSHMEM node (/dev/kvmfr0 or /dev/shm/looking-glass)"; exit 1; }
-      stdout:
-        contains: LOOKING-GLASS-SHMEM
-
     # --- KDE-selkies remote stream (shared) ---
     - id: kde-selkies-nvenc
       scope: deploy
@@ -201,7 +191,24 @@ layer:
         export XDG_RUNTIME_DIR=/run/user/$(id -u)
         [ -S "$XDG_RUNTIME_DIR/wayland-1" ] || { echo "FAIL: pixelflux wayland-1 compositor socket missing"; exit 1; }
         ss -ltn 2>/dev/null | grep -q ':8081' || { echo "FAIL: selkies capture backend :8081 not listening"; exit 1; }
-        journalctl --user -u ov-selkies-selkies --no-pager 2>/dev/null | grep -qiE 'Capture started|Stream settings active' && echo SELKIES-ENCODING || { echo "FAIL: no selkies capture/encode activity in journal"; exit 1; }
+        journalctl --user -u ov-selkies-selkies --no-pager 2>/dev/null | grep -qiE 'Capture started|Stream settings active' || { echo "FAIL: no selkies capture/encode activity in journal"; exit 1; }
+        # GPU-GATED: pixelflux's capture/encode pipeline needs the NVIDIA GPU on
+        # this stack — without a card passed through, selkies' GPU probe fails and
+        # the capture pipeline never produces frames, so frames>0 is only asserted
+        # when the GPU is actually present (matching the bed's portable design).
+        # The socket/port/journal checks above already prove selkies CAME UP.
+        if ! grep -ql 0x10de /sys/bus/pci/devices/*/vendor 2>/dev/null; then
+          echo "SELKIES-ENCODING (N/A: no NVIDIA GPU passed through — pixelflux capture is GPU-bound on this stack)"
+          exit 0
+        fi
+        # GPU present: the capture bridge must have actually PRODUCED frames
+        # (frames>0) with no last_error — not just started-but-frozen.
+        status=$(printf 'STATUS\n' | timeout 6 nc -U /tmp/ov-capture.sock 2>/dev/null | tr -d '\000')
+        frames=$(printf '%s' "$status" | grep -oE '"frames"[: ]*[0-9]+' | grep -oE '[0-9]+$')
+        err=$(printf '%s' "$status" | sed -nE 's/.*"last_error"[: ]*"([^"]*)".*/\1/p')
+        [ "${frames:-0}" -gt 0 ] 2>/dev/null || { echo "FAIL: selkies capture bridge produced 0 frames (status: ${status:-<no reply>})"; exit 1; }
+        [ -z "$err" ] || { echo "FAIL: selkies capture bridge last_error='${err}'"; exit 1; }
+        echo "SELKIES-ENCODING (frames=${frames}, no capture error)"
       stdout:
         contains: SELKIES-ENCODING
     - id: kde-selkies-html-content

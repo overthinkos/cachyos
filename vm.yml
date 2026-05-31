@@ -160,22 +160,11 @@ vm:
                 source: memfd
                 access: shared
             devices:
-                # Looking Glass IVSHMEM + dummy scanout — exercises the same
-                # shmem/video render path the cachyos-gpu operator VM uses, so
-                # the bed R10 proves the Looking-Glass wiring (libvirt <shmem> +
-                # <video> + the looking-glass-host guest layer) on a disposable
-                # target.
-                shmem:
-                    - name: looking-glass
-                      model:
-                          type: ivshmem-plain
-                      size: "128"
                 # SPICE virtual monitor: the headless display the GPU-passthrough
                 # KDE session renders to, so `ov eval spice screenshot` captures the
                 # live desktop (the bed asserts a non-uniform frame = it rendered).
                 # The virtio-gpu head is the seat-0 primary scanout — the passed-
-                # through NVIDIA GPU has no connected output; looking-glass-host
-                # captures whichever head the compositor drives, so LG is unaffected.
+                # through NVIDIA GPU has no connected output.
                 graphics:
                     - type: spice
                       listen:
@@ -226,10 +215,9 @@ vm:
         # kind:deploy (full layer stack over SSH, persisted on the guest disk),
         # then it just boots. Supersedes the earlier headless ov-cachyos-gpu.
         #
-        # Three ways to use the SAME GPU: a physical monitor on the RTX 4080
-        # (SDDM/Plasma on DRM), Looking Glass locally (IVSHMEM + dummy scanout
-        # below, looking-glass-host layer in guest, client on host), and a remote
-        # KDE-selkies WebRTC browser stream (port 3000, NVENC) of a nested Plasma.
+        # Two ways to use the SAME GPU: a physical monitor on the RTX 4080
+        # (SDDM/Plasma on DRM), and a remote KDE-selkies WebRTC browser stream
+        # (port 3000, NVENC) of a nested Plasma.
         #
         # OPERATOR/HOST-SPECIFIC BY DESIGN (like local.ov-cachyos): this committed
         # entity carries this host's NVIDIA PCI address and the operator's
@@ -326,38 +314,23 @@ vm:
                 source: memfd
                 access: shared
             devices:
-                # Looking Glass IVSHMEM region (guest looking-glass-host pushes
-                # frames here; host looking-glass-client reads them). 64 MiB fits
-                # up to 4K. Paired with memory_backing shared above.
-                shmem:
-                    - name: looking-glass
-                      model:
-                          type: ivshmem-plain
-                      size: "128"
-                # SPICE virtual monitor + virtio-gpu scanout. The passed-through
-                # NVIDIA GPU has no connected output, so the virtio-gpu head is the
-                # seat-0 primary the SDDM/Plasma session renders to headless; SPICE
-                # serves it as a 4th access path + headless recovery console (and the
-                # disposable bed screenshots it to prove the desktop rendered).
-                # looking-glass-host captures whichever head the compositor drives.
-                graphics:
-                    - type: spice
-                      listen:
-                          - type: socket
+                # NO SPICE, no emulated display head. The passed-through RTX 4080
+                # drives the operator's PHYSICAL monitors directly over DRM — the
+                # KDE desktop lives there, and (via the ScreenCast-portal browser
+                # mirror) is streamed to the browser as the SAME desktop. SPICE + a
+                # virtio-gpu head are intentionally BED-ONLY: the portable eval bed
+                # (cachyos-gpu-vm) has no physical GPU, so it needs a virtual head to
+                # screenshot. On this operator the GPU IS the display; early-boot
+                # output is the serial console (console=ttyS0 in kernel_args above).
+                # Dropping the virtio head also removes the spurious "Virtual-1"
+                # output that otherwise becomes the Plasma primary at 0,0.
                 video:
-                    - model: virtio
-                      vram: 65536
-                      heads: 1
-                      accel3d: false
-                      primary: true
-                # qemu-guest-agent control channel (host↔guest) + the SPICE agent
-                # channel (spicevmc, clipboard/resize); the qemu-guest-agent layer
-                # enables the service + full RPC surface + fsfreeze hook.
+                    - model: none
+                # qemu-guest-agent control channel (host↔guest). No spicevmc — the
+                # operator runs no SPICE server.
                 channels:
                     - type: unix
                       name: org.qemu.guest_agent.0
-                    - type: spicevmc
-                      name: com.redhat.spice.0
                 # Operator's home shared into the guest at /workspace (mounted by
                 # the workspace-mount layer). passthrough preserves uid/gid.
                 filesystems:

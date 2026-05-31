@@ -96,20 +96,19 @@ eval:
             - '@github.com/overthinkos/overthink/layers/claude-code:v2026.150.1046'
             # Full KDE desktop + GPU display/stream stack — the cachyos-gpu
             # functionality under test. kde-desktop (Plasma + SDDM + graphical
-            # .target), CachyOS theming, fonts/codecs/dev-gap, the KDE-selkies
-            # WebRTC stream (NVENC via the cuda-arch-builder), and the Looking
-            # Glass guest. Proven on this disposable bed before the operator VM.
+            # .target), CachyOS theming, fonts/codecs/dev-gap, and the KDE-selkies
+            # WebRTC stream (NVENC via the cuda-arch-builder). Proven on this
+            # disposable bed before the operator VM.
             - '@github.com/overthinkos/overthink/layers/kde-desktop:v2026.150.1046'
             - cachyos-kde-settings
-            # Shared desktop/monitor/SPICE/Looking-Glass/selkies + mouse/keyboard/
-            # screenshot checks (+ ydotool test tool). ov eval live collects this
-            # layer's deploy-scope checks for BOTH the bed and the operator VM (R3).
+            # Shared desktop/monitor/SPICE/selkies + mouse/keyboard/screenshot
+            # checks (+ ydotool test tool). ov eval live collects this layer's
+            # deploy-scope checks for BOTH the bed and the operator VM (R3).
             - cachyos-gpu-desktop-eval
             - '@github.com/overthinkos/overthink/layers/fonts-extended:v2026.150.1046'
             - '@github.com/overthinkos/overthink/layers/desktop-media:v2026.150.1046'
             - '@github.com/overthinkos/overthink/layers/cachyos-extras:v2026.150.1046'
             - '@github.com/overthinkos/overthink/layers/kde-selkies:v2026.150.1046'
-            - '@github.com/overthinkos/overthink/layers/looking-glass-host:v2026.150.1046'
             - '@github.com/overthinkos/overthink/layers/nvidia:v2026.150.1046'
             - nvidia-driver
         install_opts:
@@ -256,7 +255,7 @@ eval:
                 test -f /etc/qemu/qemu-ga.conf && systemctl is-active --quiet qemu-guest-agent && echo QGA-ACTIVE
               stdout:
                 contains: QGA-ACTIVE
-                # Shared desktop / monitor / SPICE / Looking-Glass / selkies checks now
+                # Shared desktop / monitor / SPICE / selkies checks now
                 # live in the cachyos-gpu-desktop-eval layer (added via add_layer above);
                 # ov eval live collects an applied layer's deploy-scope checks, so the SAME
                 # set runs on BOTH this bed and the persistent cachyos-gpu deploy (R3).
@@ -362,9 +361,8 @@ deploy:
     # ONCE over SSH into the GPU-passthrough VM (persisted on the guest disk,
     # survives the autostart reboot), plus the VM-only layers — nvidia-driver
     # (kernel module + KDE/Wayland userspace + reboot), qemu-guest-agent (full
-    # RPC surface), workspace-mount (/workspace), kde-selkies (remote WebRTC KDE
-    # stream, NVENC), and looking-glass-host (local low-latency view).
-    # Supersedes the earlier headless ov-cachyos-gpu.
+    # RPC surface), workspace-mount (/workspace), and kde-selkies (remote WebRTC
+    # KDE stream, NVENC). Supersedes the earlier headless ov-cachyos-gpu.
     #
     # NOT disposable: this is a real workstation, not a rebuildable test bed. The
     # full machinery is R10-proven on the disposable eval-cachyos-gpu-vm bed;
@@ -373,8 +371,8 @@ deploy:
     #
     # The @github layer pins are aligned to the newest main tag by
     # `ov image reconcile` (the new main-repo desktop/stream layers — kde-desktop,
-    # fonts-extended, desktop-media, cachyos-extras, kde-selkies, looking-glass
-    # -host — resolve only at the post-landing tag).
+    # fonts-extended, desktop-media, cachyos-extras, kde-selkies — resolve only at
+    # the post-landing tag).
     cachyos-gpu:
         target: vm
         vm: cachyos-gpu
@@ -414,19 +412,17 @@ deploy:
             # plasma-desktop (deps) + SDDM + graphical.target; cachyos-kde-settings
             # (vendored) adds the CachyOS theming; fonts-extended + desktop-media
             # sync the host font/codec set; cachyos-extras fills the dev/CLI gap.
-            # kde-selkies streams a nested Plasma over WebRTC (NVENC, :3000);
-            # looking-glass-host serves the local low-latency view.
+            # kde-selkies streams a nested Plasma over WebRTC (NVENC, :3000).
             - '@github.com/overthinkos/overthink/layers/kde-desktop:v2026.150.1046'
             - cachyos-kde-settings
-            # Shared desktop/monitor/SPICE/Looking-Glass/selkies + mouse/keyboard/
-            # screenshot checks (+ ydotool test tool). ov eval live collects this
-            # layer's deploy-scope checks for BOTH the bed and the operator VM (R3).
+            # Shared desktop/monitor/SPICE/selkies + mouse/keyboard/screenshot
+            # checks (+ ydotool test tool). ov eval live collects this layer's
+            # deploy-scope checks for BOTH the bed and the operator VM (R3).
             - cachyos-gpu-desktop-eval
             - '@github.com/overthinkos/overthink/layers/fonts-extended:v2026.150.1046'
             - '@github.com/overthinkos/overthink/layers/desktop-media:v2026.150.1046'
             - '@github.com/overthinkos/overthink/layers/cachyos-extras:v2026.150.1046'
             - '@github.com/overthinkos/overthink/layers/kde-selkies:v2026.150.1046'
-            - '@github.com/overthinkos/overthink/layers/looking-glass-host:v2026.150.1046'
             # VM-only additions. podman for GPU/CUDA containers; the guest agent +
             # workspace mount; nvidia-driver LAST — its reboot: true emits a
             # trailing RebootStep, so the guest reboots ONCE after everything is in
@@ -448,7 +444,7 @@ deploy:
             - EDITOR=nvim
             - PAGER=less
         description:
-            feature: Persistent GPU CachyOS KDE coder workstation VM (KDE + monitor + Looking Glass + KDE-selkies stream + /workspace + autostart)
+            feature: Persistent GPU CachyOS KDE coder workstation VM (KDE + monitor + KDE-selkies stream + /workspace + autostart)
             tag: [working]
 local:
     #  ov-cachyos — the operator CachyOS workstation profile (kind:local

@@ -1,5 +1,5 @@
 layer:
-    version: 2026.150.1339
+    version: 2026.151.0543
     name: cachyos-kde-settings
     description: |
         CachyOS desktop look-and-feel: the cachyos-* settings, theming, SDDM
@@ -41,12 +41,11 @@ layer:
     task:
         # SDDM auto-login the deploy user (uid 1000) into the Plasma Wayland
         # session. A headless GPU-passthrough workstation has no keyboard at the
-        # greeter; auto-login starts the REAL KDE session so the physical monitor,
-        # Looking Glass, and the SPICE virtual monitor all show the desktop (not
-        # the SDDM greeter) — and, critically, so the user's
-        # graphical-session.target activates, which is what pulls the
-        # looking-glass-host service (WantedBy=graphical-session.target). $USER is
-        # unset in a cmd RUN context, so resolve the deploy user via getent.
+        # greeter; auto-login starts the REAL KDE session so the physical monitor
+        # and the SPICE virtual monitor show the desktop (not the SDDM greeter) —
+        # and, critically, so the user's graphical-session.target activates, which
+        # is what pulls the user-scope desktop session services. $USER is unset in
+        # a cmd RUN context, so resolve the deploy user via getent.
         # Plasma 6's Wayland session is plasma.desktop. KWin-Wayland drives a
         # GPU-backed virtual output (kscreen-doctor enumerable) even with no
         # physical monitor attached — an X11 seat falls back to the virtio head
@@ -70,6 +69,33 @@ layer:
           to: /etc/xdg/autostart/ov-kde-panels-all-screens.desktop
           mode: "0644"
           user: root
+        # Headless always-on policy (part 1 of 2): disable the idle screen-LOCKER.
+        # A remotely-accessed / GPU-passthrough seat has no local keyboard to type
+        # a password, so KDE's default idle auto-lock strands the session behind an
+        # unescapable lock screen. /etc/xdg is the system-default KDE config dir
+        # (the deploy user has no ~/.config override), so this applies to every
+        # Plasma session on the box. Paired with the keepalive service below.
+        - write: /etc/xdg/kscreenlockerrc
+          user: root
+          mode: "0644"
+          content: |
+            [Daemon]
+            Autolock=false
+            LockOnResume=false
+    service:
+        # Headless always-on policy (part 2 of 2): inhibit powerdevil's idle
+        # screen-OFF / dim / suspend (and the screensaver) for the session lifetime.
+        # This is the root-cause fix for "no output on the monitors": on a headless
+        # GPU-passthrough seat the physical RTX heads DPMS-off after idle and, with
+        # no local input to wake them, stay dark forever. kde-inhibit holds an
+        # org.freedesktop.ScreenSaver + PowerManagement inhibit while it runs;
+        # restart:always re-holds it. User scope: needs the Plasma session bus.
+        - name: ov-display-keepalive
+          exec: kde-inhibit --power --screenSaver sleep infinity
+          restart: always
+          enable: true
+          scope: user
+          after: [graphical-session.target]
     eval:
         - id: sddm-autologin-configured
           scope: deploy
@@ -87,7 +113,7 @@ layer:
           scope: deploy
           command: |
             export XDG_RUNTIME_DIR=/run/user/$(id -u)
-            export DBUS_SESSION_BUS_ADDRESS="unix:path=${XDG_RUNTIME_DIR}/bus"
+            export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
             QDBUS=qdbus6; command -v qdbus6 >/dev/null 2>&1 || QDBUS=qdbus
             # Drive the deployed ensure-script (idempotent), then assert that no
             # screen is left without a Plasma panel.
@@ -112,3 +138,16 @@ layer:
         - id: cachyos-themes-sddm-installed
           package: cachyos-themes-sddm
           installed: true
+        # Headless always-on policy is in effect: locker disabled + the idle
+        # screen-off/dim/suspend inhibitor running (so the physical heads never
+        # blank-and-stay-dark on this input-less passthrough seat).
+        - id: kscreenlocker-autolock-disabled
+          scope: deploy
+          file: /etc/xdg/kscreenlockerrc
+          contains: "Autolock=false"
+        - id: display-keepalive-active
+          scope: deploy
+          command: |
+            pgrep -f 'kde-inhibit .*screenSaver' >/dev/null 2>&1 && echo KEEPALIVE-OK || { echo "FAIL: ov-display-keepalive (kde-inhibit) not running — idle screen-off not inhibited"; exit 1; }
+          stdout:
+            contains: KEEPALIVE-OK

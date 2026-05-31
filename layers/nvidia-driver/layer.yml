@@ -1,5 +1,5 @@
 layer:
-    version: 2026.149.1500
+    version: 2026.150.2158
     name: nvidia-driver
     description: |
         NVIDIA kernel driver (open module) + graphical-session userspace for a
@@ -15,7 +15,7 @@ layer:
         — without it kwin_wayland/SDDM-wayland fail on nvidia), the OpenCL ICD,
         nvidia-settings, and the VA-API driver (decode + the streaming encode
         path). nvidia-drm modeset=1 (set below) gives KMS so the compositor can
-        scan out to the real GPU output (physical monitor or Looking Glass dummy).
+        scan out to the real GPU output (physical monitor).
 
         Only meaningful on a bare host / VM guest — never inside a container (a
         container shares the host kernel and cannot load modules). The reboot is
@@ -83,13 +83,12 @@ layer:
           user: root
         # Device-group access for the desktop user's session services. The KDE
         # compositor + pixelflux NVENC run as user-scope services in the deploy
-        # user's session; /dev/dri/render* + /dev/nvidia* are video/render-owned
-        # and /dev/kvmfr0 (Looking Glass IVSHMEM) is kvm-owned, so the deploy
-        # user (uid 1000) must be in all three or the user-session
-        # compositor/encoder and looking-glass-host can't open the devices.
+        # user's session; /dev/dri/render* + /dev/nvidia* are video/render-owned,
+        # so the deploy user (uid 1000) must be in both or the user-session
+        # compositor/encoder can't open the devices.
         - cmd: |
             u="$(getent passwd 1000 | cut -d: -f1)"
-            [ -n "$u" ] && usermod -aG video,render,kvm "$u" || true
+            [ -n "$u" ] && usermod -aG video,render "$u" || true
           user: root
     reboot: true
     eval:
