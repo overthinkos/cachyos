@@ -78,6 +78,16 @@ eval:
         vm: cachyos-gpu-vm
         disposable: true
         lifecycle: dev
+        # Claims the single physical NVIDIA GPU. The resource arbiter
+        # (ov/preempt.go) gracefully preempts any RUNNING preemptible holder of
+        # the `nvidia-gpu` token — e.g. the operator's vm:cachyos-gpu workstation
+        # marked `preemptible: {holds: [nvidia-gpu]}` in the per-host deploy.yml —
+        # before this bed brings up its VM, and restores it after teardown. The
+        # token is portable (a name); on a host with no preemptible nvidia-gpu
+        # holder the arbiter finds nothing to preempt (no-op), so the bed still
+        # runs anywhere. See /ov-internals:disposable "The resource-arbitration
+        # axis", /ov-core:deploy.
+        requires_exclusive: [nvidia-gpu]
         add_layer:
             # Order matters: everything before nvidia-driver, whose reboot: true
             # emits a trailing RebootStep — so the guest reboots ONCE after the
