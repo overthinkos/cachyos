@@ -1,7 +1,7 @@
 # image/cachyos — signpost (not the rule-set)
 
 This submodule is the **CachyOS** base image family (x86_64_v3-optimized Arch
-derivative): a single `overthink.yml` that imports the main repo under the `ov`
+derivative): an `overthink.yml` (plus per-kind sibling files) that imports the main repo under the `ov`
 namespace and `build.yml` flat. Main's `versa` image consumes cachyos via the
 `cachyos` import namespace (the main↔cachyos mutual import is cycle-broken at
 load).
