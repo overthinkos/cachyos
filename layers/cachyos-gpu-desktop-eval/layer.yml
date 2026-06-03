@@ -166,18 +166,15 @@ layer:
       stdout:
         contains: WL-SHOT-OK
 
-    # --- KDE-selkies remote stream (shared) ---
-    - id: kde-selkies-nvenc
-      scope: deploy
-      command: |
-        if ! grep -ql 0x10de /sys/bus/pci/devices/*/vendor 2>/dev/null; then
-          echo "NVENC-OK (N/A: no NVIDIA GPU passed through)"
-        else
-          for i in $(seq 1 30); do { [ -e /dev/nvidia0 ] || nvidia-smi >/dev/null 2>&1; } && break; sleep 2; done
-          gst-inspect-1.0 nvh264enc >/dev/null 2>&1 && echo NVENC-OK || { echo "FAIL: nvh264enc GStreamer element missing — pixelflux/gst NVENC not built"; exit 1; }
-        fi
-      stdout:
-        contains: NVENC-OK
+    # --- KDE-selkies remote stream (nested ov-selkies-kde pod) ---
+    # The nested pod's BAKED selkies-layer eval — frame-not-black (real pixels)
+    # + encoder-active (real NVENC on the passed-through GPU, hard-fail on CPU
+    # fallback) + pixelflux compositor socket + selkies service — now runs via
+    # `ov eval live eval-cachyos-gpu-vm.selkies-kde` (the nested-pod eval). So the
+    # encoder/frame/capture proofs live ONCE on the selkies layer (R3), not as
+    # guest-side podman-exec duplicates here. The two checks below keep GUEST-side
+    # stream coverage that the layer's ${HOST_PORT}-based https check can't give a
+    # nested pod (its ports publish on the guest loopback, not the host).
     - id: kde-selkies-stream-https
       scope: deploy
       command: |
@@ -185,32 +182,6 @@ layer:
         curl -ksf -o /dev/null -w '%{http_code}' https://127.0.0.1:3000/ | grep -q 200 && echo SELKIES-STREAM-200
       stdout:
         contains: SELKIES-STREAM-200
-    - id: selkies-encoding-frames
-      scope: deploy
-      command: |
-        export XDG_RUNTIME_DIR=/run/user/$(id -u)
-        [ -S "$XDG_RUNTIME_DIR/wayland-1" ] || { echo "FAIL: pixelflux wayland-1 compositor socket missing"; exit 1; }
-        ss -ltn 2>/dev/null | grep -q ':8081' || { echo "FAIL: selkies capture backend :8081 not listening"; exit 1; }
-        journalctl --user -u ov-selkies-selkies --no-pager 2>/dev/null | grep -qiE 'Capture started|Stream settings active' || { echo "FAIL: no selkies capture/encode activity in journal"; exit 1; }
-        # GPU-GATED: pixelflux's capture/encode pipeline needs the NVIDIA GPU on
-        # this stack — without a card passed through, selkies' GPU probe fails and
-        # the capture pipeline never produces frames, so frames>0 is only asserted
-        # when the GPU is actually present (matching the bed's portable design).
-        # The socket/port/journal checks above already prove selkies CAME UP.
-        if ! grep -ql 0x10de /sys/bus/pci/devices/*/vendor 2>/dev/null; then
-          echo "SELKIES-ENCODING (N/A: no NVIDIA GPU passed through — pixelflux capture is GPU-bound on this stack)"
-          exit 0
-        fi
-        # GPU present: the capture bridge must have actually PRODUCED frames
-        # (frames>0) with no last_error — not just started-but-frozen.
-        status=$(printf 'STATUS\n' | timeout 6 nc -U /tmp/ov-capture.sock 2>/dev/null | tr -d '\000')
-        frames=$(printf '%s' "$status" | grep -oE '"frames"[: ]*[0-9]+' | grep -oE '[0-9]+$')
-        err=$(printf '%s' "$status" | sed -nE 's/.*"last_error"[: ]*"([^"]*)".*/\1/p')
-        [ "${frames:-0}" -gt 0 ] 2>/dev/null || { echo "FAIL: selkies capture bridge produced 0 frames (status: ${status:-<no reply>})"; exit 1; }
-        [ -z "$err" ] || { echo "FAIL: selkies capture bridge last_error='${err}'"; exit 1; }
-        echo "SELKIES-ENCODING (frames=${frames}, no capture error)"
-      stdout:
-        contains: SELKIES-ENCODING
     - id: kde-selkies-html-content
       scope: deploy
       command: |
