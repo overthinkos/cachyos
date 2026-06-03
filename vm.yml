@@ -52,8 +52,10 @@ vm:
                 - sh -c 'mkdir -p /etc/pacman.d/hooks && ln -sf /dev/null /etc/pacman.d/hooks/nvidia-ctk-cdi.hook'
     cachyos-gpu-vm:
         # GPU-passthrough VM guest that receives a physical NVIDIA GPU via a VFIO
-        # <hostdev> and runs a CUDA container (the cuda-eval image) inside it.
-        # Driven by the eval-cachyos-gpu-vm bed.
+        # <hostdev>. Driven by the eval-cachyos-gpu-vm bed, which mirrors the
+        # operator workstation: a bare-metal KDE Plasma seat in-guest plus a nested
+        # selkies-kde-nvidia streaming pod (real NVENC) deployed as a persistent
+        # in-guest quadlet.
         #
         # SUBSTRATE = CachyOS bootstrap (pacstrap) under UEFI/OVMF. UEFI is
         # MANDATORY for a modern GPU: the RTX 4080's 16 GB VRAM sits behind a
@@ -64,11 +66,17 @@ vm:
         # passed-through GPU cleanly under OVMF. pacstrap needs the rootful builder
         # (`ov settings set engine.rootful sudo`).
         #
-        # PORTABLE BY DESIGN — this committed entity carries NO `libvirt.devices.
-        # hostdevs:` block (a PCI address is host-specific). Generate it with
-        # `ov vm gpu list` and add it locally (uncommitted) for a live GPU run;
-        # without it the bed still exercises build/deploy and the GPU/CUDA checks
-        # report N/A.
+        # PORTABLE — this committed entity carries NO host-specific devices: no
+        # `libvirt.devices.hostdevs:` (a PCI bus/slot address is host-specific) and
+        # no host-path `filesystems:` (a virtiofs share rooted at an absolute host
+        # path). Both live in THIS host's instance overlay
+        # (~/.local/share/ov/vm/ov-cachyos-gpu-vm/instance.yml), merged at
+        # `ov vm create` by VmInstanceOverride.ApplyToVmSpec — so the bed attaches
+        # this host's real RTX 4080 (real GPU passthrough + NVENC) without baking a
+        # PCI address into version control. Generate the hostdev block with
+        # `ov vm gpu list`. The bed arbitrates the card exclusively
+        # (requires_exclusive: [nvidia-gpu]); a genuinely card-less host simply
+        # omits the overlay and the GPU-gated checks report N/A.
         #
         # backend: libvirt is mandatory — <hostdev> PCI passthrough only renders
         # on the libvirt backend. Rootless passthrough also needs a raised memlock
@@ -93,7 +101,12 @@ vm:
             # initramfs regen needed — see the nvidia-driver layer).
             kernel_args: console=tty0 console=ttyS0,115200 modprobe.blacklist=nouveau nvidia-drm.modeset=1
         backend: libvirt
-        disk_size: 50G
+        # 100G (sparse qcow2): the full KDE+GPU+dev rootfs PLUS the nested
+        # selkies-kde-nvidia pod image (~15 GB) loaded into the guest user's
+        # rootless podman storage (/home/cachy/.local/share/containers) — 50G
+        # ran out of space mid-load. The disk grows on demand, so the larger
+        # ceiling costs nothing until used.
+        disk_size: 100G
         ram: 8G
         cpu: 4
         machine: q35
@@ -182,30 +195,17 @@ vm:
                       name: org.qemu.guest_agent.0
                     - type: spicevmc
                       name: com.redhat.spice.0
-                # Throwaway virtiofs share (host /tmp → guest /workspace) — proves
-                # the virtiofs auto-shared-mem pairing + the workspace-mount layer
-                # end-to-end on a disposable target. NOT a real home dir (unlike
-                # the cachyos-gpu operator VM, which shares /home/atrawog).
-                # Source is an operator-provisioned, mode-0700 scratch dir (NOT
-                # world-writable /tmp) so the guest-user idmap is actually
-                # exercised: the guest user owns + can write it ONLY when the
-                # auto-injected idmap maps guest-uid-1000 → the host operator
-                # (libvirt's default maps guest-ROOT → operator, leaving it
-                # root-owned + unreadable to the guest user). The operator creates
-                # the dir once (like the host-specific GPU hostdevs below).
-                filesystems:
-                    - driver: virtiofs
-                      accessmode: passthrough
-                      source: /home/atrawog/.cache/ov/eval-workspace
-                      target: workspace
-                # PORTABLE — NO committed hostdevs (a PCI address is host-specific).
-                # For a live GPU R10 on a host with an NVIDIA card, generate the
-                # block with `ov vm gpu list` and add a `hostdevs:` block here
-                # LOCALLY before the run (do NOT commit it). The GPU-gated eval
-                # checks (monitor / nvenc / cuda-smoke) are N/A — they pass with a
-                # note — on a portable bed with no card passed through, so the bed
-                # builds + verifies on any host; the GPU path is proven by a local
-                # hostdev run (the 2026.150 R10 ran 29/29 with the card attached).
+                # NO host-path `filesystems:` and NO `hostdevs:` committed here —
+                # both are host-specific and live in THIS host's instance overlay
+                # (~/.local/share/ov/vm/ov-cachyos-gpu-vm/instance.yml), merged at
+                # `ov vm create` by VmInstanceOverride.ApplyToVmSpec:
+                #   - the GPU <hostdev> (RTX 4080, IOMMU group = 01:00.0 + 01:00.1);
+                #   - a virtiofs `workspace` share rooted at an operator-provisioned
+                #     mode-0700 scratch dir (NOT world-writable /tmp) so the
+                #     guest-user idmap is actually exercised: the guest user owns +
+                #     writes it ONLY when the auto-injected idmap maps guest-uid-1000
+                #     → the host operator (libvirt's default maps guest-ROOT →
+                #     operator, leaving it root-owned + unreadable to the guest user).
     cachyos-gpu:
         # PERSISTENT operator GPU workstation VM — the full ov-cachyos dev stack
         # PLUS a complete KDE Plasma desktop synced to the host, inside a
@@ -219,18 +219,19 @@ vm:
         # (SDDM/Plasma on DRM), and a remote KDE-selkies WebRTC browser stream
         # (port 3000, NVENC) of a nested Plasma.
         #
-        # OPERATOR/HOST-SPECIFIC BY DESIGN (like local.ov-cachyos): this committed
-        # entity carries this host's NVIDIA PCI address and the operator's
-        # /home/atrawog share. `ov vm gpu list` regenerates the hostdevs block if
-        # the host changes. NOT a disposable test bed — there is no disposable
-        # deploy for it; the full machinery is R10-proven on the disposable
-        # eval-cachyos-gpu-vm bed instead.
+        # PORTABLE (like local.ov-cachyos): this committed entity carries NO
+        # host-specific config — the NVIDIA PCI <hostdev> and the operator's
+        # /home/<operator> share both live in THIS host's instance overlay
+        # (~/.local/share/ov/vm/ov-cachyos-gpu/instance.yml), merged at
+        # `ov vm create` by VmInstanceOverride.ApplyToVmSpec. Generate the hostdev
+        # block with `ov vm gpu list`. NOT a disposable test bed — there is no
+        # disposable deploy for it; the full machinery is R10-proven on the
+        # disposable eval-cachyos-gpu-vm bed instead.
         #
         # SUBSTRATE = CachyOS pacstrap under UEFI/OVMF (same rationale as
-        # cachyos-gpu-vm: the RTX 4080's 64-bit large BAR needs UEFI). The NVIDIA
-        # card (01:00.0 + .1) is already vfio-pci-bound on this host; the host
-        # drives display from the AMD GPU, so autostarting this VM costs the host
-        # no display.
+        # cachyos-gpu-vm: the RTX 4080's 64-bit large BAR needs UEFI). On this host
+        # the passed-through card is vfio-pci-bound and the host drives display
+        # from the AMD GPU, so autostarting this VM costs the host no display.
         source:
             kind: bootstrap
             builder: pacstrap
@@ -331,27 +332,11 @@ vm:
                 channels:
                     - type: unix
                       name: org.qemu.guest_agent.0
-                # Operator's home shared into the guest at /workspace (mounted by
-                # the workspace-mount layer). passthrough preserves uid/gid.
-                filesystems:
-                    - driver: virtiofs
-                      accessmode: passthrough
-                      source: /home/atrawog
-                      target: workspace
-                # This host's NVIDIA RTX 4080 SUPER (10de:2702, IOMMU group 13 =
-                # 01:00.0 + 01:00.1). From `ov vm gpu list`.
-                hostdevs:
-                    - type: pci
-                      managed: "yes"
-                      source:
-                          domain: "0x0000"
-                          bus: "0x01"
-                          slot: "0x00"
-                          function: "0x0"
-                    - type: pci
-                      managed: "yes"
-                      source:
-                          domain: "0x0000"
-                          bus: "0x01"
-                          slot: "0x00"
-                          function: "0x1"
+                # NO host-path `filesystems:` and NO `hostdevs:` committed here —
+                # both are host-specific and live in THIS host's instance overlay
+                # (~/.local/share/ov/vm/ov-cachyos-gpu/instance.yml), merged at
+                # `ov vm create` by VmInstanceOverride.ApplyToVmSpec:
+                #   - the GPU <hostdev> (RTX 4080, IOMMU group = 01:00.0 + 01:00.1);
+                #   - the operator's home (/home/<operator>) shared into the guest at
+                #     /workspace via virtiofs passthrough (mounted by the
+                #     workspace-mount layer; passthrough preserves uid/gid).
