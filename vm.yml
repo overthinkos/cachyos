@@ -123,36 +123,10 @@ vm:
             port: 12227
             key_source: generate
         cloud_init:
-            write_files:
-                # pacstrap leaves no runtime /etc/pacman.conf; install one so
-                # add_layer package installs work in the guest. SigLevel Never
-                # matches the bootstrap (no keyring on this disposable eval guest).
-                - path: /etc/pacman.conf
-                  perms: "0644"
-                  content: |
-                    [options]
-                    Architecture = x86_64 x86_64_v3
-                    SigLevel = Never
-                    ParallelDownloads = 5
-                    # cachyos-v3 + cachyos-core-v3 (x86_64_v3) + cachyos ($arch)
-                    # + Arch core/extra. Deliberately NO cachyos-extra-v3 AND NO
-                    # cachyos-extra: neither publishes a usable DB on
-                    # mirror.cachyos.org — the v3 overlay 404s a malformed libyuv
-                    # (filed as plain x86_64 under the v3 path), and cachyos-extra
-                    # at $arch returns an HTML listing, not a .db ("unrecognized
-                    # archive format"). libyuv/gcc and other "extra" packages
-                    # resolve from Arch `extra`; cachyos-v3/core-v3 supply the
-                    # v3-optimized core set. (Verified in-guest: libyuv → extra.)
-                    [cachyos-v3]
-                    Server = https://mirror.cachyos.org/repo/x86_64_v3/$repo
-                    [cachyos-core-v3]
-                    Server = https://mirror.cachyos.org/repo/x86_64_v3/$repo
-                    [cachyos]
-                    Server = https://mirror.cachyos.org/repo/$arch/$repo
-                    [core]
-                    Include = /etc/pacman.d/mirrorlist
-                    [extra]
-                    Include = /etc/pacman.d/mirrorlist
+            # /etc/pacman.conf is written into the rootfs by the cachyos pacstrap
+            # bootstrap (build.yml distro.cachyos.pacstrap.runtime_pacman_conf) —
+            # the single source for every cachyos pacstrap VM, so no per-VM
+            # write_files block is needed here.
             runcmd:
                 - systemctl enable --now sshd
                 - systemctl enable --now qemu-guest-agent
@@ -265,36 +239,10 @@ vm:
             port: 12228
             key_source: generate
         cloud_init:
-            write_files:
-                # Same bootstrap pacman.conf as cachyos-gpu-vm so in-guest layer
-                # installs work on the keyring-less pacstrap base. (A persistent
-                # workstation can later harden SigLevel after pacman-key init.)
-                - path: /etc/pacman.conf
-                  perms: "0644"
-                  content: |
-                    [options]
-                    Architecture = x86_64 x86_64_v3
-                    SigLevel = Never
-                    ParallelDownloads = 5
-                    # cachyos-v3 + cachyos-core-v3 (x86_64_v3) + cachyos ($arch)
-                    # + Arch core/extra. Deliberately NO cachyos-extra-v3 AND NO
-                    # cachyos-extra: neither publishes a usable DB on
-                    # mirror.cachyos.org — the v3 overlay 404s a malformed libyuv
-                    # (filed as plain x86_64 under the v3 path), and cachyos-extra
-                    # at $arch returns an HTML listing, not a .db ("unrecognized
-                    # archive format"). libyuv/gcc and other "extra" packages
-                    # resolve from Arch `extra`; cachyos-v3/core-v3 supply the
-                    # v3-optimized core set. (Verified in-guest: libyuv → extra.)
-                    [cachyos-v3]
-                    Server = https://mirror.cachyos.org/repo/x86_64_v3/$repo
-                    [cachyos-core-v3]
-                    Server = https://mirror.cachyos.org/repo/x86_64_v3/$repo
-                    [cachyos]
-                    Server = https://mirror.cachyos.org/repo/$arch/$repo
-                    [core]
-                    Include = /etc/pacman.d/mirrorlist
-                    [extra]
-                    Include = /etc/pacman.d/mirrorlist
+            # /etc/pacman.conf is written into the rootfs by the cachyos pacstrap
+            # bootstrap (build.yml distro.cachyos.pacstrap.runtime_pacman_conf) —
+            # the single source for every cachyos pacstrap VM. (A persistent
+            # workstation can later harden SigLevel after pacman-key init.)
             runcmd:
                 - systemctl enable --now sshd
                 - systemctl enable --now qemu-guest-agent
