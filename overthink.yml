@@ -590,7 +590,7 @@ deploy:
             - '@github.com/overthinkos/overthink/layers/devops-tools:v2026.155.1010'
             - '@github.com/overthinkos/overthink/layers/docker-ce:v2026.155.1010'
             - '@github.com/overthinkos/overthink/layers/kubernetes:v2026.155.1010'
-            - '@github.com/overthinkos/overthink/layers/vscode:v2026.155.1010'
+            - '@github.com/overthinkos/overthink/layers/vscode:v2026.155.1536'
             - ghostty
             - '@github.com/overthinkos/overthink/layers/chrome:v2026.155.1010'
             - '@github.com/overthinkos/overthink/layers/nvidia:v2026.155.1010'
@@ -681,7 +681,7 @@ local:
             - '@github.com/overthinkos/overthink/layers/devops-tools:v2026.155.1010'
             - '@github.com/overthinkos/overthink/layers/docker-ce:v2026.155.1010'
             - '@github.com/overthinkos/overthink/layers/kubernetes:v2026.155.1010'
-            - '@github.com/overthinkos/overthink/layers/vscode:v2026.155.1010'
+            - '@github.com/overthinkos/overthink/layers/vscode:v2026.155.1536'
             - ghostty
             - '@github.com/overthinkos/overthink/layers/chrome:v2026.155.1010'
             - '@github.com/overthinkos/overthink/layers/nvidia:v2026.155.1010'
