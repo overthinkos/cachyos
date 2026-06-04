@@ -62,7 +62,7 @@ image:
         build:
             - pac
         layer:
-            - '@github.com/overthinkos/overthink/layers/pacstrap-builder:v2026.155.1933'
+            - '@github.com/overthinkos/overthink/layers/pacstrap-builder:v2026.155.2234'
         eval:
             - id: cpb-pacstrap-binary
               file: /usr/sbin/pacstrap
@@ -100,9 +100,9 @@ image:
         platform:
             - linux/amd64
         layer:
-            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/nvidia:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/cuda:v2026.155.1933'
+            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/nvidia:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/cuda:v2026.155.2234'
     cuda-eval:
         # GPU compute-smoke image for the VFIO-passthrough eval: cachyos.nvidia
         # (driver libs + nvidia-container-toolkit + CUDA) plus the locally-vendored
@@ -119,18 +119,18 @@ image:
         platform:
             - linux/amd64
         layer:
-            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/python-ml:v2026.155.1933'
+            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/python-ml:v2026.155.2234'
     jupyter-ml:
         base: nvidia
         platform:
             - linux/amd64
         layer:
-            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/jupyter-ml:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/notebook-templates:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/dbus:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/ov:v2026.155.1933'
+            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/jupyter-ml:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/notebook-templates:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/dbus:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/ov:v2026.155.2234'
         port:
             - 8888:8888
     ollama:
@@ -138,10 +138,10 @@ image:
         platform:
             - linux/amd64
         layer:
-            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/ollama:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/dbus:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/ov:v2026.155.1933'
+            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/ollama:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/dbus:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/ov:v2026.155.2234'
         port:
             - 11434:11434
     comfyui:
@@ -149,10 +149,10 @@ image:
         platform:
             - linux/amd64
         layer:
-            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/comfyui:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/dbus:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/ov:v2026.155.1933'
+            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/comfyui:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/dbus:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/ov:v2026.155.2234'
         port:
             - 8188:8188
     unsloth-studio:
@@ -160,11 +160,11 @@ image:
         platform:
             - linux/amd64
         layer:
-            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/unsloth-studio:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/notebook-finetuning:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/dbus:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/ov:v2026.155.1933'
+            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/unsloth-studio:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/notebook-finetuning:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/dbus:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/ov:v2026.155.2234'
         port:
             - 8888:8888
             - 8000:8000
@@ -179,17 +179,17 @@ image:
         platform:
             - linux/amd64
         layer:
-            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/nodejs:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/python-ml:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/supervisord:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/postgresql:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/vectorchord:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/redis:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/immich:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/immich-ml:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/dbus:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/ov:v2026.155.1933'
+            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/nodejs:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/python-ml:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/supervisord:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/postgresql:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/vectorchord:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/redis:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/immich:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/immich-ml:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/dbus:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/ov:v2026.155.2234'
         port:
             - 2283:2283
     selkies-kde:
@@ -206,10 +206,10 @@ image:
         platform:
             - linux/amd64
         layer:
-            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/selkies-kde-desktop:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/dbus:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/ov:v2026.155.1933'
+            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/selkies-kde-desktop:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/dbus:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/ov:v2026.155.2234'
         port:
             - 3000:3000
             - 9222:9222
@@ -230,10 +230,10 @@ image:
         platform:
             - linux/amd64
         layer:
-            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/selkies-desktop:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/dbus:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/ov:v2026.155.1933'
+            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/selkies-desktop:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/dbus:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/ov:v2026.155.2234'
         port:
             - 3000:3000
             - 9222:9222
@@ -264,10 +264,10 @@ image:
         platform:
             - linux/amd64
         layer:
-            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/selkies-kde-desktop:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/dbus:v2026.155.1933'
-            - '@github.com/overthinkos/overthink/layers/ov:v2026.155.1933'
+            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/selkies-kde-desktop:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/dbus:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/layers/ov:v2026.155.2234'
         port:
             - 3000:3000
             - 9222:9222
