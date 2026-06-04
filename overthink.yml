@@ -600,7 +600,10 @@ deploy:
             # plasma-desktop (deps) + SDDM + graphical.target; cachyos-kde-settings
             # (vendored) adds the CachyOS theming; fonts-extended + desktop-media
             # sync the host font/codec set; cachyos-extras fills the dev/CLI gap.
-            # kde-selkies streams a nested Plasma over WebRTC (NVENC, :3000).
+            # The WebRTC streaming desktop is the nested selkies-kde-nvidia pod
+            # (real NVENC, :3000) deployed as a persistent in-guest quadlet — see
+            # `nested:` below, NOT an in-guest layer. The bare-metal SDDM Plasma
+            # seat (kde-desktop) drives the physical RTX monitors.
             - '@github.com/overthinkos/overthink/layers/kde-desktop:v2026.155.1010'
             - cachyos-kde-settings
             # Shared desktop/monitor/SPICE/selkies + mouse/keyboard/screenshot
@@ -610,7 +613,8 @@ deploy:
             - '@github.com/overthinkos/overthink/layers/fonts-extended:v2026.155.1010'
             - '@github.com/overthinkos/overthink/layers/desktop-media:v2026.155.1010'
             - '@github.com/overthinkos/overthink/layers/cachyos-extras:v2026.155.1010'
-            - '@github.com/overthinkos/overthink/layers/kde-selkies:v2026.155.1010'
+            # (in-guest kde-selkies layer REMOVED — the WebRTC streaming desktop is
+            # the nested selkies-kde-nvidia pod below; podman is its in-guest substrate.)
             # VM-only additions. podman for GPU/CUDA containers; the guest agent +
             # workspace mount; nvidia-driver LAST — its reboot: true emits a
             # trailing RebootStep, so the guest reboots ONCE after everything is in
@@ -631,8 +635,18 @@ deploy:
         env:
             - EDITOR=nvim
             - PAGER=less
+        nested:
+            # The KDE-selkies WebRTC streaming desktop runs as a headless nested pod
+            # (real NVENC on the passed-through RTX GPU), deployed as a PERSISTENT
+            # in-guest quadlet by deployNestedPodsInGuest — the exact config the
+            # eval-cachyos-gpu-vm mirror bed proves (R10 9/9, fresh rebuild). The
+            # bare-metal SDDM Plasma seat (kde-desktop) drives the physical monitors
+            # independently of the stream pod.
+            selkies-kde:
+                target: pod
+                image: selkies-kde-nvidia
         description:
-            feature: Persistent GPU CachyOS KDE coder workstation VM (KDE + monitor + KDE-selkies stream + /workspace + autostart)
+            feature: Persistent GPU CachyOS KDE coder workstation VM (bare-metal SDDM Plasma seat on the monitors + nested selkies-kde-nvidia stream pod (real NVENC, :3000) + /workspace + autostart)
             tag: [working]
 local:
     #  ov-cachyos — the operator CachyOS workstation profile (kind:local
