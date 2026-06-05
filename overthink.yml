@@ -20,7 +20,7 @@
 #  Directly buildable: `ov image build cachyos` (from the parent repo:
 #  `ov -C image/cachyos image build cachyos`; anywhere:
 #  `ov --repo overthinkos/cachyos image build cachyos`).
-version: 2026.156.557
+version: 2026.156.1041
 defaults:
     platform:
         - linux/amd64
@@ -47,9 +47,9 @@ discover:
     # (ghostty, keepassxc-keyring, wheel-nopasswd) relocated out of main's shared
     # layers/. Bare layer names resolve here; every shared layer (yay, chrome,
     # gnupg, keepassxc, nvidia, …) still arrives by @github ref into main.
-    candy:
-        - path: candy
-          recursive: true
+    - path: candy
+      recursive: true
+      manifest: candy.yml
 eval:
     # Disposable R10 test bed for the cachyos bootstrap VM (kind:eval — the
     # 2026-05 deploy→eval unification moved repo-shipped disposable beds out of
