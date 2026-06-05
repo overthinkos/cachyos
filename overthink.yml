@@ -60,13 +60,13 @@ eval:
         vm: cachyos-vm
         disposable: true
         lifecycle: dev
-        # #43 dep-absent localpkg witness. ov-full on a BARE cachyos bootstrap VM
+        # #43 dep-absent localpkg witness. ov on a BARE cachyos bootstrap VM
         # (NO cachyos-extras, unlike eval-cachyos-gpu-vm). The ov layer's localpkg:
         # builds overthink-git from the superproject pkg/arch via makepkg, reads its
         # .PKGINFO depends, finds cloudflared-bin + gvisor-tap-vsock are FOREIGN (no
         # sync repo provides them), builds that closure via the `aur` builder, then
         # pacman -U's the whole closure onto the guest. eval-cachyos-gpu-vm pulls
-        # cachyos-extras BEFORE ov-full, so those deps are pre-present and pacman -U
+        # cachyos-extras BEFORE ov, so those deps are pre-present and pacman -U
         # succeeds by topo luck — it does NOT exercise the closure resolution. Here
         # the deps are ABSENT, so `pacman -U overthink-git` can ONLY succeed if
         # localpkg built + installed the closure. The check below FAILS without #43.
@@ -156,12 +156,12 @@ eval:
             - '@github.com/overthinkos/overthink/candy/fonts-extended:v2026.155.2234'
             - '@github.com/overthinkos/overthink/candy/desktop-media:v2026.155.2234'
             - '@github.com/overthinkos/overthink/candy/cachyos-extras:v2026.155.2234'
-            # ov-full (→ ov layer) exercises the ov-layer-on-VM-deploy path: on
+            # ov (→ ov layer) exercises the ov-layer-on-VM-deploy path: on
             # this Arch/CachyOS guest the ov layer's localpkg: builds overthink-git
             # from the repo's pkg/arch PKGBUILD on the host (makepkg) + pacman -U's
             # it into the guest at /usr/bin/ov — proving the proper-package install
             # (not the stale curl-a-binary fallback). Matches the operator
-            # cachyos-gpu workstation, which lists ov-full. Placed before
+            # cachyos-gpu workstation, which lists ov. Placed before
             # nvidia-driver so nvidia-driver's reboot: still trails the whole stack.
             - '@github.com/overthinkos/overthink/candy/ov:v2026.156.2017'
             - '@github.com/overthinkos/overthink/candy/nvidia:v2026.155.2234'
