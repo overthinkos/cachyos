@@ -1,4 +1,4 @@
-layer:
+candy:
     version: 2026.144.1443
     name: keepassxc-keyring
     description: |
@@ -20,9 +20,9 @@ layer:
     # keepassxc, gnupg, direnv stay in main (shared) → pulled by @github ref so
     # this locally-vendored layer's deps still resolve in this repo's namespace.
     require:
-        - '@github.com/overthinkos/overthink/layers/keepassxc:v2026.141.1600'
-        - '@github.com/overthinkos/overthink/layers/gnupg:v2026.141.1600'
-        - '@github.com/overthinkos/overthink/layers/direnv:v2026.141.1600'
+        - '@github.com/overthinkos/overthink/candy/keepassxc:v2026.141.1600'
+        - '@github.com/overthinkos/overthink/candy/gnupg:v2026.141.1600'
+        - '@github.com/overthinkos/overthink/candy/direnv:v2026.141.1600'
     distro:
         arch:
             package:

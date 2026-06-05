@@ -2,8 +2,8 @@
 #  overthink.yml's `includes:` list. The schema kind discriminator is
 #  `kind: image` for kind-keyed entries; root-shape map is `image:` (this file).
 #  2026-05 kind-files cutover.
-version: 2026.155.1801
-image:
+version: 2026.156.557
+box:
     cachyos:
         version: 2026.152.2025
         # Canonical CachyOS base: the upstream-published OCI image (cachyos-v3 —
@@ -61,8 +61,8 @@ image:
             - arch
         build:
             - pac
-        layer:
-            - '@github.com/overthinkos/overthink/layers/pacstrap-builder:v2026.155.2234'
+        candy:
+            - '@github.com/overthinkos/overthink/candy/pacstrap-builder:v2026.155.2234'
         eval:
             - id: cpb-pacstrap-binary
               file: /usr/sbin/pacstrap
@@ -99,10 +99,10 @@ image:
         base: cachyos
         platform:
             - linux/amd64
-        layer:
-            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/nvidia:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/cuda:v2026.155.2234'
+        candy:
+            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/nvidia:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/cuda:v2026.155.2234'
     cuda-eval:
         # GPU compute-smoke image for the VFIO-passthrough eval: cachyos.nvidia
         # (driver libs + nvidia-container-toolkit + CUDA) plus the locally-vendored
@@ -112,59 +112,59 @@ image:
         base: nvidia
         platform:
             - linux/amd64
-        layer:
+        candy:
             - cuda-smoke
     python-ml:
         base: nvidia
         platform:
             - linux/amd64
-        layer:
-            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/python-ml:v2026.155.2234'
+        candy:
+            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/python-ml:v2026.155.2234'
     jupyter-ml:
         base: nvidia
         platform:
             - linux/amd64
-        layer:
-            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/jupyter-ml:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/notebook-templates:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/dbus:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/ov:v2026.155.2234'
+        candy:
+            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/jupyter-ml:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/notebook-templates:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/dbus:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/ov:v2026.155.2234'
         port:
             - 8888:8888
     ollama:
         base: nvidia
         platform:
             - linux/amd64
-        layer:
-            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/ollama:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/dbus:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/ov:v2026.155.2234'
+        candy:
+            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/ollama:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/dbus:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/ov:v2026.155.2234'
         port:
             - 11434:11434
     comfyui:
         base: nvidia
         platform:
             - linux/amd64
-        layer:
-            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/comfyui:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/dbus:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/ov:v2026.155.2234'
+        candy:
+            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/comfyui:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/dbus:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/ov:v2026.155.2234'
         port:
             - 8188:8188
     unsloth-studio:
         base: nvidia
         platform:
             - linux/amd64
-        layer:
-            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/unsloth-studio:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/notebook-finetuning:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/dbus:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/ov:v2026.155.2234'
+        candy:
+            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/unsloth-studio:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/notebook-finetuning:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/dbus:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/ov:v2026.155.2234'
         port:
             - 8888:8888
             - 8000:8000
@@ -178,18 +178,18 @@ image:
             - aur
         platform:
             - linux/amd64
-        layer:
-            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/nodejs:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/python-ml:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/supervisord:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/postgresql:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/vectorchord:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/redis:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/immich:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/immich-ml:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/dbus:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/ov:v2026.155.2234'
+        candy:
+            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/nodejs:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/python-ml:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/supervisord:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/postgresql:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/vectorchord:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/redis:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/immich:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/immich-ml:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/dbus:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/ov:v2026.155.2234'
         port:
             - 2283:2283
     selkies-kde:
@@ -205,11 +205,11 @@ image:
             - aur
         platform:
             - linux/amd64
-        layer:
-            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/selkies-kde-desktop:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/dbus:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/ov:v2026.155.2234'
+        candy:
+            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/selkies-kde-desktop:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/dbus:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/ov:v2026.155.2234'
         port:
             - 3000:3000
             - 9222:9222
@@ -229,11 +229,11 @@ image:
             pixi: ov.cuda-arch-builder
         platform:
             - linux/amd64
-        layer:
-            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/selkies-desktop:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/dbus:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/ov:v2026.155.2234'
+        candy:
+            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/selkies-desktop:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/dbus:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/ov:v2026.155.2234'
         port:
             - 3000:3000
             - 9222:9222
@@ -263,11 +263,11 @@ image:
             pixi: ov.cuda-arch-builder
         platform:
             - linux/amd64
-        layer:
-            - '@github.com/overthinkos/overthink/layers/agent-forwarding:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/selkies-kde-desktop:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/dbus:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/layers/ov:v2026.155.2234'
+        candy:
+            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/selkies-kde-desktop:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/dbus:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/ov:v2026.155.2234'
         port:
             - 3000:3000
             - 9222:9222
