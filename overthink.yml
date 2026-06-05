@@ -20,7 +20,7 @@
 #  Directly buildable: `ov image build cachyos` (from the parent repo:
 #  `ov -C image/cachyos image build cachyos`; anywhere:
 #  `ov --repo overthinkos/cachyos image build cachyos`).
-version: 2026.156.1041
+version: 2026.156.1531
 defaults:
     platform:
         - linux/amd64
@@ -71,7 +71,7 @@ eval:
         # the deps are ABSENT, so `pacman -U overthink-git` can ONLY succeed if
         # localpkg built + installed the closure. The check below FAILS without #43.
         add_candy:
-            - '@github.com/overthinkos/overthink/candy/ov-full:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/ov:v2026.156.2017'
         install_opts:
             allow_repo_changes: true
             allow_root_tasks: true
@@ -163,7 +163,7 @@ eval:
             # (not the stale curl-a-binary fallback). Matches the operator
             # cachyos-gpu workstation, which lists ov-full. Placed before
             # nvidia-driver so nvidia-driver's reboot: still trails the whole stack.
-            - '@github.com/overthinkos/overthink/candy/ov-full:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/ov:v2026.156.2017'
             - '@github.com/overthinkos/overthink/candy/nvidia:v2026.155.2234'
             - nvidia-driver
         install_opts:
@@ -594,7 +594,7 @@ deploy:
             - ghostty
             - '@github.com/overthinkos/overthink/candy/chrome:v2026.155.2234'
             - '@github.com/overthinkos/overthink/candy/nvidia:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/candy/ov-full:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/ov:v2026.156.2017'
             # Full KDE Plasma desktop synced to the host + GPU display/stream
             # stack. kde-desktop pulls the whole Plasma/KF6/Qt stack via
             # plasma-desktop (deps) + SDDM + graphical.target; cachyos-kde-settings
@@ -685,7 +685,7 @@ local:
             - ghostty
             - '@github.com/overthinkos/overthink/candy/chrome:v2026.155.2234'
             - '@github.com/overthinkos/overthink/candy/nvidia:v2026.155.2234'
-            - '@github.com/overthinkos/overthink/candy/ov-full:v2026.155.2234'
+            - '@github.com/overthinkos/overthink/candy/ov:v2026.156.2017'
         install_opts:
             with_service: true
             allow_repo_changes: true
