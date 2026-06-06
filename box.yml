@@ -34,7 +34,7 @@ box:
             - npm
             - cargo
             - aur
-        # Build-scope eval probes — `ov eval image cachyos`. Inherited by
+        # Build-scope eval probes — `ov eval box cachyos`. Inherited by
         # downstream consumers (main's versa) via the base chain.
         eval:
             - id: cachyos-os-release

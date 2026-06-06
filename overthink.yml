@@ -4,7 +4,7 @@
 #  SINGLE-FILE config (2026-05 import-namespace cutover): every local entity
 #  (the cachyos base + pacstrap family, the cachyos VM, the disposable eval bed,
 #  the ov-cachyos operator profile + its kind:local template) is inlined here.
-#  This repo VENDORS its cachyos-exclusive layers locally under layers/ (resolved
+#  This repo VENDORS its cachyos-exclusive layers locally under candy/ (resolved
 #  via the discover: block); every shared layer is an `@github.com/...` ref, and
 #  the shared build-config + the main repo's base entities arrive via `import:`.
 #
@@ -17,7 +17,7 @@
 #      `cachyos` namespace (versa is `base: cachyos.cachyos`) — a mutual import,
 #      cycle-broken at load.
 #
-#  Directly buildable: `ov image build cachyos` (from the parent repo:
+#  Directly buildable: `ov box build cachyos` (from the parent repo:
 #  `ov -C image/cachyos image build cachyos`; anywhere:
 #  `ov --repo overthinkos/cachyos image build cachyos`).
 version: 2026.157.311
@@ -45,7 +45,7 @@ import:
 discover:
     # Layers vendored locally by THIS repo — the cachyos-exclusive layers
     # (ghostty, keepassxc-keyring, wheel-nopasswd) relocated out of main's shared
-    # layers/. Bare layer names resolve here; every shared layer (yay, chrome,
+    # candy/. Bare layer names resolve here; every shared layer (yay, chrome,
     # gnupg, keepassxc, nvidia, …) still arrives by @github ref into main.
     - path: candy
       recursive: true
@@ -374,7 +374,7 @@ eval:
     # Deploy- and build-scope eval coverage is inherited from the composed
     # layers (the "lowest level" principle) — the beds carry no eval: of their
     # own. The GPU base (nvidia) and python-ml carry no service, so they are
-    # proved by `ov eval image` alone and need no pod bed.
+    # proved by `ov eval box` alone and need no pod bed.
     eval-cachyos-jupyter-ml-pod:
         target: pod
         box: jupyter-ml
@@ -561,7 +561,7 @@ deploy:
     # cross-host pixi build of pixelflux links the real NVENC encoder.
     #
     # The @github layer pins are aligned to the newest main tag by
-    # `ov image reconcile` (the new main-repo desktop/stream layers — kde-desktop,
+    # `ov box reconcile` (the new main-repo desktop/stream layers — kde-desktop,
     # fonts-extended, desktop-media, cachyos-extras, kde-selkies — resolve only at
     # the post-landing tag).
     cachyos-gpu:
@@ -655,7 +655,7 @@ local:
     #  ov-cachyos — the operator CachyOS workstation profile (kind:local
     #  template). Shared layers are pulled by GITHUB REFERENCE from the main
     #  overthink repo; the cachyos-exclusive layers (ghostty, keepassxc-keyring,
-    #  wheel-nopasswd) are vendored locally under layers/. The builder_image is a
+    #  wheel-nopasswd) are vendored locally under candy/. The builder_image is a
     #  published OCI ref (arch-builder), not a layer.
     ov-cachyos:
         candy:

@@ -18,8 +18,8 @@ of the main repo.
 This repo contains **no layers and no build-config of its own**. Everything is
 pulled from `github.com/overthinkos/overthink` by **github reference**:
 
-- every layer in `image.yml` / `deploy.yml` / `local.yml` is an
-  `@github.com/overthinkos/overthink/layers/<name>:<tag>` ref;
+- every layer in `box.yml` / `deploy.yml` / `local.yml` is an
+  `@github.com/overthinkos/overthink/candy/<name>:<tag>` ref;
 - the shared build-config (`build.yml` — distro/builder/init, including the
   `cachyos` distro definition) and the `arch` base + `arch-builder` pair
   (`arch-base.yml`) are remote `include:`s in `overthink.yml`.
@@ -53,8 +53,8 @@ pulls a single file (main pulls `cachyos-base.yml`; this repo pulls
 
 ```bash
 # Inside the submodule (the build verb defaults to overthink.yml):
-ov image build cachyos
-ov image build cachyos-pacstrap-builder
+ov box build cachyos
+ov box build cachyos-pacstrap-builder
 
 # From the parent overthink repo:
 ov -C image/cachyos image build cachyos
