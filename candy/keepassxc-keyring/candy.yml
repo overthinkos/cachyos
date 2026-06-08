@@ -20,9 +20,9 @@ candy:
     # keepassxc, gnupg, direnv stay in main (shared) → pulled by @github ref so
     # this locally-vendored layer's deps still resolve in this repo's namespace.
     require:
-        - '@github.com/overthinkos/overthink/candy/keepassxc:v2026.159.1101'
-        - '@github.com/overthinkos/overthink/candy/gnupg:v2026.159.1101'
-        - '@github.com/overthinkos/overthink/candy/direnv:v2026.159.1101'
+        - '@github.com/overthinkos/overthink/candy/keepassxc:v2026.159.1458'
+        - '@github.com/overthinkos/overthink/candy/gnupg:v2026.159.1458'
+        - '@github.com/overthinkos/overthink/candy/direnv:v2026.159.1458'
     distro:
         arch:
             package:

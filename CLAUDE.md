@@ -1,7 +1,7 @@
 # image/cachyos — signpost (not the rule-set)
 
 This submodule is the **CachyOS** base image family (x86_64_v3-optimized Arch
-derivative): an `opencharly.yml` (plus per-kind sibling files) that imports the main repo under the `charly`
+derivative): a `charly.yml` (plus per-kind sibling files) that imports the main repo under the `charly`
 namespace and `build.yml` flat. Main's `versa` image consumes cachyos via the
 `cachyos` import namespace (the main↔cachyos mutual import is cycle-broken at
 load).
