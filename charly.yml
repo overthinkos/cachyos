@@ -60,8 +60,8 @@ eval:
         vm: cachyos-vm
         disposable: true
         lifecycle: dev
-        # pac localpkg AUTO-RESOLVE witness. ov on a BARE cachyos bootstrap VM
-        # (NO cachyos-extras). The ov layer's localpkg: builds opencharly-git from
+        # pac localpkg AUTO-RESOLVE witness. charly on a BARE cachyos bootstrap VM
+        # (NO cachyos-extras). The charly layer's localpkg: builds opencharly-git from
         # the superproject pkg/arch via makepkg, then `pacman -U`'s it onto the
         # guest — and `pacman -U` AUTO-RESOLVES the package's MANDATORY repo deps
         # (podman, libvirt, tailscale, gocryptfs, …) from the cachyos/arch repos.
@@ -159,8 +159,8 @@ eval:
             - '@github.com/overthinkos/overthink/candy/fonts-extended:v2026.159.1458'
             - '@github.com/overthinkos/overthink/candy/desktop-media:v2026.159.1458'
             - '@github.com/overthinkos/overthink/candy/cachyos-extras:v2026.159.1458'
-            # ov (→ ov layer) exercises the ov-layer-on-VM-deploy path: on
-            # this Arch/CachyOS guest the ov layer's localpkg: builds opencharly-git
+            # charly (→ charly layer) exercises the ov-layer-on-VM-deploy path: on
+            # this Arch/CachyOS guest the charly layer's localpkg: builds opencharly-git
             # from the repo's pkg/arch PKGBUILD on the host (makepkg) + pacman -U's
             # it into the guest at /usr/bin/charly — proving the proper-package install
             # (not the stale curl-a-binary fallback). Matches the operator

@@ -152,7 +152,7 @@ candy:
                 cat > "$dst" <<EOF
             [Desktop Entry]
             Type=Application
-            Name=${name} (disabled by ov keepassxc-keyring)
+            Name=${name} (disabled by charly keepassxc-keyring)
             Exec=/bin/true
             Hidden=true
             NoDisplay=true
@@ -211,7 +211,7 @@ candy:
           mode: "0600"
           user: "${USER}"
           content: |
-            # Managed by ov keepassxc-keyring layer.
+            # Managed by charly keepassxc-keyring layer.
             pinentry-program /usr/bin/pinentry-qt
             default-cache-ttl 28800
             max-cache-ttl 43200
@@ -245,7 +245,7 @@ candy:
           mode: "0644"
           user: "${USER}"
           content: |
-            # Managed by ov keepassxc-keyring layer.
+            # Managed by charly keepassxc-keyring layer.
             # Point session SSH_AUTH_SOCK at the systemd-user ssh-agent socket.
             SSH_AUTH_SOCK=${XDG_RUNTIME_DIR}/ssh-agent.socket
         # Cleanup: an earlier version of this layer wrote shell-rc hooks
@@ -303,7 +303,7 @@ candy:
           user: "${USER}"
           content: |
             [Unit]
-            Description=KeePassXC Password Manager (managed by ov keepassxc-keyring)
+            Description=KeePassXC Password Manager (managed by charly keepassxc-keyring)
             After=graphical-session.target
             PartOf=graphical-session.target
 
