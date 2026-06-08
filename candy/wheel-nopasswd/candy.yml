@@ -6,7 +6,7 @@ candy:
         wheel group exists, adds the uid-1000 account to wheel, and writes
         /etc/sudoers.d/20-nopasswd-wheel with `%wheel ALL=(ALL:ALL) NOPASSWD: ALL`
         at mode 0440. Mirrors the convention used inside AUR-builder containers
-        by ov/deploy_target_local.go renderAurScript.
+        by charly/deploy_target_local.go renderAurScript.
     package:
         - sudo
     task:
@@ -17,7 +17,7 @@ candy:
           user: root
         # Wheel group + membership. Shell logic required: idempotent group
         # creation (the `|| groupadd` form mirrors renderAurScript at
-        # ov/deploy_target_local.go:1435), dynamic uid-1000 lookup via
+        # charly/deploy_target_local.go:1435), dynamic uid-1000 lookup via
         # `getent passwd 1000` (matches the sshd layer pattern — works for
         # both create-mode `user` and adopt-mode `ubuntu`), and a defensive
         # verify step that fails loudly rather than silently leaving the

@@ -20,9 +20,9 @@ candy:
     # keepassxc, gnupg, direnv stay in main (shared) → pulled by @github ref so
     # this locally-vendored layer's deps still resolve in this repo's namespace.
     require:
-        - '@github.com/overthinkos/overthink/candy/keepassxc:v2026.157.0650'
-        - '@github.com/overthinkos/overthink/candy/gnupg:v2026.157.0650'
-        - '@github.com/overthinkos/overthink/candy/direnv:v2026.157.0650'
+        - '@github.com/overthinkos/overthink/candy/keepassxc:v2026.159.1101'
+        - '@github.com/overthinkos/overthink/candy/gnupg:v2026.159.1101'
+        - '@github.com/overthinkos/overthink/candy/direnv:v2026.159.1101'
     distro:
         arch:
             package:
@@ -201,7 +201,7 @@ candy:
         # Direnv shell hooks now live in the direnv layer's `shell:` block
         # (post-2026-05 cutover). keepassxc-keyring depends on direnv via
         # `requires:`, so the hook lands automatically.
-        # gpg-agent.conf: pinentry-qt + 8h cache. Mirrors what `ov secrets gpg
+        # gpg-agent.conf: pinentry-qt + 8h cache. Mirrors what `charly secrets gpg
         # setup` step 2 writes. Independent of whether the user has a GPG key
         # yet — once they import or generate one, this config is in place.
         - mkdir: "${HOME}/.gnupg"
@@ -256,8 +256,8 @@ candy:
         - cmd: |
             set -eu
             for rc in "${HOME}/.bashrc" "${HOME}/.zshrc"; do
-              if [ -f "$rc" ] && grep -qF '# overthink:begin ssh-auth-sock' "$rc"; then
-                sed -i '/# overthink:begin ssh-auth-sock/,/# overthink:end ssh-auth-sock/d' "$rc"
+              if [ -f "$rc" ] && grep -qF '# opencharly:begin ssh-auth-sock' "$rc"; then
+                sed -i '/# opencharly:begin ssh-auth-sock/,/# opencharly:end ssh-auth-sock/d' "$rc"
               fi
             done
             rm -f "${HOME}/.config/fish/conf.d/ssh-auth-sock.fish"
@@ -277,15 +277,15 @@ candy:
         - cmd: |
             set -eu
             for rc in "${HOME}/.bashrc" "${HOME}/.zshrc"; do
-              if [ -f "$rc" ] && grep -qF '# overthink:begin direnv-hook' "$rc"; then
-                sed -i '/# overthink:begin direnv-hook/,/# overthink:end direnv-hook/d' "$rc"
+              if [ -f "$rc" ] && grep -qF '# opencharly:begin direnv-hook' "$rc"; then
+                sed -i '/# opencharly:begin direnv-hook/,/# opencharly:end direnv-hook/d' "$rc"
               fi
             done
             # Legacy fish drop-in path (no ov- prefix) — DELETED in the
             # cutover; the direnv layer's shell: schema writes to
             # ~/.config/fish/conf.d/ov-direnv.fish instead.
             legacy_fish="${HOME}/.config/fish/conf.d/direnv.fish"
-            if [ -f "$legacy_fish" ] && grep -qF '# overthink:begin direnv-hook' "$legacy_fish"; then
+            if [ -f "$legacy_fish" ] && grep -qF '# opencharly:begin direnv-hook' "$legacy_fish"; then
               rm -f "$legacy_fish"
             fi
           user: "${USER}"

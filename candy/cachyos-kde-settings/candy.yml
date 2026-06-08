@@ -62,7 +62,7 @@ candy:
         # XDG autostart entry (KDE phase 2) that adds a bottom panel to any screen
         # lacking one — on every login and after a monitor hotplug.
         - copy: ov-kde-panels-all-screens.sh
-          to: /usr/local/bin/ov-kde-panels-all-screens.sh
+          to: /usr/local/bin/charly-kde-panels-all-screens.sh
           mode: "0755"
           user: root
         - copy: ov-kde-panels-all-screens.desktop
@@ -104,7 +104,7 @@ candy:
         - id: kde-panel-autostart-installed
           scope: deploy
           command: |
-            test -x /usr/local/bin/ov-kde-panels-all-screens.sh || { echo "FAIL: panel ensure-script missing or not executable"; exit 1; }
+            test -x /usr/local/bin/charly-kde-panels-all-screens.sh || { echo "FAIL: panel ensure-script missing or not executable"; exit 1; }
             test -f /etc/xdg/autostart/ov-kde-panels-all-screens.desktop || { echo "FAIL: panel autostart .desktop missing"; exit 1; }
             echo PANEL-AUTOSTART-INSTALLED
           stdout:
@@ -117,7 +117,7 @@ candy:
             QDBUS=qdbus6; command -v qdbus6 >/dev/null 2>&1 || QDBUS=qdbus
             # Drive the deployed ensure-script (idempotent), then assert that no
             # screen is left without a Plasma panel.
-            [ -x /usr/local/bin/ov-kde-panels-all-screens.sh ] && /usr/local/bin/ov-kde-panels-all-screens.sh >/dev/null 2>&1
+            [ -x /usr/local/bin/charly-kde-panels-all-screens.sh ] && /usr/local/bin/charly-kde-panels-all-screens.sh >/dev/null 2>&1
             out=$("$QDBUS" org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript 'var have={}; panels().forEach(function(p){have[p.screen]=true;}); var missing=[]; for(var s=0;s<screenCount;s++){ if(!have[s]) missing.push(s); } print("screens="+screenCount+" panels="+panels().length+" missing=["+missing.join(",")+"]");' 2>/dev/null)
             echo "$out"
             case "$out" in

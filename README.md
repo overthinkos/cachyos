@@ -1,6 +1,6 @@
 # overthinkos/cachyos
 
-The **CachyOS image family** for [Overthink](https://github.com/overthinkos/overthink),
+The **CachyOS image family** for [OpenCharly](https://github.com/overthinkos/overthink),
 split into its own repository and mounted as a git submodule at `image/cachyos`
 of the main repo.
 
@@ -10,8 +10,8 @@ of the main repo.
 |---|---|
 | `image:` | `cachyos` (base, in `cachyos-base.yml`), `cachyos-pacstrap-builder`, `cachyos-pacstrap` |
 | `vm:` | `cachyos-vm` (bootstrap-from-scratch via pacstrap) |
-| `deploy:` | `eval-cachyos-vm`, `ov-cachyos` (operator workstation profile) |
-| `local:` | `ov-cachyos` (kind:local template — the workstation layer-stack) |
+| `deploy:` | `eval-cachyos-vm`, `charly-cachyos` (operator workstation profile) |
+| `local:` | `charly-cachyos` (kind:local template — the workstation layer-stack) |
 
 ## Composition by reference — nothing is vendored
 
@@ -22,7 +22,7 @@ pulled from `github.com/overthinkos/overthink` by **github reference**:
   `@github.com/overthinkos/overthink/candy/<name>:<tag>` ref;
 - the shared build-config (`build.yml` — distro/builder/init, including the
   `cachyos` distro definition) and the `arch` base + `arch-builder` pair
-  (`arch-base.yml`) are remote `include:`s in `overthink.yml`.
+  (`arch-base.yml`) are remote `include:`s in `opencharly.yml`.
 
 CachyOS is Arch-based, so `cachyos-pacstrap-builder` is `base: arch` and resolves
 the `arch` base from the main repo's `arch-base.yml`. All references pin to a
@@ -32,11 +32,11 @@ definition of every layer — no duplication.
 ## main ↔ cachyos coupling
 
 The `cachyos` **base** image (`cachyos-base.yml`) is owned by THIS repo, but the
-main repo's `versa` image is `base: cachyos`. So main's `overthink.yml`
+main repo's `versa` image is `base: cachyos`. So main's `opencharly.yml`
 remote-includes `cachyos-base.yml` from here:
 
 ```yaml
-# main overthink.yml
+# main opencharly.yml
 include:
   - '@github.com/overthinkos/cachyos/cachyos-base.yml:<tag>'
 ```
@@ -45,44 +45,44 @@ This is a deliberate **main → cachyos** dependency (building `versa` on main
 needs this repo reachable). It is NOT a resolution cycle: each side's `include:`
 pulls a single file (main pulls `cachyos-base.yml`; this repo pulls
 `build.yml` / `arch-base.yml`), and no included file re-enters the other repo's
-`overthink.yml`. The image DAG is acyclic
+`opencharly.yml`. The image DAG is acyclic
 (`versa → cachyos → docker.io/cachyos-v3`;
 `cachyos-pacstrap-builder → arch → docker.io/archlinux`).
 
 ## Build
 
 ```bash
-# Inside the submodule (the build verb defaults to overthink.yml):
-ov box build cachyos
-ov box build cachyos-pacstrap-builder
+# Inside the submodule (the build verb defaults to opencharly.yml):
+charly box build cachyos
+charly box build cachyos-pacstrap-builder
 
-# From the parent overthink repo:
-ov -C image/cachyos image build cachyos
+# From the parent opencharly repo:
+charly -C image/cachyos image build cachyos
 
 # Standalone, against the published repo:
 ov --repo overthinkos/cachyos image build cachyos
 ```
 
-The first build resolves the upstream github references into `~/.cache/ov/repos/`
+The first build resolves the upstream github references into `~/.cache/charly/repos/`
 and materializes the referenced layers under `.build/_layers/`.
 
-## Operator workstation profile (`ov-cachyos`)
+## Operator workstation profile (`charly-cachyos`)
 
 Apply the kitchen-sink CachyOS dev profile to the current host:
 
 ```bash
-ov -C image/cachyos update ov-cachyos
+charly -C image/cachyos update charly-cachyos
 # or, anywhere:
-ov --repo overthinkos/cachyos update ov-cachyos
+ov --repo overthinkos/cachyos update charly-cachyos
 ```
 
 (Before the 2026-05 migration this lived in the main repo and ran as
-`ov update ov-cachyos` from the repo root.)
+`charly update charly-cachyos` from the repo root.)
 
 ## pacstrap-from-scratch (`cachyos-pacstrap` / `cachyos-vm`)
 
-These build end-to-end as of **ov 2026.141.1850**. The shared pacstrap
-pacman.conf renderer (`renderPacstrapExtraConf` in `ov/build.go`, used by both
+These build end-to-end as of **charly 2026.141.1850**. The shared pacstrap
+pacman.conf renderer (`renderPacstrapExtraConf` in `charly/build.go`, used by both
 the image and VM bootstrap paths) now:
 
 1. emits an `[options] Architecture` directive derived from the cachyos-v3
@@ -96,14 +96,14 @@ Verified live: `cachyos-pacstrap` produces a rootfs with `linux-cachyos`
 (`%ARCH% = x86_64_v3`) installed, and `cachyos-vm` produces a bootable
 `disk.qcow2`. The Docker-Hub-based `cachyos` base (`cachyos-base.yml`) is still
 the faster default (no privileged build); the pacstrap variants are for offline
-/ air-gapped builds. (A newer `ov` than the published release is required, since
+/ air-gapped builds. (A newer `charly` than the published release is required, since
 the renderer fix lives in the binary.)
 
 ## Requirements
 
 A build of any image here fetches from the upstream repo, so it needs network
-access and an `ov` recent enough to understand the config's schema version
-(`ov` hard-fails with an "update ov" message if the config is newer than the
+access and an `charly` recent enough to understand the config's schema version
+(`charly` hard-fails with an "update ov" message if the config is newer than the
 binary supports).
 
 ---

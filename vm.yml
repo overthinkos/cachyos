@@ -1,8 +1,8 @@
-#  Per-kind file for vm entries. Sibling of overthink.yml — included via
-#  overthink.yml's `includes:` list. The schema kind discriminator is
+#  Per-kind file for vm entries. Sibling of opencharly.yml — included via
+#  opencharly.yml's `includes:` list. The schema kind discriminator is
 #  `kind: vm` for kind-keyed entries; root-shape map is `vm:` (this file).
 #  2026-05 kind-files cutover.
-version: 2026.157.311
+version: 2026.159.3
 vm:
     cachyos-vm:
         # Bootstrap-from-scratch via cachyos-pacstrap-builder (local). The cachyos
@@ -61,26 +61,26 @@ vm:
         # MANDATORY for a modern GPU: the RTX 4080's 16 GB VRAM sits behind a
         # 64-bit large BAR that SeaBIOS cannot map, so under BIOS the guest nvidia
         # driver fails GSP boot ("bad register read 0xbadf…"). The Arch cloud image
-        # can't boot under UEFI (stale BOOTX64.EFI; see /ov-vm:arch), so a fresh
+        # can't boot under UEFI (stale BOOTX64.EFI; see /charly-vm:arch), so a fresh
         # pacstrap install with its own EFI bootloader is used — it boots the
         # passed-through GPU cleanly under OVMF. pacstrap needs the rootful builder
-        # (`ov settings set engine.rootful sudo`).
+        # (`charly settings set engine.rootful sudo`).
         #
         # PORTABLE — this committed entity carries NO host-specific devices: no
         # `libvirt.devices.hostdevs:` (a PCI bus/slot address is host-specific) and
         # no host-path `filesystems:` (a virtiofs share rooted at an absolute host
         # path). Both live in THIS host's instance overlay
-        # (~/.local/share/ov/vm/ov-cachyos-gpu-vm/instance.yml), merged at
-        # `ov vm create` by VmInstanceOverride.ApplyToVmSpec — so the bed attaches
+        # (~/.local/share/charly/vm/charly-cachyos-gpu-vm/instance.yml), merged at
+        # `charly vm create` by VmInstanceOverride.ApplyToVmSpec — so the bed attaches
         # this host's real RTX 4080 (real GPU passthrough + NVENC) without baking a
         # PCI address into version control. Generate the hostdev block with
-        # `ov vm gpu list`. The bed arbitrates the card exclusively
+        # `charly vm gpu list`. The bed arbitrates the card exclusively
         # (requires_exclusive: [nvidia-gpu]); a genuinely card-less host simply
         # omits the overlay and the GPU-gated checks report N/A.
         #
         # backend: libvirt is mandatory — <hostdev> PCI passthrough only renders
         # on the libvirt backend. Rootless passthrough also needs a raised memlock
-        # limit + /dev/vfio access — see `ov vm gpu status`.
+        # limit + /dev/vfio access — see `charly vm gpu status`.
         source:
             kind: bootstrap
             builder: pacstrap
@@ -148,7 +148,7 @@ vm:
                 access: shared
             devices:
                 # SPICE virtual monitor: the headless display the GPU-passthrough
-                # KDE session renders to, so `ov eval spice screenshot` captures the
+                # KDE session renders to, so `charly eval spice screenshot` captures the
                 # live desktop (the bed asserts a non-uniform frame = it rendered).
                 # The virtio-gpu head is the seat-0 primary scanout — the passed-
                 # through NVIDIA GPU has no connected output.
@@ -171,8 +171,8 @@ vm:
                       name: com.redhat.spice.0
                 # NO host-path `filesystems:` and NO `hostdevs:` committed here —
                 # both are host-specific and live in THIS host's instance overlay
-                # (~/.local/share/ov/vm/ov-cachyos-gpu-vm/instance.yml), merged at
-                # `ov vm create` by VmInstanceOverride.ApplyToVmSpec:
+                # (~/.local/share/charly/vm/charly-cachyos-gpu-vm/instance.yml), merged at
+                # `charly vm create` by VmInstanceOverride.ApplyToVmSpec:
                 #   - the GPU <hostdev> (RTX 4080, IOMMU group = 01:00.0 + 01:00.1);
                 #   - a virtiofs `workspace` share rooted at an operator-provisioned
                 #     mode-0700 scratch dir (NOT world-writable /tmp) so the
@@ -181,24 +181,24 @@ vm:
                 #     → the host operator (libvirt's default maps guest-ROOT →
                 #     operator, leaving it root-owned + unreadable to the guest user).
     cachyos-gpu:
-        # PERSISTENT operator GPU workstation VM — the full ov-cachyos dev stack
+        # PERSISTENT operator GPU workstation VM — the full charly-cachyos dev stack
         # PLUS a complete KDE Plasma desktop synced to the host, inside a
         # GPU-passthrough VM that auto-starts with the host. The VM analog of the
-        # `ov-cachyos` local workstation profile, evolved into a full graphical
+        # `charly-cachyos` local workstation profile, evolved into a full graphical
         # `<distro>-coder` workstation; provisioned once via the `cachyos-gpu`
         # kind:deploy (full layer stack over SSH, persisted on the guest disk),
-        # then it just boots. Supersedes the earlier headless ov-cachyos-gpu.
+        # then it just boots. Supersedes the earlier headless charly-cachyos-gpu.
         #
         # Two ways to use the SAME GPU: a physical monitor on the RTX 4080
         # (SDDM/Plasma on DRM), and a remote KDE-selkies WebRTC browser stream
         # (port 3000, NVENC) of a nested Plasma.
         #
-        # PORTABLE (like local.ov-cachyos): this committed entity carries NO
+        # PORTABLE (like local.charly-cachyos): this committed entity carries NO
         # host-specific config — the NVIDIA PCI <hostdev> and the operator's
         # /home/<operator> share both live in THIS host's instance overlay
-        # (~/.local/share/ov/vm/ov-cachyos-gpu/instance.yml), merged at
-        # `ov vm create` by VmInstanceOverride.ApplyToVmSpec. Generate the hostdev
-        # block with `ov vm gpu list`. NOT a disposable test bed — there is no
+        # (~/.local/share/charly/vm/charly-cachyos-gpu/instance.yml), merged at
+        # `charly vm create` by VmInstanceOverride.ApplyToVmSpec. Generate the hostdev
+        # block with `charly vm gpu list`. NOT a disposable test bed — there is no
         # disposable deploy for it; the full machinery is R10-proven on the
         # disposable eval-cachyos-gpu-vm bed instead.
         #
@@ -282,8 +282,8 @@ vm:
                       name: org.qemu.guest_agent.0
                 # NO host-path `filesystems:` and NO `hostdevs:` committed here —
                 # both are host-specific and live in THIS host's instance overlay
-                # (~/.local/share/ov/vm/ov-cachyos-gpu/instance.yml), merged at
-                # `ov vm create` by VmInstanceOverride.ApplyToVmSpec:
+                # (~/.local/share/charly/vm/charly-cachyos-gpu/instance.yml), merged at
+                # `charly vm create` by VmInstanceOverride.ApplyToVmSpec:
                 #   - the GPU <hostdev> (RTX 4080, IOMMU group = 01:00.0 + 01:00.1);
                 #   - the operator's home (/home/<operator>) shared into the guest at
                 #     /workspace via virtiofs passthrough (mounted by the
