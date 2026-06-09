@@ -69,14 +69,21 @@ vm:
         # PORTABLE — this committed entity carries NO host-specific devices: no
         # `libvirt.devices.hostdevs:` (a PCI bus/slot address is host-specific) and
         # no host-path `filesystems:` (a virtiofs share rooted at an absolute host
-        # path). Both live in THIS host's instance overlay
-        # (~/.local/share/charly/vm/charly-cachyos-gpu-vm/instance.yml), merged at
-        # `charly vm create` by VmInstanceOverride.ApplyToVmSpec — so the bed attaches
-        # this host's real RTX 4080 (real GPU passthrough + NVENC) without baking a
-        # PCI address into version control. Generate the hostdev block with
-        # `charly vm gpu list`. The bed arbitrates the card exclusively
-        # (requires_exclusive: [nvidia-gpu]); a genuinely card-less host simply
-        # omits the overlay and the GPU-gated checks report N/A.
+        # path). The GPU hostdev is AUTO-ALLOCATED: the bed declares
+        # `requires_exclusive: [nvidia-gpu]`, the main repo's build.yml maps that
+        # token to a `resource: {nvidia-gpu: {gpu: {vendor: "0x10de"}}}` selector, and
+        # `charly vm create` (autoAllocateExclusiveGPUs) detects the matching NVIDIA
+        # card, writes its whole-IOMMU-group `<hostdev>` block into THIS host's
+        # instance overlay (~/.local/share/charly/vm/charly-cachyos-gpu-vm/
+        # instance.yml), and injects it via VmInstanceOverride.ApplyToVmSpec — so the
+        # bed attaches this host's real RTX 4080 (real GPU passthrough + NVENC) with
+        # NO manual `charly vm gpu list` step and no PCI address in version control.
+        # An operator-authored hostdev (committed here or in instance.yml) ALWAYS
+        # wins — auto-allocation defers to it. If the resource is required but no
+        # matching card is present, `charly vm create` FAILS HARD (operator directive:
+        # auto-allocate or fail hard). The host-path `filesystems:` overlay (if any)
+        # is still operator-authored in instance.yml. See /charly-vm:vm "GPU
+        # passthrough", /charly-internals:disposable "resource-arbitration axis".
         #
         # backend: libvirt is mandatory — <hostdev> PCI passthrough only renders
         # on the libvirt backend. Rootless passthrough also needs a raised memlock
@@ -198,9 +205,14 @@ vm:
         # /home/<operator> share both live in THIS host's instance overlay
         # (~/.local/share/charly/vm/charly-cachyos-gpu/instance.yml), merged at
         # `charly vm create` by VmInstanceOverride.ApplyToVmSpec. Generate the hostdev
-        # block with `charly vm gpu list`. NOT a disposable test bed — there is no
-        # disposable deploy for it; the full machinery is R10-proven on the
-        # disposable eval-cachyos-gpu-vm bed instead.
+        # block with `charly vm gpu list`. (Unlike the disposable bed, this
+        # persistent workstation deploy declares no `requires_exclusive:` resource,
+        # so its hostdev is operator-authored here — auto-allocation
+        # (gpu_allocate.go) fires for a `requires_exclusive: [nvidia-gpu]` CLAIMANT
+        # like the eval-cachyos-gpu-vm bed; an operator-authored hostdev always
+        # wins regardless.) NOT a disposable test bed — there is no disposable
+        # deploy for it; the full machinery is R10-proven on the disposable
+        # eval-cachyos-gpu-vm bed instead.
         #
         # SUBSTRATE = CachyOS pacstrap under UEFI/OVMF (same rationale as
         # cachyos-gpu-vm: the RTX 4080's 64-bit large BAR needs UEFI). On this host
