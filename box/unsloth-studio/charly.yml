@@ -1,0 +1,13 @@
+box:
+    name: unsloth-studio
+    base: nvidia
+    platform:
+        - linux/amd64
+    candy:
+        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.160.1105'
+        - '@github.com/overthinkos/overthink/candy/unsloth-studio:v2026.160.1105'
+        - '@github.com/overthinkos/overthink/candy/notebook-finetuning:v2026.160.1105'
+        - '@github.com/overthinkos/overthink/candy/dbus:v2026.160.1105'
+    port:
+        - 8888:8888
+        - 8000:8000

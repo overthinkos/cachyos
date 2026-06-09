@@ -1,0 +1,11 @@
+box:
+    name: ollama
+    base: nvidia
+    platform:
+        - linux/amd64
+    candy:
+        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.160.1105'
+        - '@github.com/overthinkos/overthink/candy/ollama:v2026.160.1105'
+        - '@github.com/overthinkos/overthink/candy/dbus:v2026.160.1105'
+    port:
+        - 11434:11434

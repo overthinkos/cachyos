@@ -1,0 +1,49 @@
+box:
+    name: cachyos
+    version: 2026.152.2025
+    # Canonical CachyOS base: the upstream-published OCI image (cachyos-v3 —
+    # x86_64_v3-optimized). The pacstrap-from-scratch variant is preserved as
+    # `cachyos-pacstrap` for environments where pulling from Docker Hub isn't
+    # possible.
+    # Pinned by digest (NO floating tag) — Docker Hub publishes ONLY the
+    # rolling tag for cachyos-v3 (no named/dated tags exist), so a digest is
+    # the most precise coordinate. Refresh by repinning to a newer digest:
+    #   skopeo inspect --no-tags docker://docker.io/cachyos/cachyos-v3 | jq -r .Digest
+    base: docker.io/cachyos/cachyos-v3@sha256:c539558e38029fa2a3cddc62aeeefe2a9261e3fa2f3d5a64c43d22033f06e209
+    distro:
+        - cachyos
+        - arch
+    build:
+        - pac
+    # CachyOS is Arch-derived and has no builder of its own; route all four
+    # formats to charly.arch-builder (main's arch-builder, via the `charly` import
+    # namespace). Builder maps do NOT cross a namespace boundary, so a
+    # consumer of this base (e.g. main's versa) declares its own builder map.
+    builder:
+        aur: charly.arch-builder
+        cargo: charly.arch-builder
+        npm: charly.arch-builder
+        pixi: charly.arch-builder
+    produce:
+        - pixi
+        - npm
+        - cargo
+        - aur
+    # Build-scope eval probes — `charly eval box cachyos`. Inherited by
+    # downstream consumers (main's versa) via the base chain.
+    eval:
+        - id: cachyos-os-release
+          command: cat /etc/os-release
+          exit_status: 0
+          stdout:
+            - contains: "ID=cachyos"
+        - id: cachyos-pacman
+          command: pacman --version
+          exit_status: 0
+          stdout:
+            - contains: "Pacman v"
+        - id: cachyos-v3-repo-configured
+          command: pacman-conf --repo-list
+          exit_status: 0
+          stdout:
+            - contains: "cachyos-v3"
