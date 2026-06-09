@@ -20,7 +20,7 @@
 #  Directly buildable: `charly box build cachyos` (from the parent repo:
 #  `charly -C image/cachyos image build cachyos`; anywhere:
 #  `charly --repo overthinkos/cachyos image build cachyos`).
-version: 2026.159.3
+version: 2026.159.1912
 defaults:
     platform:
         - linux/amd64
@@ -33,11 +33,11 @@ defaults:
         max_mb: 128
 import:
     # Shared build-config vocabulary (distro/builder/init) — flat root import.
-    - '@github.com/overthinkos/overthink/build.yml:v2026.159.1458'
+    - '@github.com/overthinkos/overthink/build.yml:v2026.160.0856'
     # Main repo entities under the `charly` namespace — charly.arch (cachyos-pacstrap-
     # builder base) + charly.arch-builder (cachyos base builder). Mutual import with
     # main (main mounts this repo under `cachyos`); cycle-broken at load.
-    - charly: '@github.com/overthinkos/overthink:v2026.159.1458'
+    - charly: '@github.com/overthinkos/overthink:v2026.160.0856'
     - box.yml
     - vm.yml
     - pod.yml
@@ -71,7 +71,7 @@ eval:
         # optdepends, opt-in only. The check below FAILS if localpkg didn't install
         # opencharly-git or pacman -U didn't auto-resolve the mandatory set.
         add_candy:
-            - '@github.com/overthinkos/overthink/candy/charly:v2026.159.1458'
+            - '@github.com/overthinkos/overthink/candy/charly:v2026.160.0856'
         install_opts:
             allow_repo_changes: true
             allow_root_tasks: true
@@ -103,8 +103,8 @@ eval:
     # The bed applies the nvidia toolkit + nvidia-driver kernel layer to the guest
     # (the driver layer reboots the guest, via the RebootStep), then runVM deploys
     # the nested `selkies-kde` pod as a PERSISTENT in-guest quadlet
-    # (deployNestedPodsInGuest: host-build selkies-kde-nvidia → cp-image into the
-    # guest → the guest's own project-free `charly deploy from-image`, lingering on so
+    # (deployNestedPodsInGuest: host-build selkies-kde-nvidia → cp-box into the
+    # guest → the guest's own project-free `charly deploy from-box`, lingering on so
     # it survives a guest reboot). This is the nested-pod-in-VM capability under
     # test. The deploy-scope checks below run inside the guest over SSH.
     #
@@ -135,39 +135,39 @@ eval:
             # agent come back clean on the fresh boot. All packages arrive via
             # these layers (never the VM bootstrap package list).
             - podman
-            - '@github.com/overthinkos/overthink/candy/qemu-guest-agent:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/workspace-mount:v2026.159.1458'
+            - '@github.com/overthinkos/overthink/candy/qemu-guest-agent:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/workspace-mount:v2026.160.0856'
             # nodejs + claude-code exercise the cross-host npm builder on a VM:
             # the npm builder runs on the host and the ~/.npm-global artifacts are
             # tarred into the guest home. Proves the AI-CLI stack installs on a VM
             # (the bug that made claude/codex/etc. silently absent) plus the
             # deploy-time {{.Home}} env.d resolution + env.d-sourcing managed block.
-            - '@github.com/overthinkos/overthink/candy/nodejs:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/claude-code:v2026.159.1458'
+            - '@github.com/overthinkos/overthink/candy/nodejs:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/claude-code:v2026.160.0856'
             # Full bare-metal KDE Plasma SEAT — the in-guest half of the workstation
             # (Plasma + SDDM + graphical .target on the virtual head), CachyOS
             # theming, fonts/codecs/dev-gap. The WebRTC STREAMING desktop is NOT an
             # in-guest layer here — it runs as the nested selkies-kde pod below
             # (kde-selkies moved into the selkies-kde-nvidia image). This mirrors the
             # workstation's dual-desktop split: bare-metal seat + headless stream.
-            - '@github.com/overthinkos/overthink/candy/kde-desktop:v2026.159.1458'
+            - '@github.com/overthinkos/overthink/candy/kde-desktop:v2026.160.0856'
             - cachyos-kde-settings
             # Shared desktop/monitor/SPICE/selkies + mouse/keyboard/screenshot
             # checks (+ ydotool test tool). charly eval live collects this layer's
             # deploy-scope checks for BOTH the bed and the operator VM (R3).
             - cachyos-gpu-desktop-eval
-            - '@github.com/overthinkos/overthink/candy/fonts-extended:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/desktop-media:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/cachyos-extras:v2026.159.1458'
-            # charly (→ charly layer) exercises the ov-layer-on-VM-deploy path: on
+            - '@github.com/overthinkos/overthink/candy/fonts-extended:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/desktop-media:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/cachyos-extras:v2026.160.0856'
+            # charly (→ charly layer) exercises the charly-layer-on-VM-deploy path: on
             # this Arch/CachyOS guest the charly layer's localpkg: builds opencharly-git
             # from the repo's pkg/arch PKGBUILD on the host (makepkg) + pacman -U's
             # it into the guest at /usr/bin/charly — proving the proper-package install
             # (not the stale curl-a-binary fallback). Matches the operator
-            # cachyos-gpu workstation, which lists ov. Placed before
+            # cachyos-gpu workstation, which lists charly. Placed before
             # nvidia-driver so nvidia-driver's reboot: still trails the whole stack.
-            - '@github.com/overthinkos/overthink/candy/charly:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/nvidia:v2026.159.1458'
+            - '@github.com/overthinkos/overthink/candy/charly:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/nvidia:v2026.160.0856'
             - nvidia-driver
         install_opts:
             # with_service gates the systemd unit enable for sddm (the bare-metal
@@ -188,8 +188,8 @@ eval:
         nested:
             # The headless WebRTC streaming desktop as a PERSISTENT in-guest quadlet.
             # runVM (deployNestedPodsInGuest) host-builds selkies-kde-nvidia,
-            # cp-images it into the guest as localhost/ov-selkies-kde:latest, then
-            # runs the guest's own `charly deploy from-image … selkies-kde` (GPU
+            # cp-boxes it into the guest as localhost/charly-selkies-kde:latest, then
+            # runs the guest's own `charly deploy from-box … selkies-kde` (GPU
             # auto-detect → CDI device; lingering on → survives a guest reboot). The
             # deploy name `selkies-kde` matches the workstation's nested child key.
             selkies-kde:
@@ -248,15 +248,15 @@ eval:
             # pacman-aware cmd: ran), NOT a curl-stale /usr/local/bin/charly. FAILS
             # without the localpkg fix — the curl branch would put /usr/local/bin/charly
             # (shadowing on $PATH) and `pacman -Q opencharly-git` would find nothing.
-            - id: gpu-ov-proper-package
+            - id: gpu-charly-proper-package
               scope: deploy
               command: |
                 pacman -Q opencharly-git >/dev/null 2>&1 &&
                 test "$(command -v charly)" -ef /usr/bin/charly &&
-                charly deploy from-image --help >/dev/null 2>&1 &&
-                echo OV-PROPER-PACKAGE
+                charly deploy from-box --help >/dev/null 2>&1 &&
+                echo CHARLY-PROPER-PACKAGE
               stdout:
-                - contains: OV-PROPER-PACKAGE
+                - contains: CHARLY-PROPER-PACKAGE
               exit_status: 0
             # The Cutover 2 headline: the nested selkies-kde streaming desktop runs
             # as a PERSISTENT in-guest USER quadlet with lingering on, so it survives
@@ -269,9 +269,9 @@ eval:
               scope: deploy
               command: |
                 export XDG_RUNTIME_DIR=/run/user/$(id -u)
-                for i in $(seq 1 30); do systemctl --user is-active ov-selkies-kde >/dev/null 2>&1 && break; sleep 2; done
+                for i in $(seq 1 30); do systemctl --user is-active charly-selkies-kde >/dev/null 2>&1 && break; sleep 2; done
                 printf 'active=%s linger=%s\n' \
-                  "$(systemctl --user is-active ov-selkies-kde 2>/dev/null)" \
+                  "$(systemctl --user is-active charly-selkies-kde 2>/dev/null)" \
                   "$(loginctl show-user "$(id -un)" -p Linger --value 2>/dev/null)"
               stdout:
                 - contains: active=active
@@ -293,7 +293,7 @@ eval:
               stdout:
                 contains: STREAM-UP
               exit_status: 0
-            # Real-NVENC + frame proof for the nested ov-selkies-kde pod now lives
+            # Real-NVENC + frame proof for the nested charly-selkies-kde pod now lives
             # ONCE on the selkies layer (R3) — encoder-active HARD-FAILS on a
             # silent CPU x264 fallback on an NVIDIA render node (the Cutover 2
             # real-NVENC headline; build.sh Patch 2d makes pixelflux's NVENC init
@@ -311,11 +311,22 @@ eval:
             - id: workspace-virtiofs-idmap-rw
               scope: deploy
               command: |
+                # The virtiofs /workspace share is OPERATOR-PROVISIONED (a host-path
+                # filesystems: block the operator adds locally), exactly like the GPU
+                # hostdevs: above — NOT committed on the disposable bed. So this check
+                # N/As (like gpu-driver-active) when no virtiofs /workspace is present,
+                # and exercises the guest-user idmap (D4) only on an operator host that
+                # mounted the share. Never a silent pass where the share WAS provisioned:
+                # there fstype IS virtiofs and the full idmap + RW assertion runs.
                 fstype=$(findmnt -n -o FSTYPE /workspace 2>/dev/null || echo MISSING)
-                [ "$fstype" = "virtiofs" ] || { echo "FAIL: /workspace fstype=$fstype (want virtiofs)"; exit 1; }
-                owner=$(stat -c %U /workspace 2>/dev/null)
-                [ "$owner" = "$(id -un)" ] || { echo "FAIL: /workspace owned by '$owner', not the guest user '$(id -un)' — guest-user idmap not applied (libvirt default maps guest-root)"; exit 1; }
-                touch /workspace/.ov-probe 2>/dev/null && rm -f /workspace/.ov-probe && echo WORKSPACE-IDMAP-RW
+                if [ "$fstype" != "virtiofs" ]; then
+                  echo "WORKSPACE-IDMAP-RW (N/A: no operator-provisioned virtiofs /workspace share on this bed, fstype=$fstype)"
+                else
+                  owner=$(stat -c %U /workspace 2>/dev/null)
+                  [ "$owner" = "$(id -un)" ] || { echo "FAIL: /workspace owned by '$owner', not the guest user '$(id -un)' — guest-user idmap not applied (libvirt default maps guest-root)"; exit 1; }
+                  touch /workspace/.charly-probe 2>/dev/null && rm -f /workspace/.charly-probe && echo WORKSPACE-IDMAP-RW
+                fi
+              exit_status: 0
               stdout:
                 contains: WORKSPACE-IDMAP-RW
             # Cross-host npm builder (D3): claude-code installs into the GUEST home
@@ -367,7 +378,7 @@ eval:
                 # charly eval live collects an applied layer's deploy-scope checks, so the SAME
                 # set runs on BOTH this bed and the persistent cachyos-gpu deploy (R3).
     # Disposable R10 pod beds for the CachyOS GPU image family. Each drives the
-    # full `charly eval run` sequence (build → eval image → deploy → eval live →
+    # full `charly eval run` sequence (build → eval box → deploy → eval live →
     # fresh update → tear down) on the cachyos-namespace image of the same name.
     # Host ports are remapped into a dedicated 45xxx range so the beds never
     # collide with an operator's production services on the canonical ports.
@@ -431,7 +442,7 @@ eval:
             tag: [testing]
     eval-selkies-labwc-nvidia-vm:
         # NVENC passthrough-VM bed: builds selkies-labwc-nvidia (real NVENC via the
-        # cuda-arch-builder pixi builder), cp-images it into the RTX-4080 passthrough
+        # cuda-arch-builder pixi builder), cp-boxes it into the RTX-4080 passthrough
         # guest, runs it as a transient --device nvidia.com/gpu=all pod, and asserts
         # the selkies stream reaches NVENC frame production. requires_exclusive
         # preempts the operator's vm:cachyos-gpu (the designed arbiter workflow);
@@ -449,9 +460,9 @@ eval:
         # nvidia-driver layer's reboot: true reloads the open module on a clean boot.
         add_candy:
             - podman
-            - '@github.com/overthinkos/overthink/candy/qemu-guest-agent:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/workspace-mount:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/nvidia:v2026.159.1458'
+            - '@github.com/overthinkos/overthink/candy/qemu-guest-agent:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/workspace-mount:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/nvidia:v2026.160.0856'
             - nvidia-driver
         install_opts:
             with_service: true
@@ -492,9 +503,9 @@ eval:
         # so the nested --device nvidia.com/gpu=all selkies-kde pod reaches the GPU.
         add_candy:
             - podman
-            - '@github.com/overthinkos/overthink/candy/qemu-guest-agent:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/workspace-mount:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/nvidia:v2026.159.1458'
+            - '@github.com/overthinkos/overthink/candy/qemu-guest-agent:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/workspace-mount:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/nvidia:v2026.160.0856'
             - nvidia-driver
         install_opts:
             with_service: true
@@ -569,35 +580,35 @@ deploy:
         vm: cachyos-gpu
         add_candy:
             - wheel-nopasswd
-            - '@github.com/overthinkos/overthink/candy/yay:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/dev-tools:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/gh:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/pre-commit:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/tmux:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/direnv:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/gnupg:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/keepassxc:v2026.159.1458'
+            - '@github.com/overthinkos/overthink/candy/yay:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/dev-tools:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/gh:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/pre-commit:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/tmux:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/direnv:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/gnupg:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/keepassxc:v2026.160.0856'
             - keepassxc-keyring
-            - '@github.com/overthinkos/overthink/candy/tailscale:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/tailscale-up:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/build-toolchain:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/golang:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/rust:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/nodejs:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/uv:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/claude-code:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/codex:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/gemini:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/oracle:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/forgecode:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/devops-tools:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/docker-ce:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/kubernetes:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/vscode:v2026.159.1458'
+            - '@github.com/overthinkos/overthink/candy/tailscale:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/tailscale-up:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/build-toolchain:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/golang:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/rust:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/nodejs:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/uv:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/claude-code:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/codex:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/gemini:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/oracle:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/forgecode:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/devops-tools:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/docker-ce:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/kubernetes:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/vscode:v2026.160.0856'
             - ghostty
-            - '@github.com/overthinkos/overthink/candy/chrome:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/nvidia:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/charly:v2026.159.1458'
+            - '@github.com/overthinkos/overthink/candy/chrome:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/nvidia:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/charly:v2026.160.0856'
             # Full KDE Plasma desktop synced to the host + GPU display/stream
             # stack. kde-desktop pulls the whole Plasma/KF6/Qt stack via
             # plasma-desktop (deps) + SDDM + graphical.target; cachyos-kde-settings
@@ -607,15 +618,15 @@ deploy:
             # (real NVENC, :3000) deployed as a persistent in-guest quadlet — see
             # `nested:` below, NOT an in-guest layer. The bare-metal SDDM Plasma
             # seat (kde-desktop) drives the physical RTX monitors.
-            - '@github.com/overthinkos/overthink/candy/kde-desktop:v2026.159.1458'
+            - '@github.com/overthinkos/overthink/candy/kde-desktop:v2026.160.0856'
             - cachyos-kde-settings
             # Shared desktop/monitor/SPICE/selkies + mouse/keyboard/screenshot
             # checks (+ ydotool test tool). charly eval live collects this layer's
             # deploy-scope checks for BOTH the bed and the operator VM (R3).
             - cachyos-gpu-desktop-eval
-            - '@github.com/overthinkos/overthink/candy/fonts-extended:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/desktop-media:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/cachyos-extras:v2026.159.1458'
+            - '@github.com/overthinkos/overthink/candy/fonts-extended:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/desktop-media:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/cachyos-extras:v2026.160.0856'
             # (in-guest kde-selkies layer REMOVED — the WebRTC streaming desktop is
             # the nested selkies-kde-nvidia pod below; podman is its in-guest substrate.)
             # VM-only additions. podman for GPU/CUDA containers; the guest agent +
@@ -623,8 +634,8 @@ deploy:
             # trailing RebootStep, so the guest reboots ONCE after everything is in
             # place, and the enabled workspace.mount + guest agent come back clean.
             - podman
-            - '@github.com/overthinkos/overthink/candy/qemu-guest-agent:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/workspace-mount:v2026.159.1458'
+            - '@github.com/overthinkos/overthink/candy/qemu-guest-agent:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/workspace-mount:v2026.160.0856'
             - nvidia-driver
         install_opts:
             with_service: true
@@ -660,35 +671,35 @@ local:
     charly-cachyos:
         candy:
             - wheel-nopasswd
-            - '@github.com/overthinkos/overthink/candy/yay:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/dev-tools:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/gh:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/pre-commit:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/tmux:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/direnv:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/gnupg:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/keepassxc:v2026.159.1458'
+            - '@github.com/overthinkos/overthink/candy/yay:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/dev-tools:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/gh:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/pre-commit:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/tmux:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/direnv:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/gnupg:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/keepassxc:v2026.160.0856'
             - keepassxc-keyring
-            - '@github.com/overthinkos/overthink/candy/tailscale:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/tailscale-up:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/build-toolchain:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/golang:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/rust:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/nodejs:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/uv:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/claude-code:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/codex:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/gemini:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/oracle:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/forgecode:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/devops-tools:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/docker-ce:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/kubernetes:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/vscode:v2026.159.1458'
+            - '@github.com/overthinkos/overthink/candy/tailscale:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/tailscale-up:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/build-toolchain:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/golang:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/rust:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/nodejs:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/uv:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/claude-code:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/codex:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/gemini:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/oracle:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/forgecode:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/devops-tools:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/docker-ce:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/kubernetes:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/vscode:v2026.160.0856'
             - ghostty
-            - '@github.com/overthinkos/overthink/candy/chrome:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/nvidia:v2026.159.1458'
-            - '@github.com/overthinkos/overthink/candy/charly:v2026.159.1458'
+            - '@github.com/overthinkos/overthink/candy/chrome:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/nvidia:v2026.160.0856'
+            - '@github.com/overthinkos/overthink/candy/charly:v2026.160.0856'
         install_opts:
             with_service: true
             allow_repo_changes: true

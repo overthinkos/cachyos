@@ -20,9 +20,9 @@ candy:
     # keepassxc, gnupg, direnv stay in main (shared) → pulled by @github ref so
     # this locally-vendored layer's deps still resolve in this repo's namespace.
     require:
-        - '@github.com/overthinkos/overthink/candy/keepassxc:v2026.159.1458'
-        - '@github.com/overthinkos/overthink/candy/gnupg:v2026.159.1458'
-        - '@github.com/overthinkos/overthink/candy/direnv:v2026.159.1458'
+        - '@github.com/overthinkos/overthink/candy/keepassxc:v2026.160.0856'
+        - '@github.com/overthinkos/overthink/candy/gnupg:v2026.160.0856'
+        - '@github.com/overthinkos/overthink/candy/direnv:v2026.160.0856'
     distro:
         arch:
             package:
@@ -273,7 +273,7 @@ candy:
         # had the legacy version, AND does nothing on a second run after
         # cleanup. Targets the bash/zsh fenced blocks AND the legacy fish
         # `~/.config/fish/conf.d/direnv.fish` (the new path is
-        # `ov-direnv.fish` written by the direnv layer's shell: emitter).
+        # `charly-direnv.fish` written by the direnv layer's shell: emitter).
         - cmd: |
             set -eu
             for rc in "${HOME}/.bashrc" "${HOME}/.zshrc"; do
@@ -281,9 +281,9 @@ candy:
                 sed -i '/# opencharly:begin direnv-hook/,/# opencharly:end direnv-hook/d' "$rc"
               fi
             done
-            # Legacy fish drop-in path (no ov- prefix) — DELETED in the
+            # Legacy fish drop-in path (no charly- prefix) — DELETED in the
             # cutover; the direnv layer's shell: schema writes to
-            # ~/.config/fish/conf.d/ov-direnv.fish instead.
+            # ~/.config/fish/conf.d/charly-direnv.fish instead.
             legacy_fish="${HOME}/.config/fish/conf.d/direnv.fish"
             if [ -f "$legacy_fish" ] && grep -qF '# opencharly:begin direnv-hook' "$legacy_fish"; then
               rm -f "$legacy_fish"
@@ -398,14 +398,14 @@ candy:
           scope: deploy
           exit_status: 0
         - id: direnv-fish-hook
-          # direnv's shell: schema writes the fish hook to ov-direnv.fish (the
+          # direnv's shell: schema writes the fish hook to charly-direnv.fish (the
           # legacy direnv.fish path is stripped by this layer's cleanup task).
           # On a deploy whose login shell is bash and where fish has no per-user
           # config yet (a fresh VM/headless guest), the fish drop-in is absent —
           # the login-shell hook (direnv-bash-hook below) already proves direnv
           # is wired. So: require the fish hook only where fish IS configured.
           command: |
-            f="${HOME}/.config/fish/conf.d/ov-direnv.fish"
+            f="${HOME}/.config/fish/conf.d/charly-direnv.fish"
             if [ -f "$f" ]; then
               grep -q 'direnv hook fish' "$f" && echo FISH-HOOK-OK
             else

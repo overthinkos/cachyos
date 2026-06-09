@@ -42,7 +42,7 @@ candy:
         # module's own pacman hook already rebuilds the base initramfs, and an
         # explicit `mkinitcpio -P` would fail the deploy on the non-fatal
         # kms/sd-vconsole build warnings.
-        - write: /etc/modprobe.d/ov-nvidia.conf
+        - write: /etc/modprobe.d/charly-nvidia.conf
           user: root
           mode: "0644"
           content: |
@@ -56,7 +56,7 @@ candy:
         # aborts the deploy); this oneshot regenerates the CDI spec on every boot
         # once the GPU device node exists, so `podman run --device
         # nvidia.com/gpu=all` works post-reboot without any manual step.
-        - write: /etc/systemd/system/ov-nvidia-cdi.service
+        - write: /etc/systemd/system/charly-nvidia-cdi.service
           user: root
           mode: "0644"
           content: |
@@ -79,7 +79,7 @@ candy:
         # image-build chroot (no systemd) doesn't fail the layer.
         - cmd: |
             systemctl daemon-reload || true
-            systemctl enable ov-nvidia-cdi.service || true
+            systemctl enable charly-nvidia-cdi.service || true
           user: root
         # Device-group access for the desktop user's session services. The KDE
         # compositor + pixelflux NVENC run as user-scope services in the deploy
@@ -93,10 +93,10 @@ candy:
     reboot: true
     eval:
         - id: nvidia-modprobe-conf
-          file: /etc/modprobe.d/ov-nvidia.conf
+          file: /etc/modprobe.d/charly-nvidia.conf
           contains: "blacklist nouveau"
         - id: nvidia-cdi-service
-          file: /etc/systemd/system/ov-nvidia-cdi.service
+          file: /etc/systemd/system/charly-nvidia-cdi.service
           contains: "nvidia-ctk cdi generate"
         - id: egl-wayland-installed
           package: egl-wayland

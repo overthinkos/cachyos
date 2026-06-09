@@ -2,7 +2,7 @@
 #  charly.yml's `import:` list. The schema kind discriminator is
 #  `kind: vm` for kind-keyed entries; root-shape map is `vm:` (this file).
 #  2026-05 kind-files cutover.
-version: 2026.159.3
+version: 2026.159.1912
 vm:
     cachyos-vm:
         # Bootstrap-from-scratch via cachyos-pacstrap-builder (local). The cachyos
@@ -46,7 +46,7 @@ vm:
                 # generate` at toolkit-install time fails ("NVML: Driver Not
                 # Loaded"), pacman exits non-zero, and the deploy aborts at the
                 # nvidia layer. CDI is (re)generated post-reboot by the
-                # nvidia-driver layer's ov-nvidia-cdi oneshot once the driver is
+                # nvidia-driver layer's charly-nvidia-cdi oneshot once the driver is
                 # up. Symlinking a hook to /dev/null is pacman's canonical
                 # "disable this hook". Runs at first boot, before any deploy.
                 - sh -c 'mkdir -p /etc/pacman.d/hooks && ln -sf /dev/null /etc/pacman.d/hooks/nvidia-ctk-cdi.hook'
@@ -136,7 +136,7 @@ vm:
                 # generate` at toolkit-install time fails ("NVML: Driver Not
                 # Loaded"), pacman exits non-zero, and the deploy aborts at the
                 # nvidia layer. CDI is (re)generated post-reboot by the
-                # nvidia-driver layer's ov-nvidia-cdi oneshot once the driver is
+                # nvidia-driver layer's charly-nvidia-cdi oneshot once the driver is
                 # up. Symlinking a hook to /dev/null is pacman's canonical
                 # "disable this hook". Runs at first boot, before any deploy.
                 - sh -c 'mkdir -p /etc/pacman.d/hooks && ln -sf /dev/null /etc/pacman.d/hooks/nvidia-ctk-cdi.hook'
@@ -252,7 +252,7 @@ vm:
                 # generate` at toolkit-install time fails ("NVML: Driver Not
                 # Loaded"), pacman exits non-zero, and the deploy aborts at the
                 # nvidia layer. CDI is (re)generated post-reboot by the
-                # nvidia-driver layer's ov-nvidia-cdi oneshot once the driver is
+                # nvidia-driver layer's charly-nvidia-cdi oneshot once the driver is
                 # up. Symlinking a hook to /dev/null is pacman's canonical
                 # "disable this hook". Runs at first boot, before any deploy.
                 - sh -c 'mkdir -p /etc/pacman.d/hooks && ln -sf /dev/null /etc/pacman.d/hooks/nvidia-ctk-cdi.hook'

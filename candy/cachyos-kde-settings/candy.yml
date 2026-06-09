@@ -53,7 +53,7 @@ candy:
         - cmd: |
             u="$(getent passwd 1000 | cut -d: -f1)"
             mkdir -p /etc/sddm.conf.d
-            printf '[Autologin]\nUser=%s\nSession=plasma.desktop\n' "$u" > /etc/sddm.conf.d/10-ov-autologin.conf
+            printf '[Autologin]\nUser=%s\nSession=plasma.desktop\n' "$u" > /etc/sddm.conf.d/10-charly-autologin.conf
           user: root
         # The KDE Plasma panel (menu bar) must appear on EVERY monitor. On a
         # GPU-passthrough workstation the SPICE virtio output owns Plasma screen 0
@@ -61,12 +61,12 @@ candy:
         # on the physical HDMI/DP monitors. Install an idempotent ensure-script + an
         # XDG autostart entry (KDE phase 2) that adds a bottom panel to any screen
         # lacking one — on every login and after a monitor hotplug.
-        - copy: ov-kde-panels-all-screens.sh
+        - copy: charly-kde-panels-all-screens.sh
           to: /usr/local/bin/charly-kde-panels-all-screens.sh
           mode: "0755"
           user: root
-        - copy: ov-kde-panels-all-screens.desktop
-          to: /etc/xdg/autostart/ov-kde-panels-all-screens.desktop
+        - copy: charly-kde-panels-all-screens.desktop
+          to: /etc/xdg/autostart/charly-kde-panels-all-screens.desktop
           mode: "0644"
           user: root
         # Headless always-on policy (part 1 of 2): disable the idle screen-LOCKER.
@@ -90,7 +90,7 @@ candy:
         # no local input to wake them, stay dark forever. kde-inhibit holds an
         # org.freedesktop.ScreenSaver + PowerManagement inhibit while it runs;
         # restart:always re-holds it. User scope: needs the Plasma session bus.
-        - name: ov-display-keepalive
+        - name: charly-display-keepalive
           exec: kde-inhibit --power --screenSaver sleep infinity
           restart: always
           enable: true
@@ -99,13 +99,13 @@ candy:
     eval:
         - id: sddm-autologin-configured
           scope: deploy
-          file: /etc/sddm.conf.d/10-ov-autologin.conf
+          file: /etc/sddm.conf.d/10-charly-autologin.conf
           contains: "Session=plasma.desktop"
         - id: kde-panel-autostart-installed
           scope: deploy
           command: |
             test -x /usr/local/bin/charly-kde-panels-all-screens.sh || { echo "FAIL: panel ensure-script missing or not executable"; exit 1; }
-            test -f /etc/xdg/autostart/ov-kde-panels-all-screens.desktop || { echo "FAIL: panel autostart .desktop missing"; exit 1; }
+            test -f /etc/xdg/autostart/charly-kde-panels-all-screens.desktop || { echo "FAIL: panel autostart .desktop missing"; exit 1; }
             echo PANEL-AUTOSTART-INSTALLED
           stdout:
             contains: PANEL-AUTOSTART-INSTALLED
@@ -148,6 +148,6 @@ candy:
         - id: display-keepalive-active
           scope: deploy
           command: |
-            pgrep -f 'kde-inhibit .*screenSaver' >/dev/null 2>&1 && echo KEEPALIVE-OK || { echo "FAIL: ov-display-keepalive (kde-inhibit) not running — idle screen-off not inhibited"; exit 1; }
+            pgrep -f 'kde-inhibit .*screenSaver' >/dev/null 2>&1 && echo KEEPALIVE-OK || { echo "FAIL: charly-display-keepalive (kde-inhibit) not running — idle screen-off not inhibited"; exit 1; }
           stdout:
             contains: KEEPALIVE-OK

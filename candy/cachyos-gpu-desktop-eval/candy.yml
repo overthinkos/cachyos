@@ -152,7 +152,7 @@ candy:
             else
               export XDG_RUNTIME_DIR=/run/user/$(id -u)
               ws=$(ls -1 "$XDG_RUNTIME_DIR"/wayland-* 2>/dev/null | grep -v wayland-1 | head -1 | xargs -r -n1 basename)
-              out=/tmp/ov-kde-shot.png
+              out=/tmp/charly-kde-shot.png
               if [ -n "$ws" ] && WAYLAND_DISPLAY="$ws" spectacle -b -n -o "$out" >/dev/null 2>&1 && [ -s "$out" ]; then
                 echo WL-SHOT-OK
               else
@@ -161,7 +161,7 @@ candy:
             fi
           stdout:
             contains: WL-SHOT-OK
-        # --- KDE-selkies remote stream (nested ov-selkies-kde pod) ---
+        # --- KDE-selkies remote stream (nested charly-selkies-kde pod) ---
         # The nested pod's BAKED selkies-layer eval — frame-not-black (real pixels)
         # + encoder-active (real NVENC on the passed-through GPU, hard-fail on CPU
         # fallback) + pixelflux compositor socket + selkies service — now runs via
