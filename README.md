@@ -1,7 +1,7 @@
 # overthinkos/cachyos
 
 The **CachyOS image family** for [OpenCharly](https://github.com/overthinkos/overthink),
-split into its own repository and mounted as a git submodule at `image/cachyos`
+split into its own repository and mounted as a git submodule at `box/cachyos`
 of the main repo.
 
 ## What's here
@@ -51,10 +51,10 @@ charly box build cachyos
 charly box build cachyos-pacstrap-builder
 
 # From the parent opencharly repo:
-charly -C image/cachyos image build cachyos
+charly -C box/cachyos box build cachyos
 
 # Standalone, against the published repo:
-charly --repo overthinkos/cachyos image build cachyos
+charly --repo overthinkos/cachyos box build cachyos
 ```
 
 The first build resolves the upstream github references into `~/.cache/charly/repos/`
@@ -65,7 +65,7 @@ and materializes the referenced layers under `.build/_layers/`.
 Apply the kitchen-sink CachyOS dev profile to the current host:
 
 ```bash
-charly -C image/cachyos update charly-cachyos
+charly -C box/cachyos update charly-cachyos
 # or, anywhere:
 charly --repo overthinkos/cachyos update charly-cachyos
 ```

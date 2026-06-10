@@ -1,5 +1,5 @@
 #  overthinkos/cachyos — the CachyOS image family, split out of the main
-#  opencharly repo (2026-05). Mounted as a git submodule at image/cachyos.
+#  opencharly repo (2026-05). Mounted as a git submodule at box/cachyos.
 #
 #  SINGLE-FILE config: every entity (the cachyos base + pacstrap family + the 7
 #  relocated app/fixture boxes under box/, the cachyos VMs, the disposable eval
@@ -17,8 +17,8 @@
 #  nothing back; the former main↔cachyos mutual cycle is dissolved.
 #
 #  Directly buildable: `charly box build cachyos` (from the parent repo:
-#  `charly -C image/cachyos image build cachyos`; anywhere:
-#  `charly --repo overthinkos/cachyos image build cachyos`).
+#  `charly -C box/cachyos box build cachyos`; anywhere:
+#  `charly --repo overthinkos/cachyos box build cachyos`).
 version: 2026.160.1301
 defaults:
     platform:

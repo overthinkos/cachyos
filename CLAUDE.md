@@ -1,4 +1,4 @@
-# image/cachyos — signpost (not the rule-set)
+# box/cachyos — signpost (not the rule-set)
 
 This submodule is the **CachyOS** base image family (x86_64_v3-optimized Arch
 derivative) PLUS the **CachyOS selkies streaming-desktop images** (`selkies-labwc`
