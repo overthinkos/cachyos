@@ -4,10 +4,10 @@ box:
     # (pixelflux Rust) + AUR google-chrome/wlrctl + labwc/waybar/swaync/etc.
     base: cachyos
     builder:
-        pixi: charly.arch-builder
-        npm: charly.arch-builder
-        cargo: charly.arch-builder
-        aur: charly.arch-builder
+        pixi: arch.arch-builder
+        npm: arch.arch-builder
+        cargo: arch.arch-builder
+        aur: arch.arch-builder
     build:
         - pac
         - aur

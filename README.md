@@ -8,46 +8,40 @@ of the main repo.
 
 | Kind | Entries |
 |---|---|
-| `image:` | `cachyos` (base, in `cachyos-base.yml`), `cachyos-pacstrap-builder`, `cachyos-pacstrap` |
+| `image:` | `cachyos` (base), `cachyos-pacstrap-builder`, `cachyos-pacstrap`, the GPU + selkies images, and the relocated apps (`versa`, `openclaw*`, `githubrunner`, `android-emulator`, `charly-selftest`) |
 | `vm:` | `cachyos-vm` (bootstrap-from-scratch via pacstrap) |
 | `deploy:` | `eval-cachyos-vm`, `charly-cachyos` (operator workstation profile) |
 | `local:` | `charly-cachyos` (kind:local template — the workstation layer-stack) |
 
-## Composition by reference — nothing is vendored
+## Composition — local base, candies + arch builder by reference
 
-This repo contains **no layers and no build-config of its own**. Everything is
-pulled from `github.com/overthinkos/overthink` by **github reference**:
+This submodule OWNS its CachyOS stack: the `cachyos` base, the
+`cachyos-pacstrap`/`cachyos-pacstrap-builder` bootstrap pair, the selkies
+streaming-desktop images, and (after the 2026-06 box inversion) the relocated
+cachyos-rooted app/fixture boxes — `versa`, `openclaw`/`openclaw-full`/`openclaw-desktop`,
+`githubrunner`, `android-emulator`, `charly-selftest`. Its CachyOS-exclusive candy
+layers live locally under `candy/` (discovered via the `discover:` block).
+Everything else is pulled from the main repo by github reference:
 
-- every layer in `box.yml` / `deploy.yml` / `local.yml` is an
-  `@github.com/overthinkos/overthink/candy/<name>:<tag>` ref;
-- the shared build-config (`build.yml` — distro/builder/init, including the
-  `cachyos` distro definition) and the `arch` base + `arch-builder` pair
-  (`arch-base.yml`) are remote `import:`s in `charly.yml`.
+- every shared candy layer is an `@github.com/overthinkos/overthink/candy/<name>:<tag>` ref;
+- the **Arch base/builder stack** (`arch.arch`, `arch.arch-builder`,
+  `arch.cuda-arch-builder`) is provided by the **`overthinkos/arch` submodule**,
+  mounted under the `arch` import namespace in `charly.yml`.
 
-CachyOS is Arch-based, so `cachyos-pacstrap-builder` is `base: arch` and resolves
-the `arch` base from the main repo's `arch-base.yml`. All references pin to a
-single tag of the upstream repo, so a build is reproducible. There is exactly one
-definition of every layer — no duplication.
+The CachyOS `distro`/`builder`/`init` build vocabulary is embedded in the `charly`
+binary (no `build.yml` import). All `@github` references pin to a single tag, so a
+build is reproducible — exactly one definition of every layer.
 
-## main ↔ cachyos coupling
+## Dependency direction (post 2026-06 box inversion)
 
-The `cachyos` **base** image (`cachyos-base.yml`) is owned by THIS repo, but the
-main repo's `versa` image is `base: cachyos`. So main's `charly.yml`
-remote-includes `cachyos-base.yml` from here:
-
-```yaml
-# main charly.yml
-include:
-  - '@github.com/overthinkos/cachyos/cachyos-base.yml:<tag>'
-```
-
-This is a deliberate **main → cachyos** dependency (building `versa` on main
-needs this repo reachable). It is NOT a resolution cycle: each side's `include:`
-pulls a single file (main pulls `cachyos-base.yml`; this repo pulls
-`build.yml` / `arch-base.yml`), and no included file re-enters the other repo's
-`charly.yml`. The image DAG is acyclic
+`overthinkos/arch` is the only namespace this repo imports: `cachyos-pacstrap-builder`
+bases on `arch.arch`, and the cachyos base + selkies-*-nvidia images route their
+builders to `arch.arch-builder` / `arch.cuda-arch-builder`. The import is
+**one-directional** — arch imports nothing back. The main repo, in turn, imports
+THIS repo (under the `cachyos` namespace) to build the relocated cachyos boxes; the
+former main↔cachyos mutual cycle is dissolved. The image DAG is acyclic
 (`versa → cachyos → docker.io/cachyos-v3`;
-`cachyos-pacstrap-builder → arch → docker.io/archlinux`).
+`cachyos-pacstrap-builder → arch.arch → docker.io/archlinux`).
 
 ## Build
 
@@ -94,7 +88,7 @@ the image and VM bootstrap paths) now:
 
 Verified live: `cachyos-pacstrap` produces a rootfs with `linux-cachyos`
 (`%ARCH% = x86_64_v3`) installed, and `cachyos-vm` produces a bootable
-`disk.qcow2`. The Docker-Hub-based `cachyos` base (`cachyos-base.yml`) is still
+`disk.qcow2`. The Docker-Hub-based `cachyos` base is still
 the faster default (no privileged build); the pacstrap variants are for offline
 / air-gapped builds. (A newer `charly` than the published release is required, since
 the renderer fix lives in the binary.)

@@ -16,14 +16,14 @@ box:
     build:
         - pac
     # CachyOS is Arch-derived and has no builder of its own; route all four
-    # formats to charly.arch-builder (main's arch-builder, via the `charly` import
-    # namespace). Builder maps do NOT cross a namespace boundary, so a
-    # consumer of this base (e.g. main's versa) declares its own builder map.
+    # formats to arch.arch-builder (the overthinkos/arch submodule's builder, via
+    # the `arch` import namespace). Builder maps do NOT cross a namespace
+    # boundary, so a consumer that builds declares its own builder map.
     builder:
-        aur: charly.arch-builder
-        cargo: charly.arch-builder
-        npm: charly.arch-builder
-        pixi: charly.arch-builder
+        aur: arch.arch-builder
+        cargo: arch.arch-builder
+        npm: arch.arch-builder
+        pixi: arch.arch-builder
     produce:
         - pixi
         - npm

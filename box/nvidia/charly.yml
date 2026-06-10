@@ -1,7 +1,7 @@
 box:
     name: nvidia
     # CachyOS GPU base — the Arch-derived analogue of the Fedora `nvidia`
-    # image. Inherits build:[pac] + builder→charly.arch-builder from the cachyos
+    # image. Inherits build:[pac] + builder→arch.arch-builder from the cachyos
     # base (same namespace). The nvidia + cuda layers are multi-distro and
     # install the Arch GPU stack (nvidia-utils, nvidia-container-toolkit,
     # cuda, cudnn, onnxruntime).

@@ -3,10 +3,13 @@
 This submodule is the **CachyOS** base image family (x86_64_v3-optimized Arch
 derivative) PLUS the **CachyOS selkies streaming-desktop images** (`selkies-labwc`
 CPU + `selkies-labwc-nvidia` / `selkies-kde` / `selkies-kde-nvidia` GPU): a
-`charly.yml` (plus per-kind sibling files) that imports the main repo under the
-`charly` namespace and `build.yml` flat. Main's `versa` consumes the cachyos base
-and `android-emulator` roots on `base: cachyos.selkies-labwc`, both via the
-`cachyos` import namespace (the main↔cachyos mutual import is cycle-broken at load).
+a self-contained `charly.yml` that ALSO owns the relocated cachyos-rooted
+app/fixture boxes (`versa`, `openclaw`/`openclaw-full`/`openclaw-desktop`,
+`githubrunner`, `android-emulator`, `charly-selftest`). It imports the
+**overthinkos/arch** submodule under the `arch` namespace (for `arch.arch` /
+`arch.arch-builder` / `arch.cuda-arch-builder`) and pulls main's shared candy
+layers via `@github` refs. After the 2026-06 box inversion main imports THIS repo
+(not vice-versa); the former main↔cachyos mutual cycle is dissolved.
 
 **Load these skills FIRST (R0):**
 

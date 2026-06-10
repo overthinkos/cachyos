@@ -1,21 +1,20 @@
 #  overthinkos/cachyos — the CachyOS image family, split out of the main
 #  opencharly repo (2026-05). Mounted as a git submodule at image/cachyos.
 #
-#  SINGLE-FILE config (2026-05 import-namespace cutover): every local entity
-#  (the cachyos base + pacstrap family, the cachyos VM, the disposable eval bed,
-#  the charly-cachyos operator profile + its kind:local template) is inlined here.
-#  This repo VENDORS its cachyos-exclusive layers locally under candy/ (resolved
-#  via the discover: block); every shared layer is an `@github.com/...` ref, and
-#  the shared build-config + the main repo's base entities arrive via `import:`.
+#  SINGLE-FILE config: every entity (the cachyos base + pacstrap family + the 7
+#  relocated app/fixture boxes under box/, the cachyos VMs, the disposable eval
+#  beds, the charly-cachyos operator profile + its kind:local template) is inlined
+#  here or discovered under box/. This repo VENDORS its cachyos-exclusive layers
+#  locally under candy/ (resolved via the discover: block); every shared layer is
+#  an `@github.com/overthinkos/overthink/candy/...` ref into the main repo. The
+#  Arch base/builder stack lives in the overthinkos/arch submodule (2026-06 box
+#  inversion).
 #
-#  import: has two shapes —
-#    * flat string  → build.yml (shared distro/builder/init vocabulary), merged
-#      into this repo's root namespace.
-#    * `charly: <ref>`  → the main opencharly repo mounted under the `charly` namespace,
-#      so `charly.arch` (cachyos-pacstrap-builder's base) + `charly.arch-builder` (the
-#      cachyos base's builder) resolve. main imports THIS repo back under the
-#      `cachyos` namespace (versa is `base: cachyos.cachyos`) — a mutual import,
-#      cycle-broken at load.
+#  import: a single namespaced entry — `arch: <ref>` mounts overthinkos/arch under
+#  the `arch` namespace, so `arch.arch` (cachyos-pacstrap-builder's base),
+#  `arch.arch-builder` (the cachyos base's builder), and `arch.cuda-arch-builder`
+#  (the selkies-*-nvidia GPU builder) resolve. One-directional — arch imports
+#  nothing back; the former main↔cachyos mutual cycle is dissolved.
 #
 #  Directly buildable: `charly box build cachyos` (from the parent repo:
 #  `charly -C image/cachyos image build cachyos`; anywhere:
@@ -32,10 +31,12 @@ defaults:
         auto: false
         max_mb: 128
 import:
-    # Main repo entities under the `charly` namespace — charly.arch (cachyos-pacstrap-
-    # builder base) + charly.arch-builder (cachyos base builder). Mutual import with
-    # main (main mounts this repo under `cachyos`); cycle-broken at load.
-    - charly: '@github.com/overthinkos/overthink:v2026.160.2017'
+    # The Arch base/builder stack lives in the overthinkos/arch submodule (2026-06
+    # box inversion). cachyos-pacstrap-builder bases on arch.arch; the cachyos base
+    # + selkies images route their pixi/npm/cargo/aur builders to arch.arch-builder
+    # / arch.cuda-arch-builder. Candy layers resolve via @github refs (not this
+    # namespace). One-directional import — arch imports nothing back.
+    - arch: '@github.com/overthinkos/arch:v2026.161.0010'
 discover:
     - path: box
       recursive: true
@@ -175,7 +176,7 @@ eval:
             # nodejs/claude-code; cuda-arch-builder is a node-capable superset (the
             # NVENC pixi build of pixelflux now lives in the selkies-kde-nvidia image
             # built on the host, not these guest layers).
-            builder_image: charly.cuda-arch-builder
+            builder_image: arch.cuda-arch-builder
         nested:
             # The headless WebRTC streaming desktop as a PERSISTENT in-guest quadlet.
             # runVM (deployNestedPodsInGuest) host-builds selkies-kde-nvidia,
@@ -561,6 +562,244 @@ eval:
               exit_status: 0
               stdout:
                 - matches: "NVENC-SESSION-ACTIVE|NVENC-N/A"
+    eval-charly-selftest-pod:
+        target: pod
+        box: charly-selftest
+        disposable: true
+        lifecycle: dev
+        port: [auto] # auto-allocate free host ports (avoid fixed-port collisions)
+        description:
+            feature: charly self-test — every charly command group exercised in-container on the full toolchain
+            tag: [working]
+        eval:
+            # --- Real happy-path (project-free groups) ---
+            - id: charly-cli-version
+              scope: deploy
+              command: charly version
+              in_container: true
+              exit_status: 0
+              stdout:
+                - matches: "[0-9]{4}\\.[0-9]+"
+            - id: charly-cli-doctor
+              scope: deploy
+              command: charly doctor
+              in_container: true
+              exit_status: 0
+              stdout:
+                - contains: "charly doctor"
+            - id: charly-cli-settings
+              scope: deploy
+              command: charly settings list
+              in_container: true
+              exit_status: 0
+            - id: charly-cli-secrets
+              scope: deploy
+              command: charly secrets list
+              in_container: true
+              exit_status: 0
+            - id: charly-cli-vm
+              scope: deploy
+              command: charly vm list
+              in_container: true
+              exit_status: 0
+            - id: charly-cli-status
+              scope: deploy
+              command: charly status --json
+              in_container: true
+              exit_status: 0
+            # --- Command-group wiring (--help proves the group + subcommand tree) ---
+            - id: charly-cli-box-group
+              scope: deploy
+              command: charly box --help
+              in_container: true
+              exit_status: 0
+              stdout:
+                - contains: build
+            - id: charly-cli-deploy-group
+              scope: deploy
+              command: charly deploy --help
+              in_container: true
+              exit_status: 0
+            - id: charly-cli-eval-group
+              scope: deploy
+              command: charly eval --help
+              in_container: true
+              exit_status: 0
+              stdout:
+                - contains: live
+            - id: charly-cli-clean-group
+              scope: deploy
+              command: charly clean --help
+              in_container: true
+              exit_status: 0
+            - id: charly-cli-migrate-group
+              scope: deploy
+              command: charly migrate --help
+              in_container: true
+              exit_status: 0
+            - id: charly-cli-feature-group
+              scope: deploy
+              command: charly feature --help
+              in_container: true
+              exit_status: 0
+            - id: charly-cli-config-group
+              scope: deploy
+              command: charly config --help
+              in_container: true
+              exit_status: 0
+              # NB: the WHOLE Kong command surface exposed via `charly mcp serve` is
+              # proven by the charly-mcp layer's own deploy-scope mcp checks
+              # (mcp-charly-list-tools + mcp-charly-call-* assert box.build / box.list.boxes
+              # are live tools), which run here as part of this bed's eval-live — no
+              # duplicate surface check needed (R3).
+    # Cross-deployment probing (pod→pod): a Chrome DRIVER pod (peer) CDP-probes
+    # this web-server SUBJECT pod over the shared `charly` network. Proves `on:` +
+    # ${PEER_HOST:<subject>} + peer: end-to-end — the canonical "a different kind
+    # of deployment tests another" case. The chrome peer is brought up ALONGSIDE
+    # the root by bringUpPeers (the shared deploy+eval lifecycle, R3); it is an
+    # instrument, never eval-live'd itself.
+    eval-versa-pod:
+        target: pod
+        box: versa
+        disposable: true
+        lifecycle: dev
+        # 2026-05 cutover: `port: [auto]` lets charly config allocate free host
+        # ports at deploy time; the env_provides templates on the producer
+        # layers substitute against the resolved expansion.
+        port: [auto]
+        description:
+            feature: "R10 bed for versa — exercises the full OSM analytics + vector-tile pipeline (quackosm PBF→GeoParquet, tippecanoe→PMTiles, martin serve, maputnik editor) plus the marimo MCP server (10 read-only notebook-inspection tools) plus the marimo-team/learn curriculum import surface plus the polars-st/geopolars/geoarrow/lonboard geospatial extensions. The 2026-05 cutover replaced an 8-element explicit port list + 4-entry env block with `port: [auto]` and per-producing-layer env_provides templates. Followup 2026-05-12: removed the airflow MCP wrapper (no Airflow-3 v2 release of mcp-server-apache-airflow exists); consumers drive Airflow via direct REST /api/v2 calls."
+            tag: [testing]
+    eval-githubrunner-pod:
+        target: pod
+        box: githubrunner
+        disposable: true
+        lifecycle: dev
+        # No port: — the runner has no listening service (host net, outbound only).
+        # No RUNNER_TOKEN/RUNNER_ORG → the guarded post_enable no-ops, so the bed
+        # proves the rootless CachyOS composition WITHOUT GitHub registration.
+        # Inherits the github-runner + container-nesting baked eval: checks
+        # (functional binary runs + the rootless nested-podman proof).
+        description:
+            feature: "R10 bed proving the rootless CachyOS githubrunner composition — runs the actions-runner config.sh (.NET/icu deps resolved), cosign/skopeo/buildah/go, rootless nested podman at uid 1000 (unmask=/proc/*, zero caps), newuidmap file-caps, ghcr mirror — WITHOUT GitHub registration (no token → guarded hooks no-op)."
+            tag: [working]
+    eval-android-emulator-pod:
+        target: pod
+        box: android-emulator
+        disposable: true
+        lifecycle: dev
+        port:
+            - 35000:3000 # Selkies HTTPS web UI
+            - 35001:4723 # Appium WebDriver
+            - 35002:5037 # ADB server
+            - 35003:2222 # SSH
+        # Nested kind:android devices, deployed onto the STARTED emulator pod
+        # (the bed runner deploys nested children after `charly start`, then runs
+        # eval-live). `device` is the in-pod emulator (apkeep in-pod installs
+        # the android-test-apps layer's F-Droid); `device-net` addresses the
+        # SAME emulator as a remote adb ENDPOINT (goadb push installs the
+        # android-apidemos committed APK), exercising the remote/physical
+        # device code path with no hardware. App presence is asserted by the
+        # android-emulator-layer baked eval (apk-fdroid-* / apk-net-apidemos-*).
+        nested:
+            device:
+                target: android
+                android: pixel9a-36
+                add_candy:
+                    - android-test-apps
+            device-net:
+                target: android
+                android: pixel9a-endpoint
+                add_candy:
+                    - android-apidemos
+        description:
+            feature: "R10 bed for android-emulator — Android 16 (API 36 x86_64 google_apis_playstore) emulator on pixel_9a with /dev/kvm passthrough, Selkies web UI on https://localhost:35000, Appium WebDriver on http://localhost:35001/wd/hub, ADB via ANDROID_ADB_SERVER_SOCKET=tcp:localhost:35002 adb devices. Play Store + GMS + Chrome preinstalled (asserted present + launchable). Nested kind:android devices install apps via the `apk:` package format: an in-pod emulator device installs F-Droid (apkeep in-pod), and a remote adb-ENDPOINT device installs the committed ApiDemos (goadb over the published 35002 port) — proving target:android + nested deployment for both device kinds. CPU/RAM auto-size from the host."
+            tag: [testing]
+        eval:
+            # eval-coverage gate for the unified `charly status` ANDROID substrate +
+            # the nested-deploy tree: the android device row(s) must render, and
+            # the nested structure must overlay under the emulator pod. Fails if
+            # AndroidCollector or status_nested regress.
+            - id: status-shows-android
+              scope: deploy
+              command: charly status --json
+              in_container: false
+              stdout:
+                - contains: '"kind": "android"'
+            - id: status-shows-nested
+              scope: deploy
+              command: charly status --json
+              in_container: false
+              stdout:
+                # The pod→android nested tree renders as a JSON `nested:[…]`
+                # array under the emulator pod (children bare-keyed device/
+                # device-net; the parent context comes from the nesting, so
+                # there is no flattened dotted path). Assert the overlay
+                # structure. Fails if status_nested stops nesting the
+                # AndroidCollector rows under their parent pod.
+                - contains: '"nested"'
+    # eval-openclaw-pod deploys the minimal headless openclaw gateway on the
+    # CachyOS (Arch) base. Exercises the cachyos→arch-builder npm build of the
+    # openclaw package + the dbus/charly/socat/supervisord stack. The deploy-scope
+    # probe confirms the openclaw CLI binary landed under ~/.npm-global/bin.
+    eval-openclaw-pod:
+        target: pod
+        box: openclaw
+        disposable: true
+        lifecycle: dev
+        port: [auto] # auto-allocate free host ports (avoid fixed-port collisions)
+        description:
+            feature: "R10 bed for the minimal headless openclaw gateway on the CachyOS (Arch) base — exercises the cachyos→arch-builder npm build of the openclaw package plus the dbus/charly/socat/supervisord layer stack."
+            tag: [testing]
+        eval:
+            - {id: eoc-pod-openclaw-binary, scope: deploy, file: "${HOME}/.npm-global/bin/openclaw", exists: true}
+    # eval-openclaw-full-pod deploys the maximal headless openclaw-full on the
+    # CachyOS (Arch) base — a non-browser gateway (no chrome/chrome-cdp). Exercises
+    # the tool stack incl. gogcli@latest (Arch go 1.26.x) and the ffmpeg/sqlite
+    # Arch package coverage. The eval: block asserts those migration-critical
+    # artifacts are present on the running container.
+    eval-openclaw-full-pod:
+        target: pod
+        box: openclaw-full
+        disposable: true
+        lifecycle: dev
+        port: [auto] # auto-allocate free host ports (avoid fixed-port collisions)
+        description:
+            feature: "R10 bed for the maximal headless openclaw-full on the CachyOS (Arch) base — a non-browser gateway exercising the tool stack incl. the gogcli@latest go install (Arch go 1.26.x) and the ffmpeg/sqlite Arch package coverage."
+            tag: [testing]
+        eval:
+            - {id: eocf-pod-gog-latest, scope: deploy, file: "${HOME}/go/bin/gog", exists: true}
+            - {id: eocf-pod-ffmpeg-arch, scope: deploy, file: /usr/bin/ffmpeg, exists: true}
+            - {id: eocf-pod-sqlite-arch, scope: deploy, file: /usr/bin/sqlite3, exists: true}
+    # eval-openclaw-desktop-pod deploys the all-in-one openclaw-desktop image on
+    # the CachyOS (Arch) base — the selkies streaming desktop fused with the
+    # openclaw-full gateway/tool stack (claude-code/codex/gemini), a CPU ollama,
+    # and the full nested charly toolchain (charly + container-nesting + golang + gh).
+    # Ports are remapped into a free 340xx block to coexist with the
+    # selkies/openclaw beds. The image-level eval (baked) carries the nested-
+    # rootless posture + nested-podman + libvirt-session + charly version/doctor +
+    # the three services' liveness; this bed's deploy-scope probes assert the
+    # cross-stack headline artifacts (AUR chrome, selkies HTTPS UI, the AI CLIs,
+    # the ollama binary) actually landed on the running combined container.
+    eval-openclaw-desktop-pod:
+        target: pod
+        box: openclaw-desktop
+        disposable: true
+        lifecycle: dev
+        port: [auto] # auto-allocate free host ports (avoid fixed-port collisions)
+        description:
+            feature: "R10 bed for openclaw-desktop — the all-in-one CachyOS image fusing the selkies streaming desktop, the openclaw-full gateway+tools stack (claude-code/codex/gemini), a CPU ollama, and the full nested charly toolchain (charly + container-nesting + golang + gh). Exercises AUR google-chrome, the ollama binary tarball on a pac base, and nested rootless podman on one image."
+            tag: [testing]
+        eval:
+            # selkies desktop — AUR browser + the streaming UI is live
+            - {id: eod-pod-chrome-aur, scope: deploy, file: /usr/bin/google-chrome-stable, exists: true}
+            - {id: eod-pod-selkies-https, scope: deploy, http: "https://127.0.0.1:${HOST_PORT:3000}/", status: 200, allow_insecure: true}
+            # openclaw — the three AI CLIs landed on the running container
+            - {id: eod-pod-claude, scope: deploy, file: "${HOME}/.npm-global/bin/claude", exists: true}
+            - {id: eod-pod-codex, scope: deploy, file: "${HOME}/.npm-global/bin/codex", exists: true}
+            - {id: eod-pod-gemini, scope: deploy, file: "${HOME}/.npm-global/bin/gemini", exists: true}
+            # CPU ollama binary (distro-agnostic tarball, no cuda)
+            - {id: eod-pod-ollama-bin, scope: deploy, file: /usr/bin/ollama, exists: true}
 deploy:
     # charly-cachyos — the operator CachyOS workstation profile (target: local +
     # host: local). NOT a zero-side-effect test bed (it mutates the operator's
@@ -672,7 +911,7 @@ deploy:
             verify: true
             # CUDA builder so the cross-host pixi build of pixelflux links the real
             # NVENC encoder (the stock arch-builder has no CUDA → NVENC stub).
-            builder_image: charly.cuda-arch-builder
+            builder_image: arch.cuda-arch-builder
         env:
             - EDITOR=nvim
             - PAGER=less
@@ -1077,3 +1316,35 @@ vm:
                       #     workspace-mount layer; passthrough preserves uid/gid).
 pod: {}
 k8s: {}
+android:
+    # In-pod emulator device — the android-emulator image bakes the Android 16
+    # (API 36, google_apis_playstore x86_64) system image + the pixel_9a AVD;
+    # this device REFERENCES it (the API level / system image are build-time
+    # properties, not driven from here). apkeep runs in-pod; adb reaches the
+    # emulator via the pod. google_account names the credential-store secret
+    # keys the apkeep google-play source reads (an AAS token, NOT a password).
+    pixel9a-36:
+        box: android-emulator
+        device: pixel_9a
+        api_level: 36
+        google_account:
+            email_secret: GOOGLE_ACCOUNT_EMAIL
+            token_secret: GOOGLE_AAS_TOKEN
+    # Remote/physical device example — addresses an adb SERVER over the network
+    # (a host running `adb connect` to a phone, OR an emulator pod's published
+    # 5037). apkeep runs on the HOST and the APK is pushed via goadb to the
+    # endpoint; the host needs apkeep + android-tools (adb) for the `package:`
+    # download path (PKGBUILD optdepends). The `apk: <committed-file>` path
+    # needs neither (pure goadb push). The 127.0.0.1:35002 value here matches
+    # the eval-android-emulator-pod bed's published ADB port — it lets the
+    # remote/endpoint code path be exercised against the bed's own emulator
+    # with no physical hardware.
+    pixel9a-endpoint:
+        adb:
+            # ${HOST_PORT:5037} resolves at deploy time to the PARENT emulator
+            # pod's host-mapped adb-server port (container 5037), so the endpoint
+            # follows the pod's published port instead of hard-coding it. Used
+            # nested under eval-android-emulator-pod (which publishes …:5037).
+            host: 127.0.0.1:${HOST_PORT:5037}
+        serial: emulator-5554
+        device: pixel_9a
