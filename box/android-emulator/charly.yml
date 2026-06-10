@@ -43,20 +43,8 @@ box:
             the layer declares this via security.devices so the quadlet
             auto-emits AddDevice=/dev/kvm.
         tag: [testing]
-    eval:
-        - id: image-emulator-binary
-          file: /opt/android-sdk/emulator/emulator
-          exists: true
-        - id: image-adb-binary
-          file: /opt/android-sdk/platform-tools/adb
-          exists: true
-        - id: image-appium-binary
-          file: /usr/bin/appium
-          exists: true
-        - id: image-java-binary
-          file: /usr/bin/java
-          exists: true
-        - id: image-start-emulator-script
-          file: /usr/local/bin/start-emulator
-          exists: true
-          mode: "0755"
+    # No box-level eval: the emulator/adb/appium/java binaries and the
+    # start-emulator service each belong to their providing candy's baked eval
+    # (android-sdk emulator-binary/adb-binary, appium-server appium-binary,
+    # java-openjdk java-binary, android-emulator-layer start-emulator-script +
+    # emulator-service-running), so one check covers every box composing them.
