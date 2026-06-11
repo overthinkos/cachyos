@@ -59,8 +59,8 @@ eval:
         # step), and the baked charly-binary/charly-version checks run on the guest.
         # The explicit pac localpkg AUTO-RESOLVE assertion (pacman -U pulling the
         # mandatory repo deps podman/libvirt/tailscale/gocryptfs) lives ONCE, on
-        # main's purpose-built `eval-charly-vm` pac witness — a copy here re-tested
-        # the identical pacman path on a second bed, so it is centralized there.
+        # main's purpose-built `eval-charly-vm` pac witness — the dedicated home for
+        # that assertion, so it is not duplicated across beds.
         add_candy:
             - '@github.com/overthinkos/overthink/candy/charly:v2026.162.0856'
         install_opts:
