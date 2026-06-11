@@ -8,6 +8,3 @@ box:
         - '@github.com/overthinkos/overthink/candy/unsloth-studio:v2026.160.2017'
         - '@github.com/overthinkos/overthink/candy/notebook-finetuning:v2026.160.2017'
         - '@github.com/overthinkos/overthink/candy/dbus:v2026.160.2017'
-    port:
-        - 8888:8888
-        - 8000:8000

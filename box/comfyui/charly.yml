@@ -7,5 +7,3 @@ box:
         - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.160.2017'
         - '@github.com/overthinkos/overthink/candy/comfyui:v2026.160.2017'
         - '@github.com/overthinkos/overthink/candy/dbus:v2026.160.2017'
-    port:
-        - 8188:8188

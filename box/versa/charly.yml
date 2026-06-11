@@ -25,14 +25,6 @@ box:
         - '@github.com/overthinkos/overthink/candy/notebook-graph:v2026.160.2017' # data layer: seeds /workspace/notebooks/gpu-libraries-demo.py — cuGraph/cuML/PyG/graphistry demo
         - '@github.com/overthinkos/overthink/candy/debug-tools:v2026.160.2017' # network/process/file inspection toolkit for debugging the deployed services in this image
         - '@github.com/overthinkos/overthink/candy/dbus:v2026.160.2017'
-    port:
-        - 2718:2718 # marimo edit + marimo MCP server (/mcp/server)
-        - 28080:8080 # airflow api-server (host 8080 taken by traefik)
-        - 3000:3000 # martin tile server (deploy.yml overrides host port to 23000)
-        - 8000:8000 # maputnik static editor (deploy.yml overrides host port to 28000)
-        - 8001:8001 # pmtiles-viewer SPA (deploy.yml overrides host port to 28001)
-        - 8002:8002 # versatiles-frontend SPA (deploy.yml overrides host port to 28002)
-        - 8090:8090 # versatiles serve HTTP (deploy.yml overrides host port to 28090)
     # Image-level deploy-scope eval probes — run AFTER every layer's
     # eval block on `charly eval live versa`. The first probe is the
     # end-to-end driver: it triggers all 6 self-authored DAGs via

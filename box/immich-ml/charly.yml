@@ -20,5 +20,3 @@ box:
         - '@github.com/overthinkos/overthink/candy/immich:v2026.160.2017'
         - '@github.com/overthinkos/overthink/candy/immich-ml:v2026.160.2017'
         - '@github.com/overthinkos/overthink/candy/dbus:v2026.160.2017'
-    port:
-        - 2283:2283

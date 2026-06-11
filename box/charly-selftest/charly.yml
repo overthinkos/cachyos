@@ -15,5 +15,3 @@ box:
         - '@github.com/overthinkos/overthink/candy/charly-mcp:v2026.160.2017'
         - '@github.com/overthinkos/overthink/candy/container-nesting:v2026.160.2017'
         - '@github.com/overthinkos/overthink/candy/claude-code:v2026.160.2017'
-    port:
-        - 18765:18765

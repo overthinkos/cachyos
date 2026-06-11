@@ -19,7 +19,7 @@
 #  Directly buildable: `charly box build cachyos` (from the parent repo:
 #  `charly -C box/cachyos box build cachyos`; anywhere:
 #  `charly --repo overthinkos/cachyos box build cachyos`).
-version: 2026.161.1650
+version: 2026.161.2303
 defaults:
     platform:
         - linux/amd64
@@ -383,7 +383,6 @@ eval:
         box: jupyter-ml
         disposable: true
         lifecycle: dev
-        port: [auto] # auto-allocate free host ports (avoid fixed-port collisions)
         description:
             feature: R10 bed for the CachyOS GPU jupyter-ml image — JupyterLab + ML stack on the Arch CUDA base
             tag: [testing]
@@ -392,7 +391,6 @@ eval:
         box: ollama
         disposable: true
         lifecycle: dev
-        port: [auto] # auto-allocate free host ports (avoid fixed-port collisions)
         description:
             feature: R10 bed for the CachyOS GPU ollama image — ollama server on the Arch CUDA base
             tag: [testing]
@@ -401,7 +399,6 @@ eval:
         box: comfyui
         disposable: true
         lifecycle: dev
-        port: [auto] # auto-allocate free host ports (avoid fixed-port collisions)
         description:
             feature: R10 bed for the CachyOS GPU comfyui image — ComfyUI server on the Arch CUDA base
             tag: [testing]
@@ -410,7 +407,6 @@ eval:
         box: unsloth-studio
         disposable: true
         lifecycle: dev
-        port: [auto] # auto-allocate free host ports (avoid fixed-port collisions)
         description:
             feature: R10 bed for the CachyOS GPU unsloth-studio image — fine-tuning notebook + API on the Arch CUDA base
             tag: [testing]
@@ -419,7 +415,6 @@ eval:
         box: immich-ml
         disposable: true
         lifecycle: dev
-        port: [auto] # auto-allocate free host ports (avoid fixed-port collisions)
         description:
             feature: R10 bed for the CachyOS GPU immich-ml image — full Immich + PostgreSQL + VectorChord + Redis + ML stack on the Arch CUDA base
             tag: [testing]
@@ -428,7 +423,6 @@ eval:
         box: selkies-kde
         disposable: true
         lifecycle: dev
-        port: [auto] # auto-allocate free host ports (avoid fixed-port collisions)
         description:
             feature: "R10 host-pod bed — full KDE Plasma selkies flavor (de-SDDM startplasma-wayland nested in pixelflux, headless, no seat) on the plain CachyOS base. Inherits the image's baked kde-selkies-stable + selkies stream (:3000 HTTPS) + chrome-cdp + the selkies-layer VAAPI H264 encode probe — streams + HW-encodes on the AMD iGPU host pod. selkies-kde's canonical home (relocated from main's test vehicle)."
             tag: [testing]
@@ -447,7 +441,6 @@ eval:
         box: selkies-labwc
         disposable: true
         lifecycle: dev
-        port: [auto] # auto-allocate free host ports (avoid fixed-port collisions)
         description:
             feature: "R10 bed for the CPU selkies-labwc streaming desktop on the CachyOS (Arch) base — exercises the cachyos→arch-builder pixi build of selkies (pixelflux Rust compile) plus the AUR build of google-chrome + wlrctl and the labwc/waybar/swaync/pipewire/traefik/sshd layer stack."
             tag: [testing]
@@ -567,7 +560,6 @@ eval:
         box: charly-selftest
         disposable: true
         lifecycle: dev
-        port: [auto] # auto-allocate free host ports (avoid fixed-port collisions)
         description:
             feature: charly self-test — every charly command group exercised in-container on the full toolchain
             tag: [working]
@@ -663,10 +655,6 @@ eval:
         box: versa
         disposable: true
         lifecycle: dev
-        # 2026-05 cutover: `port: [auto]` lets charly config allocate free host
-        # ports at deploy time; the env_provides templates on the producer
-        # layers substitute against the resolved expansion.
-        port: [auto]
         description:
             feature: "R10 bed for versa — exercises the full OSM analytics + vector-tile pipeline (quackosm PBF→GeoParquet, tippecanoe→PMTiles, martin serve, maputnik editor) plus the marimo MCP server (10 read-only notebook-inspection tools) plus the marimo-team/learn curriculum import surface plus the polars-st/geopolars/geoarrow/lonboard geospatial extensions. The 2026-05 cutover replaced an 8-element explicit port list + 4-entry env block with `port: [auto]` and per-producing-layer env_provides templates. Followup 2026-05-12: removed the airflow MCP wrapper (no Airflow-3 v2 release of mcp-server-apache-airflow exists); consumers drive Airflow via direct REST /api/v2 calls."
             tag: [testing]
@@ -688,11 +676,11 @@ eval:
         box: android-emulator
         disposable: true
         lifecycle: dev
-        port:
-            - 35000:3000 # Selkies HTTPS web UI
-            - 35001:4723 # Appium WebDriver
-            - 35002:5037 # ADB server
-            - 35003:2222 # SSH
+        # No port: — every container port the box exposes (3000/4723/5037/2222
+        # + the selkies-inherited chrome 9222 / chrome-devtools-mcp 9224) is
+        # auto-allocated to a free 127.0.0.1 host port at deploy. The eval probes
+        # resolve the live mapping via ${HOST_PORT:N}; `charly status` shows it.
+        # Conflict-free with sibling beds (no fixed 35xxx range).
         # Nested kind:android devices, deployed onto the STARTED emulator pod
         # (the bed runner deploys nested children after `charly start`, then runs
         # eval-live). `device` is the in-pod emulator (apkeep in-pod installs
@@ -706,14 +694,14 @@ eval:
                 target: android
                 android: pixel9a-36
                 add_candy:
-                    - android-test-apps
+                    - '@github.com/overthinkos/overthink/candy/android-test-apps:v2026.160.2017'
             device-net:
                 target: android
                 android: pixel9a-endpoint
                 add_candy:
-                    - android-apidemos
+                    - '@github.com/overthinkos/overthink/candy/android-apidemos:v2026.160.2017'
         description:
-            feature: "R10 bed for android-emulator — Android 16 (API 36 x86_64 google_apis_playstore) emulator on pixel_9a with /dev/kvm passthrough, Selkies web UI on https://localhost:35000, Appium WebDriver on http://localhost:35001/wd/hub, ADB via ANDROID_ADB_SERVER_SOCKET=tcp:localhost:35002 adb devices. Play Store + GMS + Chrome preinstalled (asserted present + launchable). Nested kind:android devices install apps via the `apk:` package format: an in-pod emulator device installs F-Droid (apkeep in-pod), and a remote adb-ENDPOINT device installs the committed ApiDemos (goadb over the published 35002 port) — proving target:android + nested deployment for both device kinds. CPU/RAM auto-size from the host."
+            feature: "R10 bed for android-emulator — Android 16 (API 36 x86_64 google_apis_playstore) emulator on pixel_9a with /dev/kvm passthrough. Every published port (Selkies web UI 3000, Appium WebDriver 4723, ADB server 5037, SSH 2222, plus the selkies-inherited chrome 9222 / chrome-devtools-mcp 9224) is auto-allocated to a free 127.0.0.1 host port at deploy; `charly status` shows the live mapping and the eval probes resolve it via ${HOST_PORT:N}. Play Store + GMS + Chrome preinstalled (asserted present + launchable). Nested kind:android devices install apps via the `apk:` package format: an in-pod emulator device installs F-Droid (apkeep in-pod), and a remote adb-ENDPOINT device installs the committed ApiDemos (goadb over the published ADB port) — proving target:android + nested deployment for both device kinds. CPU/RAM auto-size from the host."
             tag: [testing]
         eval:
             # eval-coverage gate for the unified `charly status` ANDROID substrate +
@@ -747,7 +735,6 @@ eval:
         box: openclaw
         disposable: true
         lifecycle: dev
-        port: [auto] # auto-allocate free host ports (avoid fixed-port collisions)
         description:
             feature: "R10 bed for the minimal headless openclaw gateway on the CachyOS (Arch) base — exercises the cachyos→arch-builder npm build of the openclaw package plus the dbus/charly/socat/supervisord layer stack."
             tag: [testing]
@@ -763,7 +750,6 @@ eval:
         box: openclaw-full
         disposable: true
         lifecycle: dev
-        port: [auto] # auto-allocate free host ports (avoid fixed-port collisions)
         description:
             feature: "R10 bed for the maximal headless openclaw-full on the CachyOS (Arch) base — a non-browser gateway exercising the tool stack incl. the gogcli@latest go install (Arch go 1.26.x) and the ffmpeg/sqlite Arch package coverage."
             tag: [testing]
@@ -786,7 +772,6 @@ eval:
         box: openclaw-desktop
         disposable: true
         lifecycle: dev
-        port: [auto] # auto-allocate free host ports (avoid fixed-port collisions)
         description:
             feature: "R10 bed for openclaw-desktop — the all-in-one CachyOS image fusing the selkies streaming desktop, the openclaw-full gateway+tools stack (claude-code/codex/gemini), a CPU ollama, and the full nested charly toolchain (charly + container-nesting + golang + gh). Exercises AUR google-chrome, the ollama binary tarball on a pac base, and nested rootless podman on one image."
             tag: [testing]

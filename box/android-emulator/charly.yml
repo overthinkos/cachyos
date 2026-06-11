@@ -9,18 +9,6 @@ box:
         - '@github.com/overthinkos/overthink/candy/android-sdk:v2026.160.2017'
         - '@github.com/overthinkos/overthink/candy/appium-server:v2026.160.2017'
         - '@github.com/overthinkos/overthink/candy/android-emulator-layer:v2026.160.2017'
-    port:
-        - "3000:3000"
-        - "4723:4723"
-        - "5037:5037"
-        - "2222:2222"
-        # Inherited from the selkies-desktop layer chain — chrome-cdp
-        # publishes 9222 (Chrome DevTools Protocol) and chrome-devtools-mcp
-        # publishes 9224 (Streamable HTTP MCP). The mcp-provides OCI label
-        # baked into selkies-desktop expects these ports published; declare
-        # them here so inherited eval probes resolve correctly.
-        - "9222:9222"
-        - "9224:9224"
     env:
         - EMULATOR_NAME=charly_avd_36
         - EMULATOR_API_LEVEL=36
