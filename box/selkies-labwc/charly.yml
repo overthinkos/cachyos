@@ -14,15 +14,9 @@ box:
     platform:
         - linux/amd64
     candy:
-        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.162.0856'
-        - '@github.com/overthinkos/overthink/candy/selkies-desktop:v2026.162.0856'
-        - '@github.com/overthinkos/overthink/candy/dbus:v2026.162.0856'
-    eval:
-        - command: test -x /usr/bin/labwc && test -x /usr/bin/google-chrome-stable && test -x /usr/local/bin/traefik && test -x /usr/sbin/sshd
-          id: selkies-labwc-binaries
-          exit_status: 0
-        - addr: 127.0.0.1:${HOST_PORT:9224}
-          id: selkies-labwc-chrome-devtools-mcp-port
-          timeout: 5s
-          scope: deploy
-          reachable: true
+        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.162.1442'
+        - '@github.com/overthinkos/overthink/candy/selkies-desktop:v2026.162.1442'
+        - '@github.com/overthinkos/overthink/candy/dbus:v2026.162.1442'
+    # No box-level eval: the labwc/chrome/traefik/sshd binaries belong to their
+    # candies (labwc, chrome, selkies, sshd) and the chrome-devtools-mcp port to
+    # candy/chrome-devtools-mcp — one candy check covers every box composing them.

@@ -4,7 +4,7 @@ box:
     platform:
         - linux/amd64
     candy:
-        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.162.0856'
-        - '@github.com/overthinkos/overthink/candy/unsloth-studio:v2026.162.0856'
-        - '@github.com/overthinkos/overthink/candy/notebook-finetuning:v2026.162.0856'
-        - '@github.com/overthinkos/overthink/candy/dbus:v2026.162.0856'
+        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.162.1442'
+        - '@github.com/overthinkos/overthink/candy/unsloth-studio:v2026.162.1442'
+        - '@github.com/overthinkos/overthink/candy/notebook-finetuning:v2026.162.1442'
+        - '@github.com/overthinkos/overthink/candy/dbus:v2026.162.1442'

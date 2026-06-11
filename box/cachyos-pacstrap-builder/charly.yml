@@ -9,7 +9,7 @@ box:
     build:
         - pac
     candy:
-        - '@github.com/overthinkos/overthink/candy/pacstrap-builder:v2026.162.1207'
+        - '@github.com/overthinkos/overthink/candy/pacstrap-builder:v2026.162.1442'
     # No box-level eval: the pacstrap/arch-install-scripts/grub/parted toolchain
     # checks live on the pacstrap-builder candy, so ONE check covers this box AND
     # arch-pacstrap-builder.

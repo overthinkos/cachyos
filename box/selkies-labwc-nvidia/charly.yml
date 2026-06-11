@@ -14,9 +14,9 @@ box:
     platform:
         - linux/amd64
     candy:
-        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.162.0856'
-        - '@github.com/overthinkos/overthink/candy/selkies-desktop:v2026.162.0856'
-        - '@github.com/overthinkos/overthink/candy/dbus:v2026.162.0856'
+        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.162.1442'
+        - '@github.com/overthinkos/overthink/candy/selkies-desktop:v2026.162.1442'
+        - '@github.com/overthinkos/overthink/candy/dbus:v2026.162.1442'
     # Build-scope proof the REAL NvencEncoder was compiled (not the AMD/CPU
     # stub) — the regression-proof eval-coverage for this image's NVENC
     # functionality. NvEncodeAPICreateInstance is the NVENC SDK entry point the
