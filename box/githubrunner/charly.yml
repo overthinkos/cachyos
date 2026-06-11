@@ -7,11 +7,11 @@ box:
     platform:
         - linux/amd64
     candy:
-        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.160.2017'
-        - '@github.com/overthinkos/overthink/candy/github-runner:v2026.160.2017'
-        - '@github.com/overthinkos/overthink/candy/charly:v2026.160.2017'
-        - '@github.com/overthinkos/overthink/candy/dbus:v2026.160.2017'
-        - '@github.com/overthinkos/overthink/candy/container-nesting:v2026.160.2017'
+        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.162.0856'
+        - '@github.com/overthinkos/overthink/candy/github-runner:v2026.162.0856'
+        - '@github.com/overthinkos/overthink/candy/charly:v2026.162.0856'
+        - '@github.com/overthinkos/overthink/candy/dbus:v2026.162.0856'
+        - '@github.com/overthinkos/overthink/candy/container-nesting:v2026.162.0856'
     # No uid/user override and NO image-level security: block → resolves to
     # container-nesting's rootless posture (cap_add:[], unmask=/proc/*,
     # /dev/fuse, /dev/net/tun) at uid 1000. Same shape as openclaw-desktop.

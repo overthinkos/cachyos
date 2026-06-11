@@ -9,7 +9,7 @@ box:
     build:
         - pac
     candy:
-        - '@github.com/overthinkos/overthink/candy/pacstrap-builder:v2026.160.2017'
+        - '@github.com/overthinkos/overthink/candy/pacstrap-builder:v2026.162.0856'
     eval:
         - id: cpb-pacstrap-binary
           file: /usr/sbin/pacstrap

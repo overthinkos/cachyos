@@ -14,15 +14,15 @@ box:
     platform:
         - linux/amd64
     candy:
-        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.160.2017'
-        - '@github.com/overthinkos/overthink/candy/selkies-desktop:v2026.160.2017'
-        - '@github.com/overthinkos/overthink/candy/openclaw-full:v2026.160.2017'
-        - '@github.com/overthinkos/overthink/candy/ollama:v2026.160.2017'
-        - '@github.com/overthinkos/overthink/candy/charly:v2026.160.2017'
-        - '@github.com/overthinkos/overthink/candy/container-nesting:v2026.160.2017'
-        - '@github.com/overthinkos/overthink/candy/golang:v2026.160.2017'
-        - '@github.com/overthinkos/overthink/candy/gh:v2026.160.2017'
-        - '@github.com/overthinkos/overthink/candy/dbus:v2026.160.2017'
+        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.162.0856'
+        - '@github.com/overthinkos/overthink/candy/selkies-desktop:v2026.162.0856'
+        - '@github.com/overthinkos/overthink/candy/openclaw-full:v2026.162.0856'
+        - '@github.com/overthinkos/overthink/candy/ollama:v2026.162.0856'
+        - '@github.com/overthinkos/overthink/candy/charly:v2026.162.0856'
+        - '@github.com/overthinkos/overthink/candy/container-nesting:v2026.162.0856'
+        - '@github.com/overthinkos/overthink/candy/golang:v2026.162.0856'
+        - '@github.com/overthinkos/overthink/candy/gh:v2026.162.0856'
+        - '@github.com/overthinkos/overthink/candy/dbus:v2026.162.0856'
     eval:
         # --- build scope: binaries present across all four stacks ---
         - command: test -x /usr/bin/labwc && test -x /usr/bin/google-chrome-stable && test -x /usr/local/bin/traefik && test -x /usr/sbin/sshd

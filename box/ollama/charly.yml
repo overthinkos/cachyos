@@ -4,6 +4,6 @@ box:
     platform:
         - linux/amd64
     candy:
-        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.160.2017'
-        - '@github.com/overthinkos/overthink/candy/ollama:v2026.160.2017'
-        - '@github.com/overthinkos/overthink/candy/dbus:v2026.160.2017'
+        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.162.0856'
+        - '@github.com/overthinkos/overthink/candy/ollama:v2026.162.0856'
+        - '@github.com/overthinkos/overthink/candy/dbus:v2026.162.0856'
