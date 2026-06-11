@@ -52,40 +52,20 @@ eval:
         vm: cachyos-vm
         disposable: true
         lifecycle: dev
-        # pac localpkg AUTO-RESOLVE witness. charly on a BARE cachyos bootstrap VM
-        # (NO cachyos-extras). The charly layer's localpkg: builds opencharly-git from
-        # the superproject pkg/arch via makepkg, then `pacman -U`'s it onto the
-        # guest — and `pacman -U` AUTO-RESOLVES the package's MANDATORY repo deps
-        # (podman, libvirt, tailscale, gocryptfs, …) from the cachyos/arch repos.
-        # On this BARE VM none of those deps are pre-present, so they can ONLY be
-        # there if the auto-resolving install pulled them. The optional AUR deps
-        # (cloudflared-bin, gvisor-tap-vsock) are NOT installed — they are
-        # optdepends, opt-in only. The check below FAILS if localpkg didn't install
-        # opencharly-git or pacman -U didn't auto-resolve the mandatory set.
+        # The cachyos bootstrap-VM R10 canary: pacstrap builds the cachyos rootfs
+        # from scratch, the guest boots, the charly candy deploys onto it (its
+        # localpkg: builds opencharly-git from the superproject pkg/arch via makepkg
+        # and `pacman -U`s it in — a failed install fails THIS bed at the deploy
+        # step), and the baked charly-binary/charly-version checks run on the guest.
+        # The explicit pac localpkg AUTO-RESOLVE assertion (pacman -U pulling the
+        # mandatory repo deps podman/libvirt/tailscale/gocryptfs) lives ONCE, on
+        # main's purpose-built `eval-charly-vm` pac witness — a copy here re-tested
+        # the identical pacman path on a second bed, so it is centralized there.
         add_candy:
             - '@github.com/overthinkos/overthink/candy/charly:v2026.162.0856'
         install_opts:
             allow_repo_changes: true
             allow_root_tasks: true
-        eval:
-            - id: localpkg-pac-autoresolve
-              scope: deploy
-              description: charly installed as the opencharly-git pacman package via localpkg, with its mandatory repo deps auto-resolved by `pacman -U` (no manual closure)
-              command: |
-                # pacman -Q on a foreign (source-built) package succeeds only if it
-                # actually installed; the mandatory repo deps prove pacman -U
-                # auto-resolved them on this bare VM (absent unless the install pulled them).
-                pacman -Q opencharly-git >/dev/null 2>&1 &&
-                pacman -Q podman >/dev/null 2>&1 &&
-                pacman -Q libvirt >/dev/null 2>&1 &&
-                pacman -Q tailscale >/dev/null 2>&1 &&
-                pacman -Q gocryptfs >/dev/null 2>&1 &&
-                test "$(command -v charly)" -ef /usr/bin/charly &&
-                charly version &&
-                echo LOCALPKG-PAC-AUTORESOLVE-OK
-              stdout:
-                - contains: LOCALPKG-PAC-AUTORESOLVE-OK
-              exit_status: 0
     # Disposable R10 bed mirroring the cachyos-gpu WORKSTATION's exact dual-desktop
     # config — the acceptance gate for the live Part C migration:
     #   host (IOMMU on) → cachyos-gpu-vm (VFIO GPU passthrough, nvidia-open kernel
