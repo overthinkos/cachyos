@@ -1,18 +1,31 @@
 candy:
     version: 2026.151.0543
     name: cachyos-kde-settings
-    description: |
-        CachyOS desktop look-and-feel: the cachyos-* settings, theming, SDDM
-        theme, wallpapers, Plymouth boot theme and shell configs that the CachyOS
-        Calamares "CachyOS Packages" + KDE-Desktop netinstall groups ship. Pairs
-        with the generic kde-desktop layer (Plasma + SDDM) to reproduce a stock
-        CachyOS KDE workstation. Vendored in this submodule because every package
-        here lives in the CachyOS repo (not generic Arch); the VM bootstrap
-        already has the cachyos repos configured.
-
-        Host-specific entries from the netinstall (cachyos-kernel-manager,
-        mirrorlists, keyring, hooks, chwd) are intentionally omitted — the VM
-        manages its own kernel/repos and those would be inert or conflict.
+    description:
+        feature: CachyOS desktop look-and-feel — settings, theming, SDDM theme, wallpapers, Plymouth
+        narrative: |
+            Installs the cachyos-* settings, theming, SDDM theme, wallpapers,
+            Plymouth boot theme and shell configs the CachyOS netinstall ships,
+            plus SDDM autologin and an all-monitors Plasma panel autostart. Pairs
+            with the generic kde-desktop layer to reproduce a stock CachyOS KDE
+            workstation. Verifiable: the cachyos settings/theme/wallpaper packages
+            install and (at deploy scope) SDDM autologin is configured.
+        tag: [working]
+        scenario:
+            - name: cachyos-kde-settings-installed
+              step:
+                - then: the cachyos-settings package is installed
+                  package: cachyos-settings
+                  installed: true
+                - then: the cachyos-kde-settings package is installed
+                  package: cachyos-kde-settings
+                  installed: true
+            - name: sddm-autologin-configured
+              step:
+                - then: SDDM is configured to auto-login into the Plasma Wayland session
+                  scope: deploy
+                  file: /etc/sddm.conf.d/10-charly-autologin.conf
+                  contains: "Session=plasma.desktop"
     distro:
         arch:
             package:

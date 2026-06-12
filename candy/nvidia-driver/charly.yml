@@ -1,31 +1,31 @@
 candy:
     version: 2026.150.2158
     name: nvidia-driver
-    description: |
-        NVIDIA kernel driver (open module) + graphical-session userspace for a
-        CachyOS VM guest that has a physical GPU passed through via VFIO. The
-        KERNEL-side companion to the `nvidia` layer (which installs only the
-        userspace container toolkit): it installs the open kernel module,
-        blacklists the in-tree nouveau driver so it can't claim the passed-through
-        GPU, regenerates the initramfs, and requests a reboot so the module loads
-        on a clean boot.
-
-        Also installs the userspace bits a full KDE Plasma WAYLAND session on the
-        passthrough GPU needs: egl-wayland (the nvidia EGLStream external-platform
-        — without it kwin_wayland/SDDM-wayland fail on nvidia), the OpenCL ICD,
-        nvidia-settings, and the VA-API driver (decode + the streaming encode
-        path). nvidia-drm modeset=1 (set below) gives KMS so the compositor can
-        scan out to the real GPU output (physical monitor).
-
-        Only meaningful on a bare host / VM guest — never inside a container (a
-        container shares the host kernel and cannot load modules). The reboot is
-        honored by target:vm (reboot guest + wait); skipped at image build and on
-        target:local.
-
-        Pins the CachyOS prebuilt module (linux-cachyos-nvidia-open), which is
-        version-matched to the linux-cachyos kernel the bootstrap guest runs — no
-        dkms build, no kernel-headers, no prebuilt-vs-running skew. Lives in this
-        submodule alongside the GPU eval bed.
+    description:
+        feature: NVIDIA open kernel driver + Wayland userspace for a VFIO GPU-passthrough CachyOS VM guest
+        narrative: |
+            Installs the CachyOS prebuilt open kernel module
+            (linux-cachyos-nvidia-open) + nvidia-utils, egl-wayland (KDE Wayland on
+            NVIDIA), the OpenCL ICD, nvidia-settings and the VA-API driver;
+            blacklists nouveau, enables nvidia-drm modeset=1, installs a boot-time
+            CDI-generation oneshot, and requests a reboot. Guest/bare-host only
+            (never in a container). Verifiable: the modprobe + CDI unit files land
+            and the egl-wayland / opencl-nvidia packages install.
+        tag: [working]
+        scenario:
+            - name: nvidia-driver-config-installed
+              step:
+                - then: the nouveau blacklist + nvidia-drm modeset config is installed
+                  file: /etc/modprobe.d/charly-nvidia.conf
+                  contains: "blacklist nouveau"
+                - then: the boot-time CDI-generation service is installed
+                  file: /etc/systemd/system/charly-nvidia-cdi.service
+                  contains: "nvidia-ctk cdi generate"
+            - name: nvidia-wayland-userspace-installed
+              step:
+                - then: egl-wayland (the NVIDIA Wayland EGLStream platform) is installed
+                  package: egl-wayland
+                  installed: true
     distro:
         arch:
             package:

@@ -1,14 +1,25 @@
 candy:
     version: 2026.148.1730
     name: cuda-smoke
-    description: |
-        Bakes a tiny deterministic CUDA compute smoke test. Compiles a vector-add
-        kernel with nvcc at build time into /usr/local/bin/cuda-smoke; at runtime
-        the binary allocates device memory, runs the kernel, verifies the result,
-        and prints "CUDA-OK devices=<N>" (exit 0) or "CUDA-FAIL: <reason>"
-        (exit 1). Composed on top of cachyos.nvidia (which provides nvcc + cudart)
-        to form the cuda-eval image — the GPU-passthrough eval runs this inside a
-        container in the VM to prove real device compute, not just driver presence.
+    description:
+        feature: Deterministic CUDA compute smoke test compiled with nvcc at build time
+        narrative: |
+            Compiles a vector-add kernel with nvcc into /usr/local/bin/cuda-smoke;
+            at runtime it allocates device memory, runs the kernel, verifies the
+            result, and prints "CUDA-OK devices=<N>" (exit 0) or "CUDA-FAIL"
+            (exit 1). Composed on cachyos.nvidia to form the cuda-eval image — the
+            GPU-passthrough eval runs it in a container in the VM to prove real
+            device compute. Verifiable at build scope: the compiled binary exists.
+        tag: [working]
+        scenario:
+            - name: cuda-smoke-binary-built
+              step:
+                - then: the nvcc-compiled cuda-smoke binary exists at /usr/local/bin/cuda-smoke
+                  file: /usr/local/bin/cuda-smoke
+                  exists: true
+            - name: cuda-smoke-runs-on-gpu
+              step:
+                - then: on a GPU-passthrough guest, cuda-smoke runs the kernel and prints CUDA-OK
     distro:
         arch:
             package:

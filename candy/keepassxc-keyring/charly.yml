@@ -1,22 +1,31 @@
 candy:
     version: 2026.144.1443
     name: keepassxc-keyring
-    description: |
-        Configure KeePassXC as the freedesktop.org Secret Service provider on a
-        target:local host:
-          * Enable the FdoSecrets plugin in keepassxc.ini.
-          * Autostart KeePassXC on session login.
-          * Disable competing Secret Service daemons (gnome-keyring + kwallet)
-            at the per-user XDG-autostart and systemd-user-unit layers — fully
-            reversible, never touches the system package.
-          * Install the runtime packages (pinentry, libsecret) the
-            .secrets + direnv + GPG + KeePassXC chain depends on.
-          * Install generic direnv shell hooks for bash, zsh, and fish so .envrc
-            activates on `cd` regardless of the user's chosen shell.
-
-        Marking a specific .kdbx group as "Secret Service exposed" is per-database
-        state INSIDE the kdbx file — that is a one-time GUI step when the user
-        first opens their database; this layer cannot do it.
+    description:
+        feature: KeePassXC as the freedesktop.org Secret Service provider on a target:local host
+        narrative: |
+            Enables the KeePassXC FdoSecrets plugin, autostarts KeePassXC on login,
+            disables competing Secret Service daemons (gnome-keyring + kwallet)
+            reversibly, installs the pinentry/libsecret runtime deps, and wires
+            gpg-agent + ssh-agent + direnv shell hooks. Verifiable: the keepassxc +
+            pinentry-qt + secret-tool binaries exist and (at deploy scope)
+            FdoSecrets is enabled in keepassxc.ini.
+        tag: [working]
+        scenario:
+            - name: keepassxc-secret-service-installed
+              step:
+                - then: the keepassxc binary is installed and executable
+                  command: test -x /usr/bin/keepassxc
+                  exit_status: 0
+                - then: the secret-tool libsecret client is installed
+                  command: command -v secret-tool
+                  exit_status: 0
+            - name: fdosecrets-enabled
+              step:
+                - then: the FdoSecrets plugin is enabled in keepassxc.ini
+                  scope: deploy
+                  command: grep -q '^Enabled=true' ${HOME}/.config/keepassxc/keepassxc.ini
+                  exit_status: 0
     # keepassxc, gnupg, direnv stay in main (shared) → pulled by @github ref so
     # this locally-vendored layer's deps still resolve in this repo's namespace.
     require:

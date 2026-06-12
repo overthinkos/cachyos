@@ -1,12 +1,31 @@
 candy:
     version: 2026.144.1443
     name: wheel-nopasswd
-    description: |
-        Passwordless sudo for the wheel group. Installs sudo, ensures the
-        wheel group exists, adds the uid-1000 account to wheel, and writes
-        /etc/sudoers.d/20-nopasswd-wheel with `%wheel ALL=(ALL:ALL) NOPASSWD: ALL`
-        at mode 0440. Mirrors the convention used inside AUR-builder containers
-        by charly/deploy_target_local.go renderAurScript.
+    description:
+        feature: Passwordless sudo for the wheel group
+        narrative: |
+            Installs sudo, ensures the wheel group exists, adds the uid-1000
+            account to wheel, and writes /etc/sudoers.d/20-nopasswd-wheel
+            (`%wheel ALL=(ALL:ALL) NOPASSWD: ALL`, mode 0440). Verifiable: sudo is
+            installed and `sudo -n -l` shows a NOPASSWD rule for the user.
+        tag: [working]
+        scenario:
+            - name: passwordless-sudo-works
+              step:
+                - then: the sudo package is installed
+                  package: sudo
+                  installed: true
+                - then: the uid-1000 user has a passwordless sudo rule in effect
+                  command: |
+                    if [ "$(id -u)" = "0" ]; then
+                      account=$(getent passwd 1000 | cut -d: -f1)
+                      runuser -u "$account" -- sudo -n -l
+                    else
+                      sudo -n -l
+                    fi
+                  exit_status: 0
+                  stdout:
+                    - contains: "NOPASSWD"
     package:
         - sudo
     task:

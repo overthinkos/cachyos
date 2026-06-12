@@ -1,6 +1,28 @@
 candy:
     name: cachyos-gpu-desktop-eval
     version: 2026.151.0543
+    description:
+        feature: Shared desktop/GPU-stream verification layer for the CachyOS GPU workstation
+        narrative: |
+            Carries no install beyond the desktop-interaction test tools (ydotool)
+            and a deploy-scope eval block. Both the disposable bed
+            (eval-cachyos-gpu-vm) and the persistent operator deploy (cachyos-gpu)
+            add_layer this, so the SAME monitor / SPICE / selkies / GPU checks run
+            against both from one source (R3). Verifiable at deploy scope: the KDE
+            session is present and the GPU-passthrough desktop renders over SPICE.
+        tag: [working]
+        scenario:
+            - name: kde-desktop-present
+              step:
+                - then: the KDE Plasma binaries (plasmashell, kwin_wayland) are present in the session
+                  scope: deploy
+                  command: |
+                    command -v plasmashell >/dev/null && command -v kwin_wayland >/dev/null && echo KDE-PRESENT
+                  stdout:
+                    contains: KDE-PRESENT
+            - name: gpu-desktop-renders-over-spice
+              step:
+                - then: the GPU-passthrough KDE session renders a non-uniform frame over the SPICE wire
     # Shared desktop/GPU-stream verification layer for the CachyOS GPU workstation.
     # It carries NO install beyond the desktop-interaction TEST TOOLS (R9) and a
     # deploy-scope `eval:` block. Both the disposable bed (eval-cachyos-gpu-vm, on

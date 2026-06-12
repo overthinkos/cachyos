@@ -1,7 +1,24 @@
 candy:
     version: 2026.144.1443
     name: ghostty
-    description: Ghostty terminal emulator
+    description:
+        feature: Ghostty GPU-accelerated terminal emulator
+        narrative: |
+            Installs the ghostty terminal emulator. Verifiable: the ghostty binary
+            lands at /usr/bin/ghostty, the package is registered, and
+            `ghostty --version` reports its version banner.
+        tag: [working]
+        scenario:
+            - name: ghostty-installed
+              step:
+                - then: the ghostty binary is installed at /usr/bin/ghostty
+                  file: /usr/bin/ghostty
+                  exists: true
+                - then: ghostty reports its version
+                  command: /usr/bin/ghostty --version
+                  exit_status: 0
+                  stdout:
+                    - matches: "^Ghostty"
     distro:
         arch:
             package:
