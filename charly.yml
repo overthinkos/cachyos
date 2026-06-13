@@ -2,7 +2,7 @@
 #  opencharly repo (2026-05). Mounted as a git submodule at box/cachyos.
 #
 #  SINGLE-FILE config: every entity (the cachyos base + pacstrap family + the 7
-#  relocated app/fixture boxes under box/, the cachyos VMs, the disposable eval
+#  relocated app/fixture boxes under box/, the cachyos VMs, the disposable check
 #  beds, the charly-cachyos operator profile + its kind:local template) is inlined
 #  here or discovered under box/. This repo VENDORS its cachyos-exclusive layers
 #  locally under candy/ (resolved via the discover: block); every shared layer is
@@ -19,7 +19,7 @@
 #  Directly buildable: `charly box build cachyos` (from the parent repo:
 #  `charly -C box/cachyos box build cachyos`; anywhere:
 #  `charly --repo overthinkos/cachyos box build cachyos`).
-version: 2026.164.0002
+version: 2026.164.0004
 defaults:
     platform:
         - linux/amd64
@@ -42,12 +42,12 @@ discover:
       recursive: true
     - path: candy
       recursive: true
-eval:
-    # Disposable R10 test bed for the cachyos bootstrap VM (kind:eval — the
-    # 2026-05 deploy→eval unification moved repo-shipped disposable beds out of
+check:
+    # Disposable R10 test bed for the cachyos bootstrap VM (kind:check — the
+    # 2026-05 deploy→check unification moved repo-shipped disposable beds out of
     # deploy.yml). disposable: true is the sole authorization for the unattended
-    # destroy+rebuild driven by `charly eval run eval-cachyos-vm`.
-    eval-cachyos-vm:
+    # destroy+rebuild driven by `charly check run check-cachyos-vm`.
+    check-cachyos-vm:
         target: vm
         vm: cachyos-vm
         disposable: true
@@ -59,7 +59,7 @@ eval:
         # step), and the baked charly-binary/charly-version checks run on the guest.
         # The explicit pac localpkg AUTO-RESOLVE assertion (pacman -U pulling the
         # mandatory repo deps podman/libvirt/tailscale/gocryptfs) lives ONCE, on
-        # main's purpose-built `eval-charly-vm` pac witness — the dedicated home for
+        # main's purpose-built `check-charly-vm` pac witness — the dedicated home for
         # that assertion, so it is not duplicated across beds.
         add_candy:
             - '@github.com/overthinkos/overthink/candy/charly:v2026.162.1442'
@@ -84,7 +84,7 @@ eval:
     # passes with an explanatory N/A when none is present — so the bed runs
     # anywhere. On a host with the cachyos-gpu-vm hostdev block added locally, the
     # same checks assert real GPU encode. See cachyos-gpu-vm in vm.yml.
-    eval-cachyos-gpu-vm:
+    check-cachyos-gpu-vm:
         target: vm
         vm: cachyos-gpu-vm
         disposable: true
@@ -125,9 +125,9 @@ eval:
             - '@github.com/overthinkos/overthink/candy/kde-desktop:v2026.162.1442'
             - cachyos-kde-settings
             # Shared desktop/monitor/SPICE/selkies + mouse/keyboard/screenshot
-            # checks (+ ydotool test tool). charly eval live collects this layer's
+            # checks (+ ydotool test tool). charly check live collects this layer's
             # deploy-scope checks for BOTH the bed and the operator VM (R3).
-            - cachyos-gpu-desktop-eval
+            - cachyos-gpu-desktop-check
             - '@github.com/overthinkos/overthink/candy/fonts-extended:v2026.162.1442'
             - '@github.com/overthinkos/overthink/candy/desktop-media:v2026.162.1442'
             - '@github.com/overthinkos/overthink/candy/cachyos-extras:v2026.162.1442'
@@ -214,7 +214,7 @@ eval:
                 # green), and a no-GPU host returns N/A immediately (no poll penalty).
                 # A DIFFERENT silent failure — a <hostdev> configured for the VM but
                 # not actually passed through — is caught by the
-                # `gpu-passthrough-intent-honored` gate (cachyos-gpu-desktop-eval
+                # `gpu-passthrough-intent-honored` gate (cachyos-gpu-desktop-check
                 # layer), which HARD-FAILS when VM_HOSTDEV_COUNT>0 yet no 0x10de
                 # reaches the guest. So these checks' N/A branch is reachable ONLY on a
                 # genuinely card-less host, never on a GPU host whose passthrough broke.
@@ -231,7 +231,7 @@ eval:
                     - runtime
             - name: gpu-charly-proper-package
               step:
-                # localpkg eval-coverage: on this Arch/CachyOS guest charly is the proper
+                # localpkg check-coverage: on this Arch/CachyOS guest charly is the proper
                 # opencharly-git pacman package at /usr/bin/charly (the LocalPkgInstallStep
                 # built it on the host via makepkg + pacman -U'd it before the charly layer's
                 # pacman-aware cmd: ran), NOT a curl-stale /usr/local/bin/charly. FAILS
@@ -296,8 +296,8 @@ eval:
                 # silent CPU x264 fallback on an NVIDIA render node (the Cutover 2
                 # real-NVENC headline; build.sh Patch 2d makes pixelflux's NVENC init
                 # succeed), and frame-not-black proves real non-black pixels. Both run
-                # against this nested pod via the nested-pod eval
-                # `charly eval live eval-cachyos-gpu-vm.selkies-kde` (charly eval run now
+                # against this nested pod via the nested-pod check
+                # `charly check live check-cachyos-gpu-vm.selkies-kde` (charly check run now
                 # evaluates nested children) — no guest-side podman-exec duplicate here.
                 # virtiofs /workspace share + guest-user idmap. The host source is an
                 # operator-owned mode-0700 dir, so the guest user can read the marker
@@ -383,21 +383,21 @@ eval:
                   stdout:
                     contains: QGA-ACTIVE
                     # Shared desktop / monitor / SPICE / selkies checks now
-                    # live in the cachyos-gpu-desktop-eval layer (added via add_layer above);
-                    # charly eval live collects an applied layer's deploy-scope checks, so the SAME
+                    # live in the cachyos-gpu-desktop-check layer (added via add_layer above);
+                    # charly check live collects an applied layer's deploy-scope checks, so the SAME
                     # set runs on BOTH this bed and the persistent cachyos-gpu deploy (R3).
                   context:
                     - runtime
     # Disposable R10 pod beds for the CachyOS GPU image family. Each drives the
-    # full `charly eval run` sequence (build → eval box → deploy → eval live →
+    # full `charly check run` sequence (build → check box → deploy → check live →
     # fresh update → tear down) on the cachyos-namespace image of the same name.
     # Host ports are remapped into a dedicated 45xxx range so the beds never
     # collide with an operator's production services on the canonical ports.
-    # Deploy- and build-scope eval coverage is inherited from the composed
-    # layers (the "lowest level" principle) — the beds carry no eval: of their
+    # Deploy- and build-scope check coverage is inherited from the composed
+    # layers (the "lowest level" principle) — the beds carry no check: of their
     # own. The GPU base (nvidia) and python-ml carry no service, so they are
-    # proved by `charly eval box` alone and need no pod bed.
-    eval-cachyos-jupyter-ml-pod:
+    # proved by `charly check box` alone and need no pod bed.
+    check-cachyos-jupyter-ml-pod:
         target: pod
         box: jupyter-ml
         disposable: true
@@ -405,7 +405,7 @@ eval:
         description:
             feature: R10 bed for the CachyOS GPU jupyter-ml image — JupyterLab + ML stack on the Arch CUDA base
             tag: [testing]
-    eval-cachyos-ollama-pod:
+    check-cachyos-ollama-pod:
         target: pod
         box: ollama
         disposable: true
@@ -413,7 +413,7 @@ eval:
         description:
             feature: R10 bed for the CachyOS GPU ollama image — ollama server on the Arch CUDA base
             tag: [testing]
-    eval-cachyos-comfyui-pod:
+    check-cachyos-comfyui-pod:
         target: pod
         box: comfyui
         disposable: true
@@ -421,7 +421,7 @@ eval:
         description:
             feature: R10 bed for the CachyOS GPU comfyui image — ComfyUI server on the Arch CUDA base
             tag: [testing]
-    eval-cachyos-unsloth-studio-pod:
+    check-cachyos-unsloth-studio-pod:
         target: pod
         box: unsloth-studio
         disposable: true
@@ -429,7 +429,7 @@ eval:
         description:
             feature: R10 bed for the CachyOS GPU unsloth-studio image — fine-tuning notebook + API on the Arch CUDA base
             tag: [testing]
-    eval-cachyos-immich-ml-pod:
+    check-cachyos-immich-ml-pod:
         target: pod
         box: immich-ml
         disposable: true
@@ -437,7 +437,7 @@ eval:
         description:
             feature: R10 bed for the CachyOS GPU immich-ml image — full Immich + PostgreSQL + VectorChord + Redis + ML stack on the Arch CUDA base
             tag: [testing]
-    eval-selkies-kde-pod:
+    check-selkies-kde-pod:
         target: pod
         box: selkies-kde
         disposable: true
@@ -445,17 +445,17 @@ eval:
         description:
             feature: "R10 host-pod bed — full KDE Plasma selkies flavor (de-SDDM startplasma-wayland nested in pixelflux, headless, no seat) on the plain CachyOS base. Inherits the image's baked kde-selkies-stable + selkies stream (:3000 HTTPS) + chrome-cdp + the selkies-layer VAAPI H264 encode probe — streams + HW-encodes on the AMD iGPU host pod. selkies-kde's canonical home (relocated from main's test vehicle)."
             tag: [testing]
-    # eval-selkies-labwc-pod deploys the CPU streaming desktop on the CachyOS
+    # check-selkies-labwc-pod deploys the CPU streaming desktop on the CachyOS
     # (Arch) base. Exercises the cachyos→arch-builder pixi build of selkies
     # (pixelflux Rust compile) AND the AUR build of google-chrome + wlrctl, plus
     # the labwc/waybar/swaync/pipewire/traefik/sshd layer stack. Ports are
     # remapped off the canonical 3000/9222/9224/2222 to avoid host clashes with a
     # running selkies-labwc or the other desktop beds. The deploy-scope probes
     # assert the AUR-built binaries actually landed on the running container; the
-    # baked layer/image evals (incl. the Selkies HTTPS 200 UI probe) cover the
+    # baked layer/image checks (incl. the Selkies HTTPS 200 UI probe) cover the
     # rest of the deploy surface. selkies-labwc's canonical home (relocated from
     # the retired overthinkos/selkies submodule, alongside its GPU sibling).
-    eval-selkies-labwc-pod:
+    check-selkies-labwc-pod:
         target: pod
         box: selkies-labwc
         disposable: true
@@ -463,11 +463,11 @@ eval:
         description:
             feature: "R10 bed for the CPU selkies-labwc streaming desktop on the CachyOS (Arch) base — exercises the cachyos→arch-builder pixi build of selkies (pixelflux Rust compile) plus the AUR build of google-chrome + wlrctl and the labwc/waybar/swaync/pipewire/traefik/sshd layer stack."
             tag: [testing]
-            # No inline eval: the chrome/wlrctl/wtype/labwc/swaync/pipewire binaries
+            # No inline check: the chrome/wlrctl/wtype/labwc/swaync/pipewire binaries
             # belong to their candies (chrome, wl-tools, labwc, swaync, pipewire), so
-            # the bed inherits them via the baked layer eval (R3).
+            # the bed inherits them via the baked layer check (R3).
             # labwc liveness is asserted generically by the labwc layer's
-            # labwc-stable eval (supervisord uptime >=20s) — baked into every
+            # labwc-stable check (supervisord uptime >=20s) — baked into every
             # labwc image, so the bed inherits it (no bed-specific duplicate, R3).
             # CPU-RENDER PROOF (the "rendering without any GPU works" gate): this
             # bed is GPU-less (selkies-labwc composes no nvidia/rocm layer → no
@@ -476,7 +476,7 @@ eval:
             # (no GPU render node → the CPU x264 path is legitimate) run here
             # automatically — no per-bed duplicate (R3). This is the pure-CPU leg
             # of the AMD-VAAPI / NVIDIA-NVENC / CPU-x264 encode matrix.
-    eval-selkies-labwc-nvidia-vm:
+    check-selkies-labwc-nvidia-vm:
         # NVENC passthrough-VM bed: builds selkies-labwc-nvidia (real NVENC via the
         # cuda-arch-builder pixi builder), cp-boxes it into the RTX-4080 passthrough
         # guest, runs it as a transient --device nvidia.com/gpu=all pod, and asserts
@@ -491,7 +491,7 @@ eval:
         # Guest GPU stack so the passed-through RTX 4080 has a loaded driver +
         # nvidia-container-toolkit (CDI) + podman — the prerequisites for the nested
         # `--device nvidia.com/gpu=all` selkies pod to reach the GPU and for the
-        # in-guest nvidia-smi NVENC probe to exist. Mirrors eval-cachyos-gpu-vm's GPU
+        # in-guest nvidia-smi NVENC probe to exist. Mirrors check-cachyos-gpu-vm's GPU
         # setup (the proven GPU-VM bed) minus its KDE-workstation extras; the
         # nvidia-driver layer's reboot: true reloads the open module on a clean boot.
         add_candy:
@@ -533,15 +533,15 @@ eval:
                     - matches: "NVENC-SESSION-ACTIVE|NVENC-N/A"
                   context:
                     - runtime
-    eval-selkies-kde-nvidia-vm:
+    check-selkies-kde-nvidia-vm:
         # NVENC passthrough-VM bed for the full-KDE-Plasma GPU flavor. Same shape as
-        # eval-selkies-labwc-nvidia-vm; preempts vm:cachyos-gpu via the arbiter.
+        # check-selkies-labwc-nvidia-vm; preempts vm:cachyos-gpu via the arbiter.
         target: vm
         vm: cachyos-gpu-vm
         disposable: true
         lifecycle: dev
         requires_exclusive: [nvidia-gpu]
-        # Guest GPU stack (see eval-selkies-labwc-nvidia-vm) — driver + CDI + podman
+        # Guest GPU stack (see check-selkies-labwc-nvidia-vm) — driver + CDI + podman
         # so the nested --device nvidia.com/gpu=all selkies-kde pod reaches the GPU.
         add_candy:
             - podman
@@ -582,7 +582,7 @@ eval:
                     - matches: "NVENC-SESSION-ACTIVE|NVENC-N/A"
                   context:
                     - runtime
-    eval-charly-selftest-pod:
+    check-charly-selftest-pod:
         target: pod
         box: charly-selftest
         disposable: true
@@ -663,10 +663,10 @@ eval:
                   exit_status: 0
                   context:
                     - runtime
-            - name: charly-cli-eval-group
+            - name: charly-cli-check-group
               step:
-                - id: charly-cli-eval-group
-                  command: charly eval --help
+                - id: charly-cli-check-group
+                  command: charly check --help
                   in_container: true
                   exit_status: 0
                   stdout:
@@ -706,7 +706,7 @@ eval:
                   # NB: the WHOLE Kong command surface exposed via `charly mcp serve` is
                   # proven by the charly-mcp layer's own deploy-scope mcp checks
                   # (mcp-charly-list-tools + mcp-charly-call-* assert box.build / box.list.boxes
-                  # are live tools), which run here as part of this bed's eval-live — no
+                  # are live tools), which run here as part of this bed's check-live — no
                   # duplicate surface check needed (R3).
 
                   context:
@@ -715,9 +715,9 @@ eval:
     # this web-server SUBJECT pod over the shared `charly` network. Proves `on:` +
     # ${PEER_HOST:<subject>} + peer: end-to-end — the canonical "a different kind
     # of deployment tests another" case. The chrome peer is brought up ALONGSIDE
-    # the root by bringUpPeers (the shared deploy+eval lifecycle, R3); it is an
-    # instrument, never eval-live'd itself.
-    eval-versa-pod:
+    # the root by bringUpPeers (the shared deploy+check lifecycle, R3); it is an
+    # instrument, never check-live'd itself.
+    check-versa-pod:
         target: pod
         box: versa
         disposable: true
@@ -725,7 +725,7 @@ eval:
         description:
             feature: "R10 bed for versa — exercises the full OSM analytics + vector-tile pipeline (quackosm PBF→GeoParquet, tippecanoe→PMTiles, martin serve, maputnik editor) plus the marimo MCP server (10 read-only notebook-inspection tools) plus the marimo-team/learn curriculum import surface plus the polars-st/geopolars/geoarrow/lonboard geospatial extensions. Host ports auto-allocate at deploy; per-producing-layer env_provides templates resolve the live mappings. Airflow is driven via direct REST /api/v2 calls (no MCP wrapper)."
             tag: [testing]
-    eval-githubrunner-pod:
+    check-githubrunner-pod:
         target: pod
         box: githubrunner
         disposable: true
@@ -733,29 +733,29 @@ eval:
         # No port: — the runner has no listening service (host net, outbound only).
         # No RUNNER_TOKEN/RUNNER_ORG → the guarded post_enable no-ops, so the bed
         # proves the rootless CachyOS composition WITHOUT GitHub registration.
-        # Inherits the github-runner + container-nesting baked eval: checks
+        # Inherits the github-runner + container-nesting baked check: checks
         # (functional binary runs + the rootless nested-podman proof).
         description:
             feature: "R10 bed proving the rootless CachyOS githubrunner composition — runs the actions-runner config.sh (.NET/icu deps resolved), cosign/skopeo/buildah/go, rootless nested podman at uid 1000 (unmask=/proc/*, zero caps), newuidmap file-caps, ghcr mirror — WITHOUT GitHub registration (no token → guarded hooks no-op)."
             tag: [working]
-    eval-android-emulator-pod:
+    check-android-emulator-pod:
         target: pod
         box: android-emulator
         disposable: true
         lifecycle: dev
         # No port: — every container port the box exposes (3000/4723/5037/2222
         # + the selkies-inherited chrome 9222 / chrome-devtools-mcp 9224) is
-        # auto-allocated to a free 127.0.0.1 host port at deploy. The eval probes
+        # auto-allocated to a free 127.0.0.1 host port at deploy. The check probes
         # resolve the live mapping via ${HOST_PORT:N}; `charly status` shows it.
         # Conflict-free with sibling beds (no fixed 35xxx range).
         # Nested kind:android devices, deployed onto the STARTED emulator pod
         # (the bed runner deploys nested children after `charly start`, then runs
-        # eval-live). `device` is the in-pod emulator (apkeep in-pod installs
+        # check-live). `device` is the in-pod emulator (apkeep in-pod installs
         # the android-test-apps layer's F-Droid); `device-net` addresses the
         # SAME emulator as a remote adb ENDPOINT (goadb push installs the
         # android-apidemos committed APK), exercising the remote/physical
         # device code path with no hardware. App presence is asserted by the
-        # android-emulator-layer baked eval (apk-fdroid-* / apk-net-apidemos-*).
+        # android-emulator-layer baked check (apk-fdroid-* / apk-net-apidemos-*).
         nested:
             device:
                 target: android
@@ -768,12 +768,12 @@ eval:
                 add_candy:
                     - '@github.com/overthinkos/overthink/candy/android-apidemos:v2026.162.1442'
         description:
-            feature: "R10 bed for android-emulator — Android 16 (API 36 x86_64 google_apis_playstore) emulator on pixel_9a with /dev/kvm passthrough. Every published port (Selkies web UI 3000, Appium WebDriver 4723, ADB server 5037, SSH 2222, plus the selkies-inherited chrome 9222 / chrome-devtools-mcp 9224) is auto-allocated to a free 127.0.0.1 host port at deploy; `charly status` shows the live mapping and the eval probes resolve it via ${HOST_PORT:N}. Play Store + GMS + Chrome preinstalled (asserted present + launchable). Nested kind:android devices install apps via the `apk:` package format: an in-pod emulator device installs F-Droid (apkeep in-pod), and a remote adb-ENDPOINT device installs the committed ApiDemos (goadb over the published ADB port) — proving target:android + nested deployment for both device kinds. CPU/RAM auto-size from the host."
+            feature: "R10 bed for android-emulator — Android 16 (API 36 x86_64 google_apis_playstore) emulator on pixel_9a with /dev/kvm passthrough. Every published port (Selkies web UI 3000, Appium WebDriver 4723, ADB server 5037, SSH 2222, plus the selkies-inherited chrome 9222 / chrome-devtools-mcp 9224) is auto-allocated to a free 127.0.0.1 host port at deploy; `charly status` shows the live mapping and the check probes resolve it via ${HOST_PORT:N}. Play Store + GMS + Chrome preinstalled (asserted present + launchable). Nested kind:android devices install apps via the `apk:` package format: an in-pod emulator device installs F-Droid (apkeep in-pod), and a remote adb-ENDPOINT device installs the committed ApiDemos (goadb over the published ADB port) — proving target:android + nested deployment for both device kinds. CPU/RAM auto-size from the host."
             tag: [testing]
         scenario:
             - name: status-shows-android
               step:
-                # eval-coverage gate for the unified `charly status` ANDROID substrate +
+                # check-coverage gate for the unified `charly status` ANDROID substrate +
                 # the nested-deploy tree: the android device row(s) must render, and
                 # the nested structure must overlay under the emulator pod. Fails if
                 # AndroidCollector or status_nested regress.
@@ -799,11 +799,11 @@ eval:
                     - contains: '"nested"'
                   context:
                     - runtime
-    # eval-openclaw-pod deploys the minimal headless openclaw gateway on the
+    # check-openclaw-pod deploys the minimal headless openclaw gateway on the
     # CachyOS (Arch) base. Exercises the cachyos→arch-builder npm build of the
     # openclaw package + the dbus/charly/socat/supervisord stack. The deploy-scope
     # probe confirms the openclaw CLI binary landed under ~/.npm-global/bin.
-    eval-openclaw-pod:
+    check-openclaw-pod:
         target: pod
         box: openclaw
         disposable: true
@@ -811,14 +811,14 @@ eval:
         description:
             feature: "R10 bed for the minimal headless openclaw gateway on the CachyOS (Arch) base — exercises the cachyos→arch-builder npm build of the openclaw package plus the dbus/charly/socat/supervisord layer stack."
             tag: [testing]
-            # No inline eval: the openclaw binary + gateway port belong to
-            # candy/openclaw — the bed inherits them via the baked layer eval (R3).
-    # eval-openclaw-full-pod deploys the maximal headless openclaw-full on the
+            # No inline check: the openclaw binary + gateway port belong to
+            # candy/openclaw — the bed inherits them via the baked layer check (R3).
+    # check-openclaw-full-pod deploys the maximal headless openclaw-full on the
     # CachyOS (Arch) base — a non-browser gateway (no chrome/chrome-cdp). Exercises
     # the tool stack incl. gogcli@latest (Arch go 1.26.x) and the ffmpeg/sqlite
-    # Arch package coverage. The eval: block asserts those migration-critical
+    # Arch package coverage. The check: block asserts those migration-critical
     # artifacts are present on the running container.
-    eval-openclaw-full-pod:
+    check-openclaw-full-pod:
         target: pod
         box: openclaw-full
         disposable: true
@@ -826,19 +826,19 @@ eval:
         description:
             feature: "R10 bed for the maximal headless openclaw-full on the CachyOS (Arch) base — a non-browser gateway exercising the tool stack incl. the gogcli@latest go install (Arch go 1.26.x) and the ffmpeg/sqlite Arch package coverage."
             tag: [testing]
-            # No inline eval: gog/ffmpeg/sqlite3 belong to their candies (gogcli,
-            # ffmpeg, sqlite) — the bed inherits them via the baked layer eval (R3).
-    # eval-openclaw-desktop-pod deploys the all-in-one openclaw-desktop image on
+            # No inline check: gog/ffmpeg/sqlite3 belong to their candies (gogcli,
+            # ffmpeg, sqlite) — the bed inherits them via the baked layer check (R3).
+    # check-openclaw-desktop-pod deploys the all-in-one openclaw-desktop image on
     # the CachyOS (Arch) base — the selkies streaming desktop fused with the
     # openclaw-full gateway/tool stack (claude-code/codex/gemini), a CPU ollama,
     # and the full nested charly toolchain (charly + container-nesting + golang + gh).
     # Ports are remapped into a free 340xx block to coexist with the
-    # selkies/openclaw beds. The image-level eval (baked) carries the nested-
+    # selkies/openclaw beds. The image-level check (baked) carries the nested-
     # rootless posture + nested-podman + libvirt-session + charly version/doctor +
     # the three services' liveness; this bed's deploy-scope probes assert the
     # cross-stack headline artifacts (AUR chrome, selkies HTTPS UI, the AI CLIs,
     # the ollama binary) actually landed on the running combined container.
-    eval-openclaw-desktop-pod:
+    check-openclaw-desktop-pod:
         target: pod
         box: openclaw-desktop
         disposable: true
@@ -846,13 +846,13 @@ eval:
         description:
             feature: "R10 bed for openclaw-desktop — the all-in-one CachyOS image fusing the selkies streaming desktop, the openclaw-full gateway+tools stack (claude-code/codex/gemini), a CPU ollama, and the full nested charly toolchain (charly + container-nesting + golang + gh). Exercises AUR google-chrome, the ollama binary tarball on a pac base, and nested rootless podman on one image."
             tag: [testing]
-            # No inline eval: chrome (chrome candy), the selkies HTTPS UI (selkies),
+            # No inline check: chrome (chrome candy), the selkies HTTPS UI (selkies),
             # claude/codex/gemini (their candies via openclaw-full), and the ollama
-            # binary (ollama) are all covered by the baked candy eval (R3).
+            # binary (ollama) are all covered by the baked candy check (R3).
 deploy:
     # charly-cachyos — the operator CachyOS workstation profile (target: local +
     # host: local). NOT a zero-side-effect test bed (it mutates the operator's
-    # real machine), so it stays a kind:deploy operator entry, not an eval bed.
+    # real machine), so it stays a kind:deploy operator entry, not an check bed.
     # disposable: operator has authorized this host as a test system, so
     # `charly update charly-cachyos` (full destroy + reinstall via the install ledger)
     # is allowed for strict R10 verification. Shares the name `charly-cachyos` with
@@ -882,7 +882,7 @@ deploy:
     # KDE stream, NVENC). Supersedes the earlier headless charly-cachyos-gpu.
     #
     # NOT disposable: this is a real workstation, not a rebuildable test bed. The
-    # full machinery is R10-proven on the disposable eval-cachyos-gpu-vm bed;
+    # full machinery is R10-proven on the disposable check-cachyos-gpu-vm bed;
     # this entry just composes it. builder_image is the cuda-arch-builder so the
     # cross-host pixi build of pixelflux links the real NVENC encoder.
     #
@@ -936,9 +936,9 @@ deploy:
             - '@github.com/overthinkos/overthink/candy/kde-desktop:v2026.162.1442'
             - cachyos-kde-settings
             # Shared desktop/monitor/SPICE/selkies + mouse/keyboard/screenshot
-            # checks (+ ydotool test tool). charly eval live collects this layer's
+            # checks (+ ydotool test tool). charly check live collects this layer's
             # deploy-scope checks for BOTH the bed and the operator VM (R3).
-            - cachyos-gpu-desktop-eval
+            - cachyos-gpu-desktop-check
             - '@github.com/overthinkos/overthink/candy/fonts-extended:v2026.162.1442'
             - '@github.com/overthinkos/overthink/candy/desktop-media:v2026.162.1442'
             - '@github.com/overthinkos/overthink/candy/cachyos-extras:v2026.162.1442'
@@ -968,7 +968,7 @@ deploy:
             # The KDE-selkies WebRTC streaming desktop runs as a headless nested pod
             # (real NVENC on the passed-through RTX GPU), deployed as a PERSISTENT
             # in-guest quadlet by deployNestedPodsInGuest — the exact config the
-            # eval-cachyos-gpu-vm mirror bed proves (R10 9/9, fresh rebuild). The
+            # check-cachyos-gpu-vm mirror bed proves (R10 9/9, fresh rebuild). The
             # bare-metal SDDM Plasma seat (kde-desktop) drives the physical monitors
             # independently of the stream pod.
             selkies-kde:
@@ -1124,7 +1124,7 @@ vm:
                 - sh -c 'mkdir -p /etc/pacman.d/hooks && ln -sf /dev/null /etc/pacman.d/hooks/nvidia-ctk-cdi.hook'
     cachyos-gpu-vm:
         # GPU-passthrough VM guest that receives a physical NVIDIA GPU via a VFIO
-        # <hostdev>. Driven by the eval-cachyos-gpu-vm bed, which mirrors the
+        # <hostdev>. Driven by the check-cachyos-gpu-vm bed, which mirrors the
         # operator workstation: a bare-metal KDE Plasma seat in-guest plus a nested
         # selkies-kde-nvidia streaming pod (real NVENC) deployed as a persistent
         # in-guest quadlet.
@@ -1227,7 +1227,7 @@ vm:
                 access: shared
             devices:
                 # SPICE virtual monitor: the headless display the GPU-passthrough
-                # KDE session renders to, so `charly eval spice screenshot` captures the
+                # KDE session renders to, so `charly check spice screenshot` captures the
                 # live desktop (the bed asserts a non-uniform frame = it rendered).
                 # The virtio-gpu head is the seat-0 primary scanout — the passed-
                 # through NVIDIA GPU has no connected output.
@@ -1281,10 +1281,10 @@ vm:
         # persistent workstation deploy declares no `requires_exclusive:` resource,
         # so its hostdev is operator-authored here — auto-allocation
         # (gpu_allocate.go) fires for a `requires_exclusive: [nvidia-gpu]` CLAIMANT
-        # like the eval-cachyos-gpu-vm bed; an operator-authored hostdev always
+        # like the check-cachyos-gpu-vm bed; an operator-authored hostdev always
         # wins regardless.) NOT a disposable test bed — there is no disposable
         # deploy for it; the full machinery is R10-proven on the disposable
-        # eval-cachyos-gpu-vm bed instead.
+        # check-cachyos-gpu-vm bed instead.
         #
         # SUBSTRATE = CachyOS pacstrap under UEFI/OVMF (same rationale as
         # cachyos-gpu-vm: the RTX 4080's 64-bit large BAR needs UEFI). On this host
@@ -1351,7 +1351,7 @@ vm:
                 # drives the operator's PHYSICAL monitors directly over DRM — the
                 # KDE desktop lives there, and (via the ScreenCast-portal browser
                 # mirror) is streamed to the browser as the SAME desktop. SPICE + a
-                # virtio-gpu head are intentionally BED-ONLY: the portable eval bed
+                # virtio-gpu head are intentionally BED-ONLY: the portable check bed
                 # (cachyos-gpu-vm) has no physical GPU, so it needs a virtual head to
                 # screenshot. On this operator the GPU IS the display; early-boot
                 # output is the serial console (console=ttyS0 in kernel_args above).
@@ -1394,7 +1394,7 @@ android:
     # endpoint; the host needs apkeep + android-tools (adb) for the `package:`
     # download path (PKGBUILD optdepends). The `apk: <committed-file>` path
     # needs neither (pure goadb push). The 127.0.0.1:35002 value here matches
-    # the eval-android-emulator-pod bed's published ADB port — it lets the
+    # the check-android-emulator-pod bed's published ADB port — it lets the
     # remote/endpoint code path be exercised against the bed's own emulator
     # with no physical hardware.
     pixel9a-endpoint:
@@ -1402,7 +1402,7 @@ android:
             # ${HOST_PORT:5037} resolves at deploy time to the PARENT emulator
             # pod's host-mapped adb-server port (container 5037), so the endpoint
             # follows the pod's published port instead of hard-coding it. Used
-            # nested under eval-android-emulator-pod (which publishes …:5037).
+            # nested under check-android-emulator-pod (which publishes …:5037).
             host: 127.0.0.1:${HOST_PORT:5037}
         serial: emulator-5554
         device: pixel_9a

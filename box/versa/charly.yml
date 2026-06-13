@@ -46,7 +46,7 @@ box:
               command: wc -c < /tmp/notebook-run.ipynb
               in_container: true
               stdout:
-                - matches: "[1-9][0-9]{5,}" # >=100KB rendered ipynb (no anchors per /charly-eval:eval gotcha #6)
+                - matches: "[1-9][0-9]{5,}" # >=100KB rendered ipynb (no anchors per /charly-check:check gotcha #6)
               context:
                 - runtime
         - name: versa-martin-monaco
@@ -107,7 +107,7 @@ box:
           step:
             # DAG output artifact size probes (post-DAG existence + size).
             # No regex anchors — `wc -c` output ends with \n and Go's `$`
-            # doesn't match before newline (see /charly-eval:eval gotcha #6).
+            # doesn't match before newline (see /charly-check:check gotcha #6).
             # Thresholds match the actual post-DAG sizes the skill records
             # (~824 KB parquet, ~616 KB pmtiles after the post-2026-05
             # tippecanoe-config change, ~770 KB gtfs.zip) — all comfortably

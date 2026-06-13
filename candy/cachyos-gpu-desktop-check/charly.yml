@@ -1,27 +1,27 @@
 candy:
-    name: cachyos-gpu-desktop-eval
+    name: cachyos-gpu-desktop-check
     version: 2026.151.0543
     description:
         feature: Shared desktop/GPU-stream verification layer for the CachyOS GPU workstation
         narrative: |
             Carries no install beyond the desktop-interaction test tools (ydotool)
-            and a deploy-scope eval block. Both the disposable bed
-            (eval-cachyos-gpu-vm) and the persistent operator deploy (cachyos-gpu)
+            and a deploy-scope check block. Both the disposable bed
+            (check-cachyos-gpu-vm) and the persistent operator deploy (cachyos-gpu)
             add_layer this, so the SAME monitor / SPICE / selkies / GPU checks run
             against both from one source (R3). Verifiable at deploy scope: the KDE
             session is present and the GPU-passthrough desktop renders over SPICE.
         tag: [working]
     # Shared desktop/GPU-stream verification layer for the CachyOS GPU workstation.
     # It carries NO install beyond the desktop-interaction TEST TOOLS (R9) and a
-    # deploy-scope `eval:` block. Both the disposable bed (eval-cachyos-gpu-vm, on
+    # deploy-scope `check:` block. Both the disposable bed (check-cachyos-gpu-vm, on
     # cachyos-gpu-vm) AND the persistent operator deploy (cachyos-gpu) add_layer
-    # this, and `charly eval live <vm>` collects an applied layer's deploy-scope checks
-    # (collectAddLayerDeployEval) — so the SAME monitor / SPICE / selkies checks
+    # this, and `charly check live <vm>` collects an applied layer's deploy-scope checks
+    # (collectAddLayerDeployCheck) — so the SAME monitor / SPICE / selkies checks
     # run against BOTH deployments from ONE source (R3), satisfying
-    # "all eval tests work on both the eval and the prod deployment".
+    # "all check tests work on both the check and the prod deployment".
     #
     # The mouse/keyboard/screenshot checks drive the seat-0 session over the SPICE
-    # wire (host-side charly eval spice), which injects to the GPU-passthrough KDE
+    # wire (host-side charly check spice), which injects to the GPU-passthrough KDE
     # session and is fully headless — no GPU-attached monitor required, so they
     # run on the disposable bed too.
     # ydotool injects input on the KWin Wayland session via /dev/uinput (the
@@ -50,11 +50,11 @@ candy:
             # --- VM readiness assertions (run FIRST): prove the guest is up + reachable
             # over SSH and that cloud-init has settled, so the desktop / SPICE / selkies
             # / GPU checks below never run against a guest that is mid-boot,
-            # mid-cloud-init, or mid-restart. The `charly eval live` VM readiness gate
+            # mid-cloud-init, or mid-restart. The `charly check live` VM readiness gate
             # already WAITS for both before any check runs (WaitForSSH + WaitForCloudInit
             # — real sync primitives, not sleeps); these turn that state into explicit,
-            # visible eval assertions, and the bed runner additionally restarts a
-            # disposable bed whose domain crashed mid-eval before retrying. ---
+            # visible check assertions, and the bed runner additionally restarts a
+            # disposable bed whose domain crashed mid-check before retrying. ---
             - id: vm-ssh-reachable
               command: |
                 echo "uptime: $(uptime -p 2>/dev/null || uptime 2>/dev/null || echo unknown)"
@@ -114,9 +114,9 @@ candy:
             # The GPU checks below N/A-pass when no NVIDIA device (0x10de) is in the
             # guest — correct on a portable host with no card. But when a <hostdev> WAS
             # configured for this VM (VM_HOSTDEV_COUNT>0, resolved host-side from the
-            # VmSpec by `charly eval live`) yet the guest still has no 0x10de, the passthrough
+            # VmSpec by `charly check live`) yet the guest still has no 0x10de, the passthrough
             # SILENTLY FAILED and every GPU check below would N/A-pass into a false green
-            # (the eval-cachyos-gpu-vm run that motivated this gate). This single check
+            # (the check-cachyos-gpu-vm run that motivated this gate). This single check
             # HARD-FAILS that case (R3: one gate, not a duplicated guard in every check),
             # so a GPU host can never silently pass without the GPU. Sourced from the
             # VmSpec INTENT, not the running domain — a libvirt drop would zero the live
@@ -180,7 +180,7 @@ candy:
             - {id: desktop-spice-keyboard-key, spice: key, key: Escape, context: [runtime]}
         - name: desktop-spice-keyboard-type
           step:
-            - {id: desktop-spice-keyboard-type, spice: type, text: "charly-eval", context: [runtime]}
+            - {id: desktop-spice-keyboard-type, spice: type, text: "charly-check", context: [runtime]}
         - name: desktop-renders-spice
           step:
             # Now screenshot the awake desktop — non-uniform proves the GPU-passthrough
@@ -196,7 +196,7 @@ candy:
         - name: desktop-wl-screenshot-kde
           step:
             # --- NVIDIA-head in-guest screenshot via the KDE backend (bonus; GPU-gated).
-            # Drives `charly eval wl <vm> screenshot` which routes through the in-guest KDE
+            # Drives `charly check wl <vm> screenshot` which routes through the in-guest KDE
             # screenshot backend (spectacle / KWin ScreenShot2). Validated on the live
             # image; skips with an N/A note when no GPU/output is present.
             - id: desktop-wl-screenshot-kde
@@ -220,10 +220,10 @@ candy:
         - name: kde-selkies-stream-https
           step:
             # --- KDE-selkies remote stream (nested charly-selkies-kde pod) ---
-            # The nested pod's BAKED selkies-layer eval — frame-not-black (real pixels)
+            # The nested pod's BAKED selkies-layer check — frame-not-black (real pixels)
             # + encoder-active (real NVENC on the passed-through GPU, hard-fail on CPU
             # fallback) + pixelflux compositor socket + selkies service — now runs via
-            # `charly eval live eval-cachyos-gpu-vm.selkies-kde` (the nested-pod eval). So the
+            # `charly check live check-cachyos-gpu-vm.selkies-kde` (the nested-pod check). So the
             # encoder/frame/capture proofs live ONCE on the selkies layer (R3), not as
             # guest-side podman-exec duplicates here. The two checks below keep GUEST-side
             # stream coverage that the layer's ${HOST_PORT}-based https check can't give a

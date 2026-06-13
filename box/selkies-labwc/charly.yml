@@ -17,6 +17,6 @@ box:
         - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.162.1442'
         - '@github.com/overthinkos/overthink/candy/selkies-desktop:v2026.162.1442'
         - '@github.com/overthinkos/overthink/candy/dbus:v2026.162.1442'
-    # No box-level eval: the labwc/chrome/traefik/sshd binaries belong to their
+    # No box-level check: the labwc/chrome/traefik/sshd binaries belong to their
     # candies (labwc, chrome, selkies, sshd) and the chrome-devtools-mcp port to
     # candy/chrome-devtools-mcp — one candy check covers every box composing them.

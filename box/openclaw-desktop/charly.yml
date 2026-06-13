@@ -23,7 +23,7 @@ box:
         - '@github.com/overthinkos/overthink/candy/golang:v2026.162.1442'
         - '@github.com/overthinkos/overthink/candy/gh:v2026.162.1442'
         - '@github.com/overthinkos/overthink/candy/dbus:v2026.162.1442'
-    # No box-level eval: every check this all-in-one image carries lives on the
+    # No box-level check: every check this all-in-one image carries lives on the
     # candy that provides the behaviour, so each is covered once across all
     # composing boxes — selkies/chrome/labwc/traefik/sshd binaries (selkies +
     # chrome/labwc/sshd candies), ollama/gocryptfs/socat (their candies), the

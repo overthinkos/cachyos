@@ -24,15 +24,15 @@ box:
             Install apps either declaratively — a `kind: android` device + a
             `target: android` deploy applies layers' `apk:` packages onto the
             running emulator (apkeep in-pod) — or imperatively via the generic
-            `charly eval adb install-app` verb (both share one installer). apk
+            `charly check adb install-app` verb (both share one installer). apk
             sources: apk-pure default, google-play via an AAS-token secret.
             CPU/RAM auto-size from the host at runtime.
             Requires /dev/kvm + kvm-group passthrough for hardware acceleration;
             the layer declares this via security.devices so the quadlet
             auto-emits AddDevice=/dev/kvm.
         tag: [testing]
-    # No box-level eval: the emulator/adb/appium/java binaries and the
-    # start-emulator service each belong to their providing candy's baked eval
+    # No box-level check: the emulator/adb/appium/java binaries and the
+    # start-emulator service each belong to their providing candy's baked check
     # (android-sdk emulator-binary/adb-binary, appium-server appium-binary,
     # java-openjdk java-binary, android-emulator-layer start-emulator-script +
     # emulator-service-running), so one check covers every box composing them.

@@ -7,8 +7,8 @@ candy:
             Compiles a vector-add kernel with nvcc into /usr/local/bin/cuda-smoke;
             at runtime it allocates device memory, runs the kernel, verifies the
             result, and prints "CUDA-OK devices=<N>" (exit 0) or "CUDA-FAIL"
-            (exit 1). Composed on cachyos.nvidia to form the cuda-eval image — the
-            GPU-passthrough eval runs it in a container in the VM to prove real
+            (exit 1). Composed on cachyos.nvidia to form the cuda-check image — the
+            GPU-passthrough check runs it in a container in the VM to prove real
             device compute. Verifiable at build scope: the compiled binary exists.
         tag: [working]
     distro:

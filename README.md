@@ -10,7 +10,7 @@ of the main repo.
 |---|---|
 | `image:` | `cachyos` (base), `cachyos-pacstrap-builder`, `cachyos-pacstrap`, the GPU + selkies images, and the relocated apps (`versa`, `openclaw*`, `githubrunner`, `android-emulator`, `charly-selftest`) |
 | `vm:` | `cachyos-vm` (bootstrap-from-scratch via pacstrap) |
-| `deploy:` | `eval-cachyos-vm`, `charly-cachyos` (operator workstation profile) |
+| `deploy:` | `check-cachyos-vm`, `charly-cachyos` (operator workstation profile) |
 | `local:` | `charly-cachyos` (kind:local template — the workstation layer-stack) |
 
 ## Composition — local base, candies + arch builder by reference

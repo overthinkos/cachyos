@@ -65,7 +65,7 @@ candy:
             # /etc/sudoers.d/* is root:root 0440 — unreadable to the non-root
             # user the disposable test runs as. Verify via `sudo -n -l` instead,
             # which exercises the rule's effect without needing to stat the file.
-            # Mirrors the sshd layer's sudoers-charly-user eval pattern.
+            # Mirrors the sshd layer's sudoers-charly-user check pattern.
             - id: nopasswd-wheel-policy
               command: |
                 if [ "$(id -u)" = "0" ]; then
