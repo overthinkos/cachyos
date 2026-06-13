@@ -1,30 +1,35 @@
 candy:
     version: 2026.144.1443
     name: wheel-nopasswd
-    description:
-        feature: Passwordless sudo for the wheel group
-        narrative: |
-            Installs sudo, ensures the wheel group exists, adds the uid-1000
-            account to wheel, and writes /etc/sudoers.d/20-nopasswd-wheel
-            (`%wheel ALL=(ALL:ALL) NOPASSWD: ALL`, mode 0440). Verifiable: sudo is
-            installed and `sudo -n -l` shows a NOPASSWD rule for the user.
-        tag: [working]
+    description: |
+        Passwordless sudo for the wheel group
+        Installs sudo, ensures the wheel group exists, adds the uid-1000
+        account to wheel, and writes /etc/sudoers.d/20-nopasswd-wheel
+        (`%wheel ALL=(ALL:ALL) NOPASSWD: ALL`, mode 0440). Verifiable: sudo is
+        installed and `sudo -n -l` shows a NOPASSWD rule for the user.
     package:
         - sudo
-    task:
-        - write: /etc/sudoers.d/20-nopasswd-wheel
+    plan:
+        - run: write=/etc/sudoers.d/20-nopasswd-wheel
+          write: /etc/sudoers.d/20-nopasswd-wheel
           content: |
             %wheel ALL=(ALL:ALL) NOPASSWD: ALL
           mode: "0440"
           run_as: root
-        # Wheel group + membership. Shell logic required: idempotent group
-        # creation (the `|| groupadd` form mirrors renderAurScript at
-        # charly/deploy_target_local.go:1435), dynamic uid-1000 lookup via
-        # `getent passwd 1000` (matches the sshd layer pattern — works for
-        # both create-mode `user` and adopt-mode `ubuntu`), and a defensive
-        # verify step that fails loudly rather than silently leaving the
-        # operator without sudo.
-        - command: |
+        - run: |
+            command=set -e
+            getent group wheel >/dev/null || groupadd wheel
+            account=$(getent passwd 1000 | cut -d: -f1)
+            if [ -z "$account" ]; then
+              echo "wheel-nopasswd: no uid-1000 account found — refusing to add to wheel" >&2
+              exit 1
+            fi
+            usermod -aG wheel "$account"
+            id -nG "$account" | tr ' ' '\n' | grep -qx wheel || {
+              echo "wheel-nopasswd: FATAL: $account not in wheel after usermod" >&2
+              exit 1
+            }
+          command: |
             set -e
             getent group wheel >/dev/null || groupadd wheel
             account=$(getent passwd 1000 | cut -d: -f1)
@@ -38,42 +43,39 @@ candy:
               exit 1
             }
           run_as: root
-    scenario:
-        - name: passwordless-sudo-works
-          step:
-            - then: the sudo package is installed
-              package: sudo
-              installed: true
-            - then: the uid-1000 user has a passwordless sudo rule in effect
-              command: |
-                if [ "$(id -u)" = "0" ]; then
-                  account=$(getent passwd 1000 | cut -d: -f1)
-                  runuser -u "$account" -- sudo -n -l
-                else
-                  sudo -n -l
-                fi
-              exit_status: 0
-              stdout:
-                - contains: "NOPASSWD"
-        - name: sudo-package
-          step:
-            - id: sudo-package
-              package: sudo
-              installed: true
-        - name: nopasswd-wheel-policy
-          step:
-            # /etc/sudoers.d/* is root:root 0440 — unreadable to the non-root
-            # user the disposable test runs as. Verify via `sudo -n -l` instead,
-            # which exercises the rule's effect without needing to stat the file.
-            # Mirrors the sshd layer's sudoers-charly-user check pattern.
-            - id: nopasswd-wheel-policy
-              command: |
-                if [ "$(id -u)" = "0" ]; then
-                  account=$(getent passwd 1000 | cut -d: -f1)
-                  runuser -u "$account" -- sudo -n -l
-                else
-                  sudo -n -l
-                fi
-              exit_status: 0
-              stdout:
-                - contains: "NOPASSWD"
+        - check: the sudo package is installed
+          package: sudo
+          installed: true
+        - check: the uid-1000 user has a passwordless sudo rule in effect
+          command: |
+            if [ "$(id -u)" = "0" ]; then
+              account=$(getent passwd 1000 | cut -d: -f1)
+              runuser -u "$account" -- sudo -n -l
+            else
+              sudo -n -l
+            fi
+          exit_status: 0
+          stdout:
+            - contains: "NOPASSWD"
+        - check: package=sudo
+          id: sudo-package
+          package: sudo
+          installed: true
+        - check: |
+            command=if [ "$(id -u)" = "0" ]; then
+              account=$(getent passwd 1000 | cut -d: -f1)
+              runuser -u "$account" -- sudo -n -l
+            else
+              sudo -n -l
+            fi
+          id: nopasswd-wheel-policy
+          command: |
+            if [ "$(id -u)" = "0" ]; then
+              account=$(getent passwd 1000 | cut -d: -f1)
+              runuser -u "$account" -- sudo -n -l
+            else
+              sudo -n -l
+            fi
+          exit_status: 0
+          stdout:
+            - contains: "NOPASSWD"

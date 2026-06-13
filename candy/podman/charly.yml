@@ -1,34 +1,29 @@
 candy:
     version: 2026.148.1730
     name: podman
-    description:
-        feature: Rootful podman container engine for a VM guest
-        narrative: |
-            Installs podman + crun + netavark so a VM guest can run containers
-            (e.g. a CUDA container via CDI with `--device nvidia.com/gpu=all`).
-            Minimal on purpose — unlike container-nesting (rootless nested podman),
-            a VM guest runs podman as root directly. Verifiable: the podman binary
-            lands at /usr/bin/podman and reports its version.
-        tag: [working]
+    description: |
+        Rootful podman container engine for a VM guest
+        Installs podman + crun + netavark so a VM guest can run containers
+        (e.g. a CUDA container via CDI with `--device nvidia.com/gpu=all`).
+        Minimal on purpose — unlike container-nesting (rootless nested podman),
+        a VM guest runs podman as root directly. Verifiable: the podman binary
+        lands at /usr/bin/podman and reports its version.
     distro:
         arch:
             package:
                 - podman
                 - crun
                 - netavark
-    scenario:
-        - name: podman-installed
-          step:
-            - then: the podman binary is installed at /usr/bin/podman
-              file: /usr/bin/podman
-              exists: true
-            - then: podman reports its version
-              command: /usr/bin/podman --version
-              exit_status: 0
-              stdout:
-                - matches: "podman version"
-        - name: podman-binary
-          step:
-            - id: podman-binary
-              file: /usr/bin/podman
-              exists: true
+    plan:
+        - check: the podman binary is installed at /usr/bin/podman
+          file: /usr/bin/podman
+          exists: true
+        - check: podman reports its version
+          command: /usr/bin/podman --version
+          exit_status: 0
+          stdout:
+            - matches: "podman version"
+        - check: file=/usr/bin/podman
+          id: podman-binary
+          file: /usr/bin/podman
+          exists: true
