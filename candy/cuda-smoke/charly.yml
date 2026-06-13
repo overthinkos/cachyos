@@ -11,15 +11,6 @@ candy:
             GPU-passthrough eval runs it in a container in the VM to prove real
             device compute. Verifiable at build scope: the compiled binary exists.
         tag: [working]
-        scenario:
-            - name: cuda-smoke-binary-built
-              step:
-                - then: the nvcc-compiled cuda-smoke binary exists at /usr/local/bin/cuda-smoke
-                  file: /usr/local/bin/cuda-smoke
-                  exists: true
-            - name: cuda-smoke-runs-on-gpu
-              step:
-                - then: on a GPU-passthrough guest, cuda-smoke runs the kernel and prints CUDA-OK
     distro:
         arch:
             package:
@@ -29,8 +20,8 @@ candy:
     task:
         - copy: cuda_smoke.cu
           to: /tmp/cuda_smoke.cu
-          user: root
-        - cmd: |
+          run_as: root
+        - command: |
             # Invoke nvcc from its real CUDA root (/opt/cuda) — the /usr/bin/nvcc
             # symlink makes nvcc detect root=/usr and miss /opt/cuda/include/crt/.
             # Pin the host compiler to g++-15 (CUDA 13.2 doesn't support gcc 16).
@@ -38,8 +29,18 @@ candy:
             [ -x "$NVCC" ] || NVCC="$(command -v nvcc)"
             "$NVCC" -ccbin /usr/bin/g++-15 -I/opt/cuda/include -o /usr/local/bin/cuda-smoke /tmp/cuda_smoke.cu
             rm -f /tmp/cuda_smoke.cu
-          user: root
-    eval:
-        - id: cuda-smoke-binary
-          file: /usr/local/bin/cuda-smoke
-          exists: true
+          run_as: root
+    scenario:
+        - name: cuda-smoke-binary-built
+          step:
+            - then: the nvcc-compiled cuda-smoke binary exists at /usr/local/bin/cuda-smoke
+              file: /usr/local/bin/cuda-smoke
+              exists: true
+        - name: cuda-smoke-runs-on-gpu
+          step:
+            - then: on a GPU-passthrough guest, cuda-smoke runs the kernel and prints CUDA-OK
+        - name: cuda-smoke-binary
+          step:
+            - id: cuda-smoke-binary
+              file: /usr/local/bin/cuda-smoke
+              exists: true

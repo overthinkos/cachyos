@@ -25,169 +25,208 @@ box:
         - '@github.com/overthinkos/overthink/candy/notebook-graph:v2026.162.1442' # data layer: seeds /workspace/notebooks/gpu-libraries-demo.py — cuGraph/cuML/PyG/graphistry demo
         - '@github.com/overthinkos/overthink/candy/debug-tools:v2026.162.1442' # network/process/file inspection toolkit for debugging the deployed services in this image
         - '@github.com/overthinkos/overthink/candy/dbus:v2026.162.1442'
-    # Image-level deploy-scope eval probes — run AFTER every layer's
-    # eval block on `charly eval live versa`. The first probe is the
-    # end-to-end driver: it triggers all 6 self-authored DAGs via
-    # `marimo export ipynb`, waits for each to reach success, and
-    # renders all cells server-side. Every subsequent probe verifies
-    # a post-DAG artifact or per-tile-source endpoint.
-    deploy_eval:
-        # End-to-end: render the notebook (triggers all 6 DAGs).
-        - id: versa-notebook-export
-          scope: deploy
-          command: |
-            ${HOME}/.pixi/envs/default/bin/marimo export ipynb \
-              /workspace/notebooks/osm-monaco-viz.py \
-              --include-outputs --sort topological \
-              -o /tmp/notebook-run.ipynb -f
-          in_container: true
-          exit_status: 0
-          timeout: 600s
-        - id: versa-notebook-size
-          scope: deploy
-          command: wc -c < /tmp/notebook-run.ipynb
-          in_container: true
-          stdout:
-            - matches: "[1-9][0-9]{5,}" # >=100KB rendered ipynb (no anchors per /charly-eval:eval gotcha #6)
-        # Per-tile-source martin TileJSON reachability (4 sources).
-        - id: versa-martin-monaco
-          scope: deploy
-          http: "http://127.0.0.1:${HOST_PORT:3000}/monaco"
-          status: 200
-          body:
-            - contains: "tilejson"
-            - contains: "vector_layers"
-        - id: versa-martin-monaco-gpqtiles
-          scope: deploy
-          http: "http://127.0.0.1:${HOST_PORT:3000}/monaco-gpqtiles"
-          status: 200
-          body:
-            - contains: "tilejson"
-        - id: versa-martin-monaco-duckdb-mvt
-          scope: deploy
-          http: "http://127.0.0.1:${HOST_PORT:3000}/monaco-duckdb-mvt"
-          status: 200
-          body:
-            - contains: "tilejson"
-        - id: versa-martin-monaco-duckdb-freestiler
-          scope: deploy
-          http: "http://127.0.0.1:${HOST_PORT:3000}/monaco-duckdb-freestiler"
-          status: 200
-          body:
-            - contains: "tilejson"
-        # Versatiles serve shortbread tile — zoom 0/0/0 exists in every
-        # tilemaker output, including Monaco at low zoom. Probe at zoom 0
-        # rather than 14 (zoom-14 tiles only exist where data actually
-        # falls; Monaco's bounds may not cover a specific 14/8521/5963
-        # cell after a fresh tilemaker run).
-        - id: versa-versatiles-shortbread-tile
-          scope: deploy
-          command: |
-            curl -fsSI "http://127.0.0.1:${HOST_PORT:8090}/tiles/monaco-shortbread/0/0/0.pbf" \
-              | awk 'BEGIN{IGNORECASE=1} /^content-length:/ {gsub("\r",""); print $2}'
-          in_container: false
-          stdout:
-            - matches: "[1-9][0-9]+" # any positive byte count (PBF non-empty)
-        # DAG output artifact size probes (post-DAG existence + size).
-        # No regex anchors — `wc -c` output ends with \n and Go's `$`
-        # doesn't match before newline (see /charly-eval:eval gotcha #6).
-        # Thresholds match the actual post-DAG sizes the skill records
-        # (~824 KB parquet, ~616 KB pmtiles after the post-2026-05
-        # tippecanoe-config change, ~770 KB gtfs.zip) — all comfortably
-        # above 100 KB which the [1-9][0-9]{5,} substring asserts.
-        - id: versa-artifact-parquet
-          scope: deploy
-          command: wc -c < /workspace/tiles/work/monaco.parquet
-          in_container: true
-          stdout:
-            - matches: "[1-9][0-9]{5,}" # >=100KB
-        - id: versa-artifact-pmtiles
-          scope: deploy
-          command: wc -c < /workspace/tiles/pmtiles/monaco.pmtiles
-          in_container: true
-          stdout:
-            - matches: "[1-9][0-9]{5,}" # >=100KB
-        - id: versa-artifact-gtfs
-          scope: deploy
-          command: wc -c < /workspace/gtfs/raw/monaco.gtfs.zip
-          in_container: true
-          stdout:
-            - matches: "[1-9][0-9]{5,}" # >=100KB
-        # Catches the silent-versatiles-fallback masking: the
-        # existing versa-versatiles-shortbread-tile probe HEAD-checks
-        # /tiles/monaco-shortbread/0/0/0.pbf and returns a non-empty
-        # body even when the local monaco-shortbread.pmtiles is
-        # missing — versatiles' multi-source serve falls through to
-        # the always-on remote osm.versatiles container. Asserting
-        # on file size catches the file-missing state directly. The
-        # shortbread DAG (in cell 4 of osm-monaco-viz.py) used to
-        # race the OSM DAG's atomic PBF rename and produced no
-        # output; the wait-on-parquet fix landed alongside this
-        # probe so a regression of the race surfaces here.
-        - id: versa-artifact-shortbread
-          scope: deploy
-          command: wc -c < /workspace/tiles/shortbread/monaco-shortbread.pmtiles
-          in_container: true
-          stdout:
-            - matches: "[1-9][0-9]{5,}" # >=100KB
-        # GPU libraries demo (cuGraph / cuML / PyG / graphistry).
-        # versa-graph-imports asserts that all four library
-        # families load + GPU is visible. versa-graph-cugraph-pagerank
-        # exercises the nx-cugraph backend on the karate graph
-        # (cuGraph 26.4 removed cugraph.datasets; nx_cugraph is the
-        # idiomatic accelerator path). versa-graph-notebook-export +
-        # versa-graph-notebook-size run the whole demo notebook
-        # end-to-end via marimo's headless ipynb-export, matching
-        # the versa-notebook-export pattern.
-        - id: versa-graph-imports
-          scope: deploy
-          command: |
-            ${HOME}/.pixi/envs/default/bin/python -c '
-            import cugraph, cuml, nx_cugraph, pylibcugraph
-            import torch_geometric, torch_scatter, torch_sparse, torch_cluster
-            import graphistry, torch
-            print(f"cugraph={cugraph.__version__}")
-            print(f"cuml={cuml.__version__}")
-            print(f"pyg={torch_geometric.__version__}")
-            print(f"torch_scatter={torch_scatter.__version__}")
-            print(f"graphistry={graphistry.__version__}")
-            print(f"cuda_devices={torch.cuda.device_count()}")
-            '
-          in_container: true
-          stdout:
-            - matches: "cugraph=[0-9]+"
-            - matches: "cuml=[0-9]+"
-            - matches: "pyg=[0-9]+"
-            - matches: "torch_scatter=[0-9]+"
-            - matches: "graphistry=[0-9]+"
-            - matches: "cuda_devices=[1-9]"
-        - id: versa-graph-cugraph-pagerank
-          scope: deploy
-          command: |
-            ${HOME}/.pixi/envs/default/bin/python -c '
-            import networkx as nx
-            G = nx.karate_club_graph()
-            pr = nx.pagerank(G, backend="cugraph")
-            print(f"pr_rows={len(pr)}")
-            print(f"pr_top_node={max(pr, key=pr.get)}")
-            '
-          in_container: true
-          stdout:
-            - matches: "pr_rows=[1-9][0-9]+"
-            - matches: "pr_top_node=[0-9]+"
-        - id: versa-graph-notebook-export
-          scope: deploy
-          command: |
-            ${HOME}/.pixi/envs/default/bin/marimo export ipynb \
-              /workspace/notebooks/gpu-libraries-demo.py \
-              --include-outputs --sort topological \
-              -o /tmp/gpu-demo.ipynb -f
-          in_container: true
-          exit_status: 0
-          timeout: 600s
-        - id: versa-graph-notebook-size
-          scope: deploy
-          command: wc -c < /tmp/gpu-demo.ipynb
-          in_container: true
-          stdout:
-            - matches: "[1-9][0-9]{4,}" # >=10KB rendered ipynb (matches the 18KB observed live)
+    scenario:
+        - name: versa-notebook-export
+          step:
+            # End-to-end: render the notebook (triggers all 6 DAGs).
+            - id: versa-notebook-export
+              command: |
+                ${HOME}/.pixi/envs/default/bin/marimo export ipynb \
+                  /workspace/notebooks/osm-monaco-viz.py \
+                  --include-outputs --sort topological \
+                  -o /tmp/notebook-run.ipynb -f
+              in_container: true
+              exit_status: 0
+              timeout: 600s
+              context:
+                - runtime
+        - name: versa-notebook-size
+          step:
+            - id: versa-notebook-size
+              command: wc -c < /tmp/notebook-run.ipynb
+              in_container: true
+              stdout:
+                - matches: "[1-9][0-9]{5,}" # >=100KB rendered ipynb (no anchors per /charly-eval:eval gotcha #6)
+              context:
+                - runtime
+        - name: versa-martin-monaco
+          step:
+            # Per-tile-source martin TileJSON reachability (4 sources).
+            - id: versa-martin-monaco
+              http: "http://127.0.0.1:${HOST_PORT:3000}/monaco"
+              status: 200
+              body:
+                - contains: "tilejson"
+                - contains: "vector_layers"
+              context:
+                - runtime
+        - name: versa-martin-monaco-gpqtiles
+          step:
+            - id: versa-martin-monaco-gpqtiles
+              http: "http://127.0.0.1:${HOST_PORT:3000}/monaco-gpqtiles"
+              status: 200
+              body:
+                - contains: "tilejson"
+              context:
+                - runtime
+        - name: versa-martin-monaco-duckdb-mvt
+          step:
+            - id: versa-martin-monaco-duckdb-mvt
+              http: "http://127.0.0.1:${HOST_PORT:3000}/monaco-duckdb-mvt"
+              status: 200
+              body:
+                - contains: "tilejson"
+              context:
+                - runtime
+        - name: versa-martin-monaco-duckdb-freestiler
+          step:
+            - id: versa-martin-monaco-duckdb-freestiler
+              http: "http://127.0.0.1:${HOST_PORT:3000}/monaco-duckdb-freestiler"
+              status: 200
+              body:
+                - contains: "tilejson"
+              context:
+                - runtime
+        - name: versa-versatiles-shortbread-tile
+          step:
+            # Versatiles serve shortbread tile — zoom 0/0/0 exists in every
+            # tilemaker output, including Monaco at low zoom. Probe at zoom 0
+            # rather than 14 (zoom-14 tiles only exist where data actually
+            # falls; Monaco's bounds may not cover a specific 14/8521/5963
+            # cell after a fresh tilemaker run).
+            - id: versa-versatiles-shortbread-tile
+              command: |
+                curl -fsSI "http://127.0.0.1:${HOST_PORT:8090}/tiles/monaco-shortbread/0/0/0.pbf" \
+                  | awk 'BEGIN{IGNORECASE=1} /^content-length:/ {gsub("\r",""); print $2}'
+              in_container: false
+              stdout:
+                - matches: "[1-9][0-9]+" # any positive byte count (PBF non-empty)
+              context:
+                - runtime
+        - name: versa-artifact-parquet
+          step:
+            # DAG output artifact size probes (post-DAG existence + size).
+            # No regex anchors — `wc -c` output ends with \n and Go's `$`
+            # doesn't match before newline (see /charly-eval:eval gotcha #6).
+            # Thresholds match the actual post-DAG sizes the skill records
+            # (~824 KB parquet, ~616 KB pmtiles after the post-2026-05
+            # tippecanoe-config change, ~770 KB gtfs.zip) — all comfortably
+            # above 100 KB which the [1-9][0-9]{5,} substring asserts.
+            - id: versa-artifact-parquet
+              command: wc -c < /workspace/tiles/work/monaco.parquet
+              in_container: true
+              stdout:
+                - matches: "[1-9][0-9]{5,}" # >=100KB
+              context:
+                - runtime
+        - name: versa-artifact-pmtiles
+          step:
+            - id: versa-artifact-pmtiles
+              command: wc -c < /workspace/tiles/pmtiles/monaco.pmtiles
+              in_container: true
+              stdout:
+                - matches: "[1-9][0-9]{5,}" # >=100KB
+              context:
+                - runtime
+        - name: versa-artifact-gtfs
+          step:
+            - id: versa-artifact-gtfs
+              command: wc -c < /workspace/gtfs/raw/monaco.gtfs.zip
+              in_container: true
+              stdout:
+                - matches: "[1-9][0-9]{5,}" # >=100KB
+              context:
+                - runtime
+        - name: versa-artifact-shortbread
+          step:
+            # Catches the silent-versatiles-fallback masking: the
+            # existing versa-versatiles-shortbread-tile probe HEAD-checks
+            # /tiles/monaco-shortbread/0/0/0.pbf and returns a non-empty
+            # body even when the local monaco-shortbread.pmtiles is
+            # missing — versatiles' multi-source serve falls through to
+            # the always-on remote osm.versatiles container. Asserting
+            # on file size catches the file-missing state directly. The
+            # shortbread DAG (in cell 4 of osm-monaco-viz.py) used to
+            # race the OSM DAG's atomic PBF rename and produced no
+            # output; the wait-on-parquet fix landed alongside this
+            # probe so a regression of the race surfaces here.
+            - id: versa-artifact-shortbread
+              command: wc -c < /workspace/tiles/shortbread/monaco-shortbread.pmtiles
+              in_container: true
+              stdout:
+                - matches: "[1-9][0-9]{5,}" # >=100KB
+              context:
+                - runtime
+        - name: versa-graph-imports
+          step:
+            # GPU libraries demo (cuGraph / cuML / PyG / graphistry).
+            # versa-graph-imports asserts that all four library
+            # families load + GPU is visible. versa-graph-cugraph-pagerank
+            # exercises the nx-cugraph backend on the karate graph
+            # (cuGraph 26.4 removed cugraph.datasets; nx_cugraph is the
+            # idiomatic accelerator path). versa-graph-notebook-export +
+            # versa-graph-notebook-size run the whole demo notebook
+            # end-to-end via marimo's headless ipynb-export, matching
+            # the versa-notebook-export pattern.
+            - id: versa-graph-imports
+              command: |
+                ${HOME}/.pixi/envs/default/bin/python -c '
+                import cugraph, cuml, nx_cugraph, pylibcugraph
+                import torch_geometric, torch_scatter, torch_sparse, torch_cluster
+                import graphistry, torch
+                print(f"cugraph={cugraph.__version__}")
+                print(f"cuml={cuml.__version__}")
+                print(f"pyg={torch_geometric.__version__}")
+                print(f"torch_scatter={torch_scatter.__version__}")
+                print(f"graphistry={graphistry.__version__}")
+                print(f"cuda_devices={torch.cuda.device_count()}")
+                '
+              in_container: true
+              stdout:
+                - matches: "cugraph=[0-9]+"
+                - matches: "cuml=[0-9]+"
+                - matches: "pyg=[0-9]+"
+                - matches: "torch_scatter=[0-9]+"
+                - matches: "graphistry=[0-9]+"
+                - matches: "cuda_devices=[1-9]"
+              context:
+                - runtime
+        - name: versa-graph-cugraph-pagerank
+          step:
+            - id: versa-graph-cugraph-pagerank
+              command: |
+                ${HOME}/.pixi/envs/default/bin/python -c '
+                import networkx as nx
+                G = nx.karate_club_graph()
+                pr = nx.pagerank(G, backend="cugraph")
+                print(f"pr_rows={len(pr)}")
+                print(f"pr_top_node={max(pr, key=pr.get)}")
+                '
+              in_container: true
+              stdout:
+                - matches: "pr_rows=[1-9][0-9]+"
+                - matches: "pr_top_node=[0-9]+"
+              context:
+                - runtime
+        - name: versa-graph-notebook-export
+          step:
+            - id: versa-graph-notebook-export
+              command: |
+                ${HOME}/.pixi/envs/default/bin/marimo export ipynb \
+                  /workspace/notebooks/gpu-libraries-demo.py \
+                  --include-outputs --sort topological \
+                  -o /tmp/gpu-demo.ipynb -f
+              in_container: true
+              exit_status: 0
+              timeout: 600s
+              context:
+                - runtime
+        - name: versa-graph-notebook-size
+          step:
+            - id: versa-graph-notebook-size
+              command: wc -c < /tmp/gpu-demo.ipynb
+              in_container: true
+              stdout:
+                - matches: "[1-9][0-9]{4,}" # >=10KB rendered ipynb (matches the 18KB observed live)
+              context:
+                - runtime

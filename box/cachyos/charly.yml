@@ -29,21 +29,25 @@ box:
         - npm
         - cargo
         - aur
-    # Build-scope eval probes — `charly eval box cachyos`. Inherited by
-    # downstream consumers (main's versa) via the base chain.
-    eval:
-        - id: cachyos-os-release
-          command: cat /etc/os-release
-          exit_status: 0
-          stdout:
-            - contains: "ID=cachyos"
-        - id: cachyos-pacman
-          command: pacman --version
-          exit_status: 0
-          stdout:
-            - contains: "Pacman v"
-        - id: cachyos-v3-repo-configured
-          command: pacman-conf --repo-list
-          exit_status: 0
-          stdout:
-            - contains: "cachyos-v3"
+    scenario:
+        - name: cachyos-os-release
+          step:
+            - id: cachyos-os-release
+              command: cat /etc/os-release
+              exit_status: 0
+              stdout:
+                - contains: "ID=cachyos"
+        - name: cachyos-pacman
+          step:
+            - id: cachyos-pacman
+              command: pacman --version
+              exit_status: 0
+              stdout:
+                - contains: "Pacman v"
+        - name: cachyos-v3-repo-configured
+          step:
+            - id: cachyos-v3-repo-configured
+              command: pacman-conf --repo-list
+              exit_status: 0
+              stdout:
+                - contains: "cachyos-v3"

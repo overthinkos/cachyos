@@ -10,24 +10,25 @@ candy:
             a VM guest runs podman as root directly. Verifiable: the podman binary
             lands at /usr/bin/podman and reports its version.
         tag: [working]
-        scenario:
-            - name: podman-installed
-              step:
-                - then: the podman binary is installed at /usr/bin/podman
-                  file: /usr/bin/podman
-                  exists: true
-                - then: podman reports its version
-                  command: /usr/bin/podman --version
-                  exit_status: 0
-                  stdout:
-                    - matches: "podman version"
     distro:
         arch:
             package:
                 - podman
                 - crun
                 - netavark
-    eval:
-        - id: podman-binary
-          file: /usr/bin/podman
-          exists: true
+    scenario:
+        - name: podman-installed
+          step:
+            - then: the podman binary is installed at /usr/bin/podman
+              file: /usr/bin/podman
+              exists: true
+            - then: podman reports its version
+              command: /usr/bin/podman --version
+              exit_status: 0
+              stdout:
+                - matches: "podman version"
+        - name: podman-binary
+          step:
+            - id: podman-binary
+              file: /usr/bin/podman
+              exists: true

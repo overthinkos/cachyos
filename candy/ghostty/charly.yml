@@ -8,30 +8,35 @@ candy:
             lands at /usr/bin/ghostty, the package is registered, and
             `ghostty --version` reports its version banner.
         tag: [working]
-        scenario:
-            - name: ghostty-installed
-              step:
-                - then: the ghostty binary is installed at /usr/bin/ghostty
-                  file: /usr/bin/ghostty
-                  exists: true
-                - then: ghostty reports its version
-                  command: /usr/bin/ghostty --version
-                  exit_status: 0
-                  stdout:
-                    - matches: "^Ghostty"
     distro:
         arch:
             package:
                 - ghostty
-    eval:
-        - id: ghostty-binary
-          file: /usr/bin/ghostty
-          exists: true
-        - id: ghostty-package
-          package: ghostty
-          installed: true
-        - id: ghostty-version
-          command: /usr/bin/ghostty --version
-          exit_status: 0
-          stdout:
-            - matches: "^Ghostty"
+    scenario:
+        - name: ghostty-installed
+          step:
+            - then: the ghostty binary is installed at /usr/bin/ghostty
+              file: /usr/bin/ghostty
+              exists: true
+            - then: ghostty reports its version
+              command: /usr/bin/ghostty --version
+              exit_status: 0
+              stdout:
+                - matches: "^Ghostty"
+        - name: ghostty-binary
+          step:
+            - id: ghostty-binary
+              file: /usr/bin/ghostty
+              exists: true
+        - name: ghostty-package
+          step:
+            - id: ghostty-package
+              package: ghostty
+              installed: true
+        - name: ghostty-version
+          step:
+            - id: ghostty-version
+              command: /usr/bin/ghostty --version
+              exit_status: 0
+              stdout:
+                - matches: "^Ghostty"

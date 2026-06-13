@@ -12,20 +12,6 @@ candy:
             (never in a container). Verifiable: the modprobe + CDI unit files land
             and the egl-wayland / opencl-nvidia packages install.
         tag: [working]
-        scenario:
-            - name: nvidia-driver-config-installed
-              step:
-                - then: the nouveau blacklist + nvidia-drm modeset config is installed
-                  file: /etc/modprobe.d/charly-nvidia.conf
-                  contains: "blacklist nouveau"
-                - then: the boot-time CDI-generation service is installed
-                  file: /etc/systemd/system/charly-nvidia-cdi.service
-                  contains: "nvidia-ctk cdi generate"
-            - name: nvidia-wayland-userspace-installed
-              step:
-                - then: egl-wayland (the NVIDIA Wayland EGLStream platform) is installed
-                  package: egl-wayland
-                  installed: true
     distro:
         arch:
             package:
@@ -43,7 +29,7 @@ candy:
         # explicit `mkinitcpio -P` would fail the deploy on the non-fatal
         # kms/sd-vconsole build warnings.
         - write: /etc/modprobe.d/charly-nvidia.conf
-          user: root
+          run_as: root
           mode: "0644"
           content: |
             # Belt-and-suspenders nouveau blacklist (the kernel cmdline does the
@@ -57,7 +43,7 @@ candy:
         # once the GPU device node exists, so `podman run --device
         # nvidia.com/gpu=all` works post-reboot without any manual step.
         - write: /etc/systemd/system/charly-nvidia-cdi.service
-          user: root
+          run_as: root
           mode: "0644"
           content: |
             [Unit]
@@ -77,30 +63,51 @@ candy:
         # Enable for boot (runs on the post-reboot boot when the driver is up).
         # NOT --now: pre-reboot the driver isn't loaded yet. Tolerant so an
         # image-build chroot (no systemd) doesn't fail the layer.
-        - cmd: |
+        - command: |
             systemctl daemon-reload || true
             systemctl enable charly-nvidia-cdi.service || true
-          user: root
+          run_as: root
         # Device-group access for the desktop user's session services. The KDE
         # compositor + pixelflux NVENC run as user-scope services in the deploy
         # user's session; /dev/dri/render* + /dev/nvidia* are video/render-owned,
         # so the deploy user (uid 1000) must be in both or the user-session
         # compositor/encoder can't open the devices.
-        - cmd: |
+        - command: |
             u="$(getent passwd 1000 | cut -d: -f1)"
             [ -n "$u" ] && usermod -aG video,render "$u" || true
-          user: root
+          run_as: root
     reboot: true
-    eval:
-        - id: nvidia-modprobe-conf
-          file: /etc/modprobe.d/charly-nvidia.conf
-          contains: "blacklist nouveau"
-        - id: nvidia-cdi-service
-          file: /etc/systemd/system/charly-nvidia-cdi.service
-          contains: "nvidia-ctk cdi generate"
-        - id: egl-wayland-installed
-          package: egl-wayland
-          installed: true
-        - id: opencl-nvidia-installed
-          package: opencl-nvidia
-          installed: true
+    scenario:
+        - name: nvidia-driver-config-installed
+          step:
+            - then: the nouveau blacklist + nvidia-drm modeset config is installed
+              file: /etc/modprobe.d/charly-nvidia.conf
+              contains: "blacklist nouveau"
+            - then: the boot-time CDI-generation service is installed
+              file: /etc/systemd/system/charly-nvidia-cdi.service
+              contains: "nvidia-ctk cdi generate"
+        - name: nvidia-wayland-userspace-installed
+          step:
+            - then: egl-wayland (the NVIDIA Wayland EGLStream platform) is installed
+              package: egl-wayland
+              installed: true
+        - name: nvidia-modprobe-conf
+          step:
+            - id: nvidia-modprobe-conf
+              file: /etc/modprobe.d/charly-nvidia.conf
+              contains: "blacklist nouveau"
+        - name: nvidia-cdi-service
+          step:
+            - id: nvidia-cdi-service
+              file: /etc/systemd/system/charly-nvidia-cdi.service
+              contains: "nvidia-ctk cdi generate"
+        - name: egl-wayland-installed
+          step:
+            - id: egl-wayland-installed
+              package: egl-wayland
+              installed: true
+        - name: opencl-nvidia-installed
+          step:
+            - id: opencl-nvidia-installed
+              package: opencl-nvidia
+              installed: true
