@@ -3,6 +3,6 @@ box:
     enabled: true
     base: cachyos
     candy:
-        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.162.1442'
-        - '@github.com/overthinkos/overthink/candy/openclaw:v2026.162.1442'
-        - '@github.com/overthinkos/overthink/candy/dbus:v2026.162.1442'
+        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.164.2138'
+        - '@github.com/overthinkos/overthink/candy/openclaw:v2026.164.2138'
+        - '@github.com/overthinkos/overthink/candy/dbus:v2026.164.2138'

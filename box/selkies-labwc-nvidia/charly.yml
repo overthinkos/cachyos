@@ -14,9 +14,9 @@ box:
     platform:
         - linux/amd64
     candy:
-        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.162.1442'
-        - '@github.com/overthinkos/overthink/candy/selkies-desktop:v2026.162.1442'
-        - '@github.com/overthinkos/overthink/candy/dbus:v2026.162.1442'
+        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.164.2138'
+        - '@github.com/overthinkos/overthink/candy/selkies-desktop:v2026.164.2138'
+        - '@github.com/overthinkos/overthink/candy/dbus:v2026.164.2138'
     plan:
         - check: command=strings ${HOME}/.pixi/envs/default/lib/python3.*/site-packages/pixelflux/pixelflux_wayland*.so | grep -q NvEncodeAPICreateInstance && echo NVENC-COMPILED
           id: pixelflux-nvenc-compiled
