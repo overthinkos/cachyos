@@ -61,8 +61,11 @@ check:
         # mandatory repo deps podman/libvirt/tailscale/gocryptfs) lives ONCE, on
         # main's purpose-built `check-charly-vm` pac witness — the dedicated home for
         # that assertion, so it is not duplicated across beds.
+        # dev-tools is composed here so this canary also validates the cachyos
+        # workstation's core dev toolkit installs (golangci-lint / gopls / etc.).
         add_candy:
             - '@github.com/overthinkos/overthink/candy/charly:v2026.164.2138'
+            - '@github.com/overthinkos/overthink/candy/dev-tools:v2026.165.0848'
         install_opts:
             allow_repo_changes: true
             allow_root_tasks: true
@@ -789,7 +792,7 @@ deploy:
         add_candy:
             - wheel-nopasswd
             - '@github.com/overthinkos/overthink/candy/yay:v2026.164.2138'
-            - '@github.com/overthinkos/overthink/candy/dev-tools:v2026.164.2138'
+            - '@github.com/overthinkos/overthink/candy/dev-tools:v2026.165.0848'
             - '@github.com/overthinkos/overthink/candy/gh:v2026.164.2138'
             - '@github.com/overthinkos/overthink/candy/pre-commit:v2026.164.2138'
             - '@github.com/overthinkos/overthink/candy/tmux:v2026.164.2138'
@@ -878,7 +881,7 @@ local:
         candy:
             - wheel-nopasswd
             - '@github.com/overthinkos/overthink/candy/yay:v2026.164.2138'
-            - '@github.com/overthinkos/overthink/candy/dev-tools:v2026.164.2138'
+            - '@github.com/overthinkos/overthink/candy/dev-tools:v2026.165.0848'
             - '@github.com/overthinkos/overthink/candy/gh:v2026.164.2138'
             - '@github.com/overthinkos/overthink/candy/pre-commit:v2026.164.2138'
             - '@github.com/overthinkos/overthink/candy/tmux:v2026.164.2138'
