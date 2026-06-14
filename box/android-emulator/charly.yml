@@ -4,11 +4,11 @@ box:
     platform:
         - linux/amd64
     candy:
-        - '@github.com/overthinkos/overthink/candy/nodejs:v2026.165.0934'
-        - '@github.com/overthinkos/overthink/candy/java-openjdk:v2026.165.0934'
-        - '@github.com/overthinkos/overthink/candy/android-sdk:v2026.165.0934'
-        - '@github.com/overthinkos/overthink/candy/appium-server:v2026.165.0934'
-        - '@github.com/overthinkos/overthink/candy/android-emulator-layer:v2026.165.0934'
+        - '@github.com/overthinkos/overthink/candy/nodejs:v2026.165.2208'
+        - '@github.com/overthinkos/overthink/candy/java-openjdk:v2026.165.2208'
+        - '@github.com/overthinkos/overthink/candy/android-sdk:v2026.165.2208'
+        - '@github.com/overthinkos/overthink/candy/appium-server:v2026.165.2208'
+        - '@github.com/overthinkos/overthink/candy/android-emulator-layer:v2026.165.2208'
     env:
         - EMULATOR_NAME=charly_avd_36
         - EMULATOR_API_LEVEL=36
