@@ -12,6 +12,6 @@ box:
         - pac
         - aur
     candy:
-        - '@github.com/overthinkos/overthink/candy/charly-mcp:v2026.165.0848'
-        - '@github.com/overthinkos/overthink/candy/container-nesting:v2026.165.0848'
-        - '@github.com/overthinkos/overthink/candy/claude-code:v2026.165.0848'
+        - '@github.com/overthinkos/overthink/candy/charly-mcp:v2026.165.0934'
+        - '@github.com/overthinkos/overthink/candy/container-nesting:v2026.165.0934'
+        - '@github.com/overthinkos/overthink/candy/claude-code:v2026.165.0934'

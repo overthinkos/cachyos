@@ -4,7 +4,7 @@ box:
     platform:
         - linux/amd64
     candy:
-        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.165.0848'
-        - '@github.com/overthinkos/overthink/candy/jupyter-ml:v2026.165.0848'
-        - '@github.com/overthinkos/overthink/candy/notebook-templates:v2026.165.0848'
-        - '@github.com/overthinkos/overthink/candy/dbus:v2026.165.0848'
+        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.165.0934'
+        - '@github.com/overthinkos/overthink/candy/jupyter-ml:v2026.165.0934'
+        - '@github.com/overthinkos/overthink/candy/notebook-templates:v2026.165.0934'
+        - '@github.com/overthinkos/overthink/candy/dbus:v2026.165.0934'

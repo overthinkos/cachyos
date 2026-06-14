@@ -9,6 +9,6 @@ box:
     platform:
         - linux/amd64
     candy:
-        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.165.0848'
-        - '@github.com/overthinkos/overthink/candy/nvidia:v2026.165.0848'
-        - '@github.com/overthinkos/overthink/candy/cuda:v2026.165.0848'
+        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.165.0934'
+        - '@github.com/overthinkos/overthink/candy/nvidia:v2026.165.0934'
+        - '@github.com/overthinkos/overthink/candy/cuda:v2026.165.0934'

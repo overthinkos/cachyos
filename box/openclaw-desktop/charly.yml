@@ -14,15 +14,15 @@ box:
     platform:
         - linux/amd64
     candy:
-        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.165.0848'
-        - '@github.com/overthinkos/overthink/candy/selkies-desktop:v2026.165.0848'
-        - '@github.com/overthinkos/overthink/candy/openclaw-full:v2026.165.0848'
-        - '@github.com/overthinkos/overthink/candy/ollama:v2026.165.0848'
-        - '@github.com/overthinkos/overthink/candy/charly:v2026.165.0848'
-        - '@github.com/overthinkos/overthink/candy/container-nesting:v2026.165.0848'
-        - '@github.com/overthinkos/overthink/candy/golang:v2026.165.0848'
-        - '@github.com/overthinkos/overthink/candy/gh:v2026.165.0848'
-        - '@github.com/overthinkos/overthink/candy/dbus:v2026.165.0848'
+        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.165.0934'
+        - '@github.com/overthinkos/overthink/candy/selkies-desktop:v2026.165.0934'
+        - '@github.com/overthinkos/overthink/candy/openclaw-full:v2026.165.0934'
+        - '@github.com/overthinkos/overthink/candy/ollama:v2026.165.0934'
+        - '@github.com/overthinkos/overthink/candy/charly:v2026.165.0934'
+        - '@github.com/overthinkos/overthink/candy/container-nesting:v2026.165.0934'
+        - '@github.com/overthinkos/overthink/candy/golang:v2026.165.0934'
+        - '@github.com/overthinkos/overthink/candy/gh:v2026.165.0934'
+        - '@github.com/overthinkos/overthink/candy/dbus:v2026.165.0934'
     # No box-level check: every check this all-in-one image carries lives on the
     # candy that provides the behaviour, so each is covered once across all
     # composing boxes — selkies/chrome/labwc/traefik/sshd binaries (selkies +
