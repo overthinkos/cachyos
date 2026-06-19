@@ -10,6 +10,6 @@ nvidia:
             - linux/amd64
     nvidia-candy:
         candy:
-            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.166.1222'
-            - '@github.com/overthinkos/overthink/candy/nvidia:v2026.166.1222'
-            - '@github.com/overthinkos/overthink/candy/cuda:v2026.166.1222'
+            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.170.1105'
+            - '@github.com/overthinkos/overthink/candy/nvidia:v2026.170.1105'
+            - '@github.com/overthinkos/overthink/candy/cuda:v2026.170.1105'

@@ -5,7 +5,7 @@ unsloth-studio:
             - linux/amd64
     unsloth-studio-candy:
         candy:
-            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.166.1222'
-            - '@github.com/overthinkos/overthink/candy/unsloth-studio:v2026.166.1222'
-            - '@github.com/overthinkos/overthink/candy/notebook-finetuning:v2026.166.1222'
-            - '@github.com/overthinkos/overthink/candy/dbus:v2026.166.1222'
+            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.170.1105'
+            - '@github.com/overthinkos/overthink/candy/unsloth-studio:v2026.170.1105'
+            - '@github.com/overthinkos/overthink/candy/notebook-finetuning:v2026.170.1105'
+            - '@github.com/overthinkos/overthink/candy/dbus:v2026.170.1105'

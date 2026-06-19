@@ -12,8 +12,8 @@ githubrunner:
         network: host
     githubrunner-candy:
         candy:
-            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.166.1222'
-            - '@github.com/overthinkos/overthink/candy/github-runner:v2026.166.1222'
-            - '@github.com/overthinkos/overthink/candy/charly:v2026.166.1222'
-            - '@github.com/overthinkos/overthink/candy/dbus:v2026.166.1222'
-            - '@github.com/overthinkos/overthink/candy/container-nesting:v2026.166.1222'
+            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.170.1105'
+            - '@github.com/overthinkos/overthink/candy/github-runner:v2026.170.1105'
+            - '@github.com/overthinkos/overthink/candy/charly:v2026.170.1105'
+            - '@github.com/overthinkos/overthink/candy/dbus:v2026.170.1105'
+            - '@github.com/overthinkos/overthink/candy/container-nesting:v2026.170.1105'
