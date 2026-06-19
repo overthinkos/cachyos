@@ -1,9 +1,10 @@
-box:
-    name: comfyui
-    base: nvidia
-    platform:
-        - linux/amd64
-    candy:
-        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.166.1222'
-        - '@github.com/overthinkos/overthink/candy/comfyui:v2026.166.1222'
-        - '@github.com/overthinkos/overthink/candy/dbus:v2026.166.1222'
+comfyui:
+    box:
+        base: nvidia
+        platform:
+            - linux/amd64
+    comfyui-candy:
+        candy:
+            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.166.1222'
+            - '@github.com/overthinkos/overthink/candy/comfyui:v2026.166.1222'
+            - '@github.com/overthinkos/overthink/candy/dbus:v2026.166.1222'

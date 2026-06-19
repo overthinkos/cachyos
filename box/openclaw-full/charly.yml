@@ -1,7 +1,8 @@
-box:
-    name: openclaw-full
-    enabled: true
-    base: cachyos
-    candy:
-        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.166.1222'
-        - '@github.com/overthinkos/overthink/candy/openclaw-full:v2026.166.1222'
+openclaw-full:
+    box:
+        enabled: true
+        base: cachyos
+    openclaw-full-candy:
+        candy:
+            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.166.1222'
+            - '@github.com/overthinkos/overthink/candy/openclaw-full:v2026.166.1222'

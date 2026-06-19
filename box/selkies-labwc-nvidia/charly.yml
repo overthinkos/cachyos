@@ -1,28 +1,29 @@
-box:
-    name: selkies-labwc-nvidia
-    # labwc selkies flavor on the CachyOS GPU base (cachyos.nvidia) with REAL
-    # NVENC: builder.pixi → arch.cuda-arch-builder, whose nvcc + ffnvcodec NVENC
-    # headers let the selkies layer's build.sh compile pixelflux's real nvenc-sys
-    # encoder (the stock arch-builder has no CUDA → NVENC stub). chrome + wlrctl
-    # from the AUR → build:[pac, aur]. Renamed from selkies-desktop-nvidia.
-    base: nvidia
-    build:
-        - pac
-        - aur
-    builder:
-        pixi: arch.cuda-arch-builder
-    platform:
-        - linux/amd64
-    candy:
-        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.166.1222'
-        - '@github.com/overthinkos/overthink/candy/selkies-desktop:v2026.166.1222'
-        - '@github.com/overthinkos/overthink/candy/dbus:v2026.166.1222'
-    plan:
-        - check: command=strings ${HOME}/.pixi/envs/default/lib/python3.*/site-packages/pixelflux/pixelflux_wayland*.so | grep -q NvEncodeAPICreateInstance && echo NVENC-COMPILED
-          id: pixelflux-nvenc-compiled
-          command: strings ${HOME}/.pixi/envs/default/lib/python3.*/site-packages/pixelflux/pixelflux_wayland*.so | grep -q NvEncodeAPICreateInstance && echo NVENC-COMPILED
-          exit_status: 0
-          stdout:
+selkies-labwc-nvidia:
+    box:
+        # labwc selkies flavor on the CachyOS GPU base (cachyos.nvidia) with REAL
+        # NVENC: builder.pixi → arch.cuda-arch-builder, whose nvcc + ffnvcodec NVENC
+        # headers let the selkies layer's build.sh compile pixelflux's real nvenc-sys
+        # encoder (the stock arch-builder has no CUDA → NVENC stub). chrome + wlrctl
+        # from the AUR → build:[pac, aur]. Renamed from selkies-desktop-nvidia.
+        base: nvidia
+        build:
+            - pac
+            - aur
+        builder:
+            pixi: arch.cuda-arch-builder
+        platform:
+            - linux/amd64
+    selkies-labwc-nvidia-candy:
+        candy:
+            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.166.1222'
+            - '@github.com/overthinkos/overthink/candy/selkies-desktop:v2026.166.1222'
+            - '@github.com/overthinkos/overthink/candy/dbus:v2026.166.1222'
+    pixelflux-nvenc-compiled:
+        check: command=strings ${HOME}/.pixi/envs/default/lib/python3.*/site-packages/pixelflux/pixelflux_wayland*.so | grep -q NvEncodeAPICreateInstance && echo NVENC-COMPILED
+        id: pixelflux-nvenc-compiled
+        command: strings ${HOME}/.pixi/envs/default/lib/python3.*/site-packages/pixelflux/pixelflux_wayland*.so | grep -q NvEncodeAPICreateInstance && echo NVENC-COMPILED
+        exit_status: 0
+        stdout:
             - contains: "NVENC-COMPILED"
-          context:
+        context:
             - build

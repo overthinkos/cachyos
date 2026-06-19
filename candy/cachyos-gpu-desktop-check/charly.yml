@@ -1,56 +1,60 @@
-candy:
-    name: cachyos-gpu-desktop-check
-    version: 2026.151.0543
-    description: |
-        Shared desktop/GPU-stream verification layer for the CachyOS GPU workstation
-        Carries no install beyond the desktop-interaction test tools (ydotool)
-        and a deploy-scope check block. Both the disposable bed
-        (check-cachyos-gpu-vm) and the persistent operator deploy (cachyos-gpu)
-        add_layer this, so the SAME monitor / SPICE / selkies / GPU checks run
-        against both from one source (R3). Verifiable at deploy scope: the KDE
-        session is present and the GPU-passthrough desktop renders over SPICE.
-    # Shared desktop/GPU-stream verification layer for the CachyOS GPU workstation.
-    # It carries NO install beyond the desktop-interaction TEST TOOLS (R9) and a
-    # deploy-scope `check:` block. Both the disposable bed (check-cachyos-gpu-vm, on
-    # cachyos-gpu-vm) AND the persistent operator deploy (cachyos-gpu) add_layer
-    # this, and `charly check live <vm>` collects an applied layer's deploy-scope checks
-    # (collectAddLayerDeployCheck) — so the SAME monitor / SPICE / selkies checks
-    # run against BOTH deployments from ONE source (R3), satisfying
-    # "all check tests work on both the check and the prod deployment".
-    #
-    # The mouse/keyboard/screenshot checks drive the seat-0 session over the SPICE
-    # wire (host-side charly check spice), which injects to the GPU-passthrough KDE
-    # session and is fully headless — no GPU-attached monitor required, so they
-    # run on the disposable bed too.
-    # ydotool injects input on the KWin Wayland session via /dev/uinput (the
-    # wlroots wtype/wlrctl do not work on KWin); spectacle ships with KDE for the
-    # NVIDIA-head in-guest screenshot. The host-side SPICE input/screenshot path
-    # needs no in-guest tool.
-    distro:
-        arch:
-            package:
-                - ydotool
-    plan:
-        - check: the KDE Plasma binaries (plasmashell, kwin_wayland) are present in the session
-          command: |
+cachyos-gpu-desktop-check:
+    candy:
+        version: 2026.151.0543
+        description: |
+            Shared desktop/GPU-stream verification layer for the CachyOS GPU workstation
+            Carries no install beyond the desktop-interaction test tools (ydotool)
+            and a deploy-scope check block. Both the disposable bed
+            (check-cachyos-gpu-vm) and the persistent operator deploy (cachyos-gpu)
+            add_layer this, so the SAME monitor / SPICE / selkies / GPU checks run
+            against both from one source (R3). Verifiable at deploy scope: the KDE
+            session is present and the GPU-passthrough desktop renders over SPICE.
+    cachyos-gpu-desktop-check-distro:
+        # Shared desktop/GPU-stream verification layer for the CachyOS GPU workstation.
+        # It carries NO install beyond the desktop-interaction TEST TOOLS (R9) and a
+        # deploy-scope `check:` block. Both the disposable bed (check-cachyos-gpu-vm, on
+        # cachyos-gpu-vm) AND the persistent operator deploy (cachyos-gpu) add_layer
+        # this, and `charly check live <vm>` collects an applied layer's deploy-scope checks
+        # (collectAddLayerDeployCheck) — so the SAME monitor / SPICE / selkies checks
+        # run against BOTH deployments from ONE source (R3), satisfying
+        # "all check tests work on both the check and the prod deployment".
+        #
+        # The mouse/keyboard/screenshot checks drive the seat-0 session over the SPICE
+        # wire (host-side charly check spice), which injects to the GPU-passthrough KDE
+        # session and is fully headless — no GPU-attached monitor required, so they
+        # run on the disposable bed too.
+        # ydotool injects input on the KWin Wayland session via /dev/uinput (the
+        # wlroots wtype/wlrctl do not work on KWin); spectacle ships with KDE for the
+        # NVIDIA-head in-guest screenshot. The host-side SPICE input/screenshot path
+        # needs no in-guest tool.
+        distro:
+            arch:
+                package:
+                    - ydotool
+    cachyos-gpu-desktop-check-step-0:
+        check: the KDE Plasma binaries (plasmashell, kwin_wayland) are present in the session
+        command: |
             command -v plasmashell >/dev/null && command -v kwin_wayland >/dev/null && echo KDE-PRESENT
-          stdout:
+        stdout:
             contains: KDE-PRESENT
-          context:
+        context:
             - runtime
-        - agent-check: the GPU-passthrough KDE session renders a non-uniform frame over the SPICE wire
-        - check: |
+    cachyos-gpu-desktop-check-step-1:
+        agent-check: the GPU-passthrough KDE session renders a non-uniform frame over the SPICE wire
+    vm-ssh-reachable:
+        check: |
             command=echo "uptime: $(uptime -p 2>/dev/null || uptime 2>/dev/null || echo unknown)"
             echo VM-SSH-REACHABLE
-          id: vm-ssh-reachable
-          command: |
+        id: vm-ssh-reachable
+        command: |
             echo "uptime: $(uptime -p 2>/dev/null || uptime 2>/dev/null || echo unknown)"
             echo VM-SSH-REACHABLE
-          stdout:
+        stdout:
             contains: VM-SSH-REACHABLE
-          context:
+        context:
             - runtime
-        - check: |
+    cloud-init-settled:
+        check: |
             command=if command -v cloud-init >/dev/null 2>&1; then
               # "settled" = cloud-init has FINISHED, not "running" — the readiness
               # concern is TIMING, not health. The top-line `status:` reports `error`
@@ -69,8 +73,8 @@ candy:
             else
               echo "CLOUD-INIT-SETTLED (N/A: no cloud-init on this guest)"
             fi
-          id: cloud-init-settled
-          command: |
+        id: cloud-init-settled
+        command: |
             if command -v cloud-init >/dev/null 2>&1; then
               # "settled" = cloud-init has FINISHED, not "running" — the readiness
               # concern is TIMING, not health. The top-line `status:` reports `error`
@@ -89,29 +93,32 @@ candy:
             else
               echo "CLOUD-INIT-SETTLED (N/A: no cloud-init on this guest)"
             fi
-          stdout:
+        stdout:
             contains: CLOUD-INIT-SETTLED
-          context:
+        context:
             - runtime
-        - check: |
+    kde-plasma-binaries:
+        check: |
             command=command -v plasmashell >/dev/null && command -v kwin_wayland >/dev/null && command -v startplasma-wayland >/dev/null && echo KDE-PRESENT
-          id: kde-plasma-binaries
-          command: |
+        id: kde-plasma-binaries
+        command: |
             command -v plasmashell >/dev/null && command -v kwin_wayland >/dev/null && command -v startplasma-wayland >/dev/null && echo KDE-PRESENT
-          stdout:
+        stdout:
             contains: KDE-PRESENT
-          context:
+        context:
             - runtime
-        - check: |
+    sddm-graphical-default:
+        check: |
             command=systemctl is-enabled sddm.service >/dev/null 2>&1 && [ "$(systemctl get-default)" = "graphical.target" ] && echo SDDM-GRAPHICAL
-          id: sddm-graphical-default
-          command: |
+        id: sddm-graphical-default
+        command: |
             systemctl is-enabled sddm.service >/dev/null 2>&1 && [ "$(systemctl get-default)" = "graphical.target" ] && echo SDDM-GRAPHICAL
-          stdout:
+        stdout:
             contains: SDDM-GRAPHICAL
-          context:
+        context:
             - runtime
-        - check: |
+    gpu-passthrough-intent-honored:
+        check: |
             command=if [ "${VM_HOSTDEV_COUNT}" -gt 0 ] 2>/dev/null; then
               grep -ql 0x10de /sys/bus/pci/devices/*/vendor 2>/dev/null \
                 && echo "GPU-PASSTHROUGH-OK (${VM_HOSTDEV_COUNT} hostdev(s) configured; NVIDIA device present in guest)" \
@@ -119,8 +126,8 @@ candy:
             else
               echo "GPU-PASSTHROUGH-OK (N/A: no GPU hostdev configured for this VM)"
             fi
-          id: gpu-passthrough-intent-honored
-          command: |
+        id: gpu-passthrough-intent-honored
+        command: |
             if [ "${VM_HOSTDEV_COUNT}" -gt 0 ] 2>/dev/null; then
               grep -ql 0x10de /sys/bus/pci/devices/*/vendor 2>/dev/null \
                 && echo "GPU-PASSTHROUGH-OK (${VM_HOSTDEV_COUNT} hostdev(s) configured; NVIDIA device present in guest)" \
@@ -128,11 +135,12 @@ candy:
             else
               echo "GPU-PASSTHROUGH-OK (N/A: no GPU hostdev configured for this VM)"
             fi
-          stdout:
+        stdout:
             contains: GPU-PASSTHROUGH-OK
-          context:
+        context:
             - runtime
-        - check: |
+    desktop-monitor-nvidia-outputs:
+        check: |
             command=if ! grep -ql 0x10de /sys/bus/pci/devices/*/vendor 2>/dev/null; then
               echo "MONITOR-OK (N/A: no NVIDIA GPU passed through to this guest)"
             else
@@ -146,8 +154,8 @@ candy:
                 echo "MONITOR-OK (kscreen-doctor unavailable on the DRM session; nvidia driver active)"
               fi
             fi
-          id: desktop-monitor-nvidia-outputs
-          command: |
+        id: desktop-monitor-nvidia-outputs
+        command: |
             if ! grep -ql 0x10de /sys/bus/pci/devices/*/vendor 2>/dev/null; then
               echo "MONITOR-OK (N/A: no NVIDIA GPU passed through to this guest)"
             else
@@ -161,47 +169,54 @@ candy:
                 echo "MONITOR-OK (kscreen-doctor unavailable on the DRM session; nvidia driver active)"
               fi
             fi
-          stdout:
+        stdout:
             contains: MONITOR-OK
-          context:
+        context:
             - runtime
-        - check: spice=status
-          id: desktop-spice-connected
-          spice: status
-          stdout: {contains: display}
-          context: [runtime]
-        - check: spice=mouse
-          id: desktop-spice-pointer-move
-          spice: mouse
-          x: 640
-          y: 400
-          context: [runtime]
-        - check: spice=click
-          id: desktop-spice-pointer-click
-          spice: click
-          x: 640
-          y: 400
-          context: [runtime]
-        - check: spice=key
-          id: desktop-spice-keyboard-key
-          spice: key
-          key: Escape
-          context: [runtime]
-        - check: spice=type
-          id: desktop-spice-keyboard-type
-          spice: type
-          text: "charly-check"
-          context: [runtime]
-        - check: spice=screenshot
-          id: desktop-renders-spice
-          spice: screenshot
-          artifact: /tmp/cachyos-gpu-desktop.png
-          artifact_min_bytes: 4096
-          artifact_min_dimensions: 640x480
-          artifact_not_uniform: true
-          context:
+    desktop-spice-connected:
+        check: spice=status
+        id: desktop-spice-connected
+        spice: status
+        stdout: {contains: display}
+        context: [runtime]
+    desktop-spice-pointer-move:
+        check: spice=mouse
+        id: desktop-spice-pointer-move
+        spice: mouse
+        x: 640
+        y: 400
+        context: [runtime]
+    desktop-spice-pointer-click:
+        check: spice=click
+        id: desktop-spice-pointer-click
+        spice: click
+        x: 640
+        y: 400
+        context: [runtime]
+    desktop-spice-keyboard-key:
+        check: spice=key
+        id: desktop-spice-keyboard-key
+        spice: key
+        key: Escape
+        context: [runtime]
+    desktop-spice-keyboard-type:
+        check: spice=type
+        id: desktop-spice-keyboard-type
+        spice: type
+        text: "charly-check"
+        context: [runtime]
+    desktop-renders-spice:
+        check: spice=screenshot
+        id: desktop-renders-spice
+        spice: screenshot
+        artifact: /tmp/cachyos-gpu-desktop.png
+        artifact_min_bytes: 4096
+        artifact_min_dimensions: 640x480
+        artifact_not_uniform: true
+        context:
             - runtime
-        - check: |
+    desktop-wl-screenshot-kde:
+        check: |
             command=if ! grep -ql 0x10de /sys/bus/pci/devices/*/vendor 2>/dev/null; then
               echo "WL-SHOT-OK (N/A: no NVIDIA GPU passed through)"
             else
@@ -214,8 +229,8 @@ candy:
                 echo "WL-SHOT-OK (spectacle headless capture unavailable on this session)"
               fi
             fi
-          id: desktop-wl-screenshot-kde
-          command: |
+        id: desktop-wl-screenshot-kde
+        command: |
             if ! grep -ql 0x10de /sys/bus/pci/devices/*/vendor 2>/dev/null; then
               echo "WL-SHOT-OK (N/A: no NVIDIA GPU passed through)"
             else
@@ -228,33 +243,35 @@ candy:
                 echo "WL-SHOT-OK (spectacle headless capture unavailable on this session)"
               fi
             fi
-          stdout:
+        stdout:
             contains: WL-SHOT-OK
-          context:
+        context:
             - runtime
-        - check: |
+    kde-selkies-stream-https:
+        check: |
             command=for i in $(seq 1 30); do curl -ksf https://127.0.0.1:3000/ >/dev/null 2>&1 && break; sleep 2; done
             curl -ksf -o /dev/null -w '%{http_code}' https://127.0.0.1:3000/ | grep -q 200 && echo SELKIES-STREAM-200
-          id: kde-selkies-stream-https
-          command: |
+        id: kde-selkies-stream-https
+        command: |
             for i in $(seq 1 30); do curl -ksf https://127.0.0.1:3000/ >/dev/null 2>&1 && break; sleep 2; done
             curl -ksf -o /dev/null -w '%{http_code}' https://127.0.0.1:3000/ | grep -q 200 && echo SELKIES-STREAM-200
-          stdout:
+        stdout:
             contains: SELKIES-STREAM-200
-          context:
+        context:
             - runtime
-        - check: |
+    kde-selkies-html-content:
+        check: |
             command=body=$(curl -ksf https://127.0.0.1:3000/ 2>/dev/null)
             [ -n "$body" ] || { echo "FAIL: empty body from https://127.0.0.1:3000/"; exit 1; }
             printf '%s' "$body" | grep -qiE 'pixelflux|selkies|webrtc|<html' || { echo "FAIL: :3000 served a page with no selkies/webrtc markers (length=${#body})"; printf '%s\n' "$body" | head -3; exit 1; }
             echo SELKIES-HTML-OK
-          id: kde-selkies-html-content
-          command: |
+        id: kde-selkies-html-content
+        command: |
             body=$(curl -ksf https://127.0.0.1:3000/ 2>/dev/null)
             [ -n "$body" ] || { echo "FAIL: empty body from https://127.0.0.1:3000/"; exit 1; }
             printf '%s' "$body" | grep -qiE 'pixelflux|selkies|webrtc|<html' || { echo "FAIL: :3000 served a page with no selkies/webrtc markers (length=${#body})"; printf '%s\n' "$body" | head -3; exit 1; }
             echo SELKIES-HTML-OK
-          stdout:
+        stdout:
             contains: SELKIES-HTML-OK
-          context:
+        context:
             - runtime

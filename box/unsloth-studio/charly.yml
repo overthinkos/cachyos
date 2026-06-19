@@ -1,10 +1,11 @@
-box:
-    name: unsloth-studio
-    base: nvidia
-    platform:
-        - linux/amd64
-    candy:
-        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.166.1222'
-        - '@github.com/overthinkos/overthink/candy/unsloth-studio:v2026.166.1222'
-        - '@github.com/overthinkos/overthink/candy/notebook-finetuning:v2026.166.1222'
-        - '@github.com/overthinkos/overthink/candy/dbus:v2026.166.1222'
+unsloth-studio:
+    box:
+        base: nvidia
+        platform:
+            - linux/amd64
+    unsloth-studio-candy:
+        candy:
+            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.166.1222'
+            - '@github.com/overthinkos/overthink/candy/unsloth-studio:v2026.166.1222'
+            - '@github.com/overthinkos/overthink/candy/notebook-finetuning:v2026.166.1222'
+            - '@github.com/overthinkos/overthink/candy/dbus:v2026.166.1222'

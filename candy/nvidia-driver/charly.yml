@@ -1,40 +1,42 @@
-candy:
-    version: 2026.150.2158
-    name: nvidia-driver
-    description: |
-        NVIDIA open kernel driver + Wayland userspace for a VFIO GPU-passthrough CachyOS VM guest
-        Installs the CachyOS prebuilt open kernel module
-        (linux-cachyos-nvidia-open) + nvidia-utils, egl-wayland (KDE Wayland on
-        NVIDIA), the OpenCL ICD, nvidia-settings and the VA-API driver;
-        blacklists nouveau, enables nvidia-drm modeset=1, installs a boot-time
-        CDI-generation oneshot, and requests a reboot. Guest/bare-host only
-        (never in a container). Verifiable: the modprobe + CDI unit files land
-        and the egl-wayland / opencl-nvidia packages install.
-    distro:
-        arch:
-            package:
-                - linux-cachyos-nvidia-open
-                - nvidia-utils
-                - egl-wayland
-                - opencl-nvidia
-                - nvidia-settings
-                - libva-nvidia-driver
-    reboot: true
-    plan:
-        - run: write=/etc/modprobe.d/charly-nvidia.conf
-          write: /etc/modprobe.d/charly-nvidia.conf
-          run_as: root
-          mode: "0644"
-          content: |
+nvidia-driver:
+    candy:
+        version: 2026.150.2158
+        description: |
+            NVIDIA open kernel driver + Wayland userspace for a VFIO GPU-passthrough CachyOS VM guest
+            Installs the CachyOS prebuilt open kernel module
+            (linux-cachyos-nvidia-open) + nvidia-utils, egl-wayland (KDE Wayland on
+            NVIDIA), the OpenCL ICD, nvidia-settings and the VA-API driver;
+            blacklists nouveau, enables nvidia-drm modeset=1, installs a boot-time
+            CDI-generation oneshot, and requests a reboot. Guest/bare-host only
+            (never in a container). Verifiable: the modprobe + CDI unit files land
+            and the egl-wayland / opencl-nvidia packages install.
+        reboot: true
+    nvidia-driver-distro:
+        distro:
+            arch:
+                package:
+                    - linux-cachyos-nvidia-open
+                    - nvidia-utils
+                    - egl-wayland
+                    - opencl-nvidia
+                    - nvidia-settings
+                    - libva-nvidia-driver
+    nvidia-driver-step-0:
+        run: write=/etc/modprobe.d/charly-nvidia.conf
+        write: /etc/modprobe.d/charly-nvidia.conf
+        run_as: root
+        mode: "0644"
+        content: |
             # Belt-and-suspenders nouveau blacklist (the kernel cmdline does the
             # early one) + enable nvidia KMS.
             blacklist nouveau
             options nvidia-drm modeset=1
-        - run: write=/etc/systemd/system/charly-nvidia-cdi.service
-          write: /etc/systemd/system/charly-nvidia-cdi.service
-          run_as: root
-          mode: "0644"
-          content: |
+    nvidia-driver-step-1:
+        run: write=/etc/systemd/system/charly-nvidia-cdi.service
+        write: /etc/systemd/system/charly-nvidia-cdi.service
+        run_as: root
+        mode: "0644"
+        content: |
             [Unit]
             Description=Generate NVIDIA CDI spec once the GPU driver is loaded
             After=multi-user.target
@@ -49,42 +51,51 @@ candy:
 
             [Install]
             WantedBy=multi-user.target
-        - run: |
+    nvidia-driver-step-2:
+        run: |
             command=systemctl daemon-reload || true
             systemctl enable charly-nvidia-cdi.service || true
-          command: |
+        command: |
             systemctl daemon-reload || true
             systemctl enable charly-nvidia-cdi.service || true
-          run_as: root
-        - run: |
+        run_as: root
+    nvidia-driver-step-3:
+        run: |
             command=u="$(getent passwd 1000 | cut -d: -f1)"
             [ -n "$u" ] && usermod -aG video,render "$u" || true
-          command: |
+        command: |
             u="$(getent passwd 1000 | cut -d: -f1)"
             [ -n "$u" ] && usermod -aG video,render "$u" || true
-          run_as: root
-        - check: the nouveau blacklist + nvidia-drm modeset config is installed
-          file: /etc/modprobe.d/charly-nvidia.conf
-          contains: "blacklist nouveau"
-        - check: the boot-time CDI-generation service is installed
-          file: /etc/systemd/system/charly-nvidia-cdi.service
-          contains: "nvidia-ctk cdi generate"
-        - check: egl-wayland (the NVIDIA Wayland EGLStream platform) is installed
-          package: egl-wayland
-          installed: true
-        - check: file=/etc/modprobe.d/charly-nvidia.conf
-          id: nvidia-modprobe-conf
-          file: /etc/modprobe.d/charly-nvidia.conf
-          contains: "blacklist nouveau"
-        - check: file=/etc/systemd/system/charly-nvidia-cdi.service
-          id: nvidia-cdi-service
-          file: /etc/systemd/system/charly-nvidia-cdi.service
-          contains: "nvidia-ctk cdi generate"
-        - check: package=egl-wayland
-          id: egl-wayland-installed
-          package: egl-wayland
-          installed: true
-        - check: package=opencl-nvidia
-          id: opencl-nvidia-installed
-          package: opencl-nvidia
-          installed: true
+        run_as: root
+    nvidia-driver-step-4:
+        check: the nouveau blacklist + nvidia-drm modeset config is installed
+        file: /etc/modprobe.d/charly-nvidia.conf
+        contains: "blacklist nouveau"
+    nvidia-driver-step-5:
+        check: the boot-time CDI-generation service is installed
+        file: /etc/systemd/system/charly-nvidia-cdi.service
+        contains: "nvidia-ctk cdi generate"
+    nvidia-driver-step-6:
+        check: egl-wayland (the NVIDIA Wayland EGLStream platform) is installed
+        package: egl-wayland
+        installed: true
+    nvidia-modprobe-conf:
+        check: file=/etc/modprobe.d/charly-nvidia.conf
+        id: nvidia-modprobe-conf
+        file: /etc/modprobe.d/charly-nvidia.conf
+        contains: "blacklist nouveau"
+    nvidia-cdi-service:
+        check: file=/etc/systemd/system/charly-nvidia-cdi.service
+        id: nvidia-cdi-service
+        file: /etc/systemd/system/charly-nvidia-cdi.service
+        contains: "nvidia-ctk cdi generate"
+    egl-wayland-installed:
+        check: package=egl-wayland
+        id: egl-wayland-installed
+        package: egl-wayland
+        installed: true
+    opencl-nvidia-installed:
+        check: package=opencl-nvidia
+        id: opencl-nvidia-installed
+        package: opencl-nvidia
+        installed: true

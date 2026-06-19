@@ -1,22 +1,23 @@
-box:
-    name: immich-ml
-    # CachyOS GPU base already carries cuda. pgvector is AUR-only on Arch, so
-    # this image opts into build:[pac, aur] — the arch-builder's yay compiles
-    # it (the postgresql layer declares the AUR package).
-    base: nvidia
-    build:
-        - pac
-        - aur
-    platform:
-        - linux/amd64
-    candy:
-        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.166.1222'
-        - '@github.com/overthinkos/overthink/candy/nodejs:v2026.166.1222'
-        - '@github.com/overthinkos/overthink/candy/python-ml:v2026.166.1222'
-        - '@github.com/overthinkos/overthink/candy/supervisord:v2026.166.1222'
-        - '@github.com/overthinkos/overthink/candy/postgresql:v2026.166.1222'
-        - '@github.com/overthinkos/overthink/candy/vectorchord:v2026.166.1222'
-        - '@github.com/overthinkos/overthink/candy/redis:v2026.166.1222'
-        - '@github.com/overthinkos/overthink/candy/immich:v2026.166.1222'
-        - '@github.com/overthinkos/overthink/candy/immich-ml:v2026.166.1222'
-        - '@github.com/overthinkos/overthink/candy/dbus:v2026.166.1222'
+immich-ml:
+    box:
+        # CachyOS GPU base already carries cuda. pgvector is AUR-only on Arch, so
+        # this image opts into build:[pac, aur] — the arch-builder's yay compiles
+        # it (the postgresql layer declares the AUR package).
+        base: nvidia
+        build:
+            - pac
+            - aur
+        platform:
+            - linux/amd64
+    immich-ml-candy:
+        candy:
+            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.166.1222'
+            - '@github.com/overthinkos/overthink/candy/nodejs:v2026.166.1222'
+            - '@github.com/overthinkos/overthink/candy/python-ml:v2026.166.1222'
+            - '@github.com/overthinkos/overthink/candy/supervisord:v2026.166.1222'
+            - '@github.com/overthinkos/overthink/candy/postgresql:v2026.166.1222'
+            - '@github.com/overthinkos/overthink/candy/vectorchord:v2026.166.1222'
+            - '@github.com/overthinkos/overthink/candy/redis:v2026.166.1222'
+            - '@github.com/overthinkos/overthink/candy/immich:v2026.166.1222'
+            - '@github.com/overthinkos/overthink/candy/immich-ml:v2026.166.1222'
+            - '@github.com/overthinkos/overthink/candy/dbus:v2026.166.1222'

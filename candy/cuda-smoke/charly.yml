@@ -1,26 +1,28 @@
-candy:
-    version: 2026.148.1730
-    name: cuda-smoke
-    description: |
-        Deterministic CUDA compute smoke test compiled with nvcc at build time
-        Compiles a vector-add kernel with nvcc into /usr/local/bin/cuda-smoke;
-        at runtime it allocates device memory, runs the kernel, verifies the
-        result, and prints "CUDA-OK devices=<N>" (exit 0) or "CUDA-FAIL"
-        (exit 1). Composed on cachyos.nvidia to form the cuda-check image — the
-        GPU-passthrough check runs it in a container in the VM to prove real
-        device compute. Verifiable at build scope: the compiled binary exists.
-    distro:
-        arch:
-            package:
-                # CUDA 13.2's nvcc rejects the default gcc 16 (libstdc++ too new);
-                # gcc15 (g++-15) is the host compiler the `cuda` package pins to.
-                - gcc15
-    plan:
-        - run: copy=cuda_smoke.cu
-          copy: cuda_smoke.cu
-          to: /tmp/cuda_smoke.cu
-          run_as: root
-        - run: |
+cuda-smoke:
+    candy:
+        version: 2026.148.1730
+        description: |
+            Deterministic CUDA compute smoke test compiled with nvcc at build time
+            Compiles a vector-add kernel with nvcc into /usr/local/bin/cuda-smoke;
+            at runtime it allocates device memory, runs the kernel, verifies the
+            result, and prints "CUDA-OK devices=<N>" (exit 0) or "CUDA-FAIL"
+            (exit 1). Composed on cachyos.nvidia to form the cuda-check image — the
+            GPU-passthrough check runs it in a container in the VM to prove real
+            device compute. Verifiable at build scope: the compiled binary exists.
+    cuda-smoke-distro:
+        distro:
+            arch:
+                package:
+                    # CUDA 13.2's nvcc rejects the default gcc 16 (libstdc++ too new);
+                    # gcc15 (g++-15) is the host compiler the `cuda` package pins to.
+                    - gcc15
+    cuda-smoke-step-0:
+        run: copy=cuda_smoke.cu
+        copy: cuda_smoke.cu
+        to: /tmp/cuda_smoke.cu
+        run_as: root
+    cuda-smoke-step-1:
+        run: |
             command=# Invoke nvcc from its real CUDA root (/opt/cuda) — the /usr/bin/nvcc
             # symlink makes nvcc detect root=/usr and miss /opt/cuda/include/crt/.
             # Pin the host compiler to g++-15 (CUDA 13.2 doesn't support gcc 16).
@@ -28,7 +30,7 @@ candy:
             [ -x "$NVCC" ] || NVCC="$(command -v nvcc)"
             "$NVCC" -ccbin /usr/bin/g++-15 -I/opt/cuda/include -o /usr/local/bin/cuda-smoke /tmp/cuda_smoke.cu
             rm -f /tmp/cuda_smoke.cu
-          command: |
+        command: |
             # Invoke nvcc from its real CUDA root (/opt/cuda) — the /usr/bin/nvcc
             # symlink makes nvcc detect root=/usr and miss /opt/cuda/include/crt/.
             # Pin the host compiler to g++-15 (CUDA 13.2 doesn't support gcc 16).
@@ -36,12 +38,15 @@ candy:
             [ -x "$NVCC" ] || NVCC="$(command -v nvcc)"
             "$NVCC" -ccbin /usr/bin/g++-15 -I/opt/cuda/include -o /usr/local/bin/cuda-smoke /tmp/cuda_smoke.cu
             rm -f /tmp/cuda_smoke.cu
-          run_as: root
-        - check: the nvcc-compiled cuda-smoke binary exists at /usr/local/bin/cuda-smoke
-          file: /usr/local/bin/cuda-smoke
-          exists: true
-        - agent-check: on a GPU-passthrough guest, cuda-smoke runs the kernel and prints CUDA-OK
-        - check: file=/usr/local/bin/cuda-smoke
-          id: cuda-smoke-binary
-          file: /usr/local/bin/cuda-smoke
-          exists: true
+        run_as: root
+    cuda-smoke-step-2:
+        check: the nvcc-compiled cuda-smoke binary exists at /usr/local/bin/cuda-smoke
+        file: /usr/local/bin/cuda-smoke
+        exists: true
+    cuda-smoke-step-3:
+        agent-check: on a GPU-passthrough guest, cuda-smoke runs the kernel and prints CUDA-OK
+    cuda-smoke-binary:
+        check: file=/usr/local/bin/cuda-smoke
+        id: cuda-smoke-binary
+        file: /usr/local/bin/cuda-smoke
+        exists: true

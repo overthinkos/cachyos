@@ -1,8 +1,9 @@
-box:
-    name: python-ml
-    base: nvidia
-    platform:
-        - linux/amd64
-    candy:
-        - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.166.1222'
-        - '@github.com/overthinkos/overthink/candy/python-ml:v2026.166.1222'
+python-ml:
+    box:
+        base: nvidia
+        platform:
+            - linux/amd64
+    python-ml-candy:
+        candy:
+            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.166.1222'
+            - '@github.com/overthinkos/overthink/candy/python-ml:v2026.166.1222'
