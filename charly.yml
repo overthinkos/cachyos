@@ -992,7 +992,7 @@ cachyos-vm:
     vm:
         # Bootstrap-from-scratch via cachyos-pacstrap-builder (local). The cachyos
         # distro config (pacstrap base packages, keyring, mirrors, repos) lives in
-        # the main repo's build.yml, imported above.
+        # the embedded build vocabulary (`charly/charly.yml`).
         source:
             kind: bootstrap
             builder: pacstrap
@@ -1056,7 +1056,7 @@ cachyos-gpu-vm:
         # `libvirt.devices.hostdevs:` (a PCI bus/slot address is host-specific) and
         # no host-path `filesystems:` (a virtiofs share rooted at an absolute host
         # path). The GPU hostdev is AUTO-ALLOCATED: the bed declares
-        # `requires_exclusive: [nvidia-gpu]`, the main repo's build.yml maps that
+        # `requires_exclusive: [nvidia-gpu]`, the embedded resource: vocabulary maps that
         # token to a `resource: {nvidia-gpu: {gpu: {vendor: "0x10de"}}}` selector, and
         # `charly vm create` (autoAllocateExclusiveGPUs) detects the matching NVIDIA
         # card, writes its whole-IOMMU-group `<hostdev>` block into THIS host's
@@ -1117,7 +1117,7 @@ cachyos-gpu-vm:
             key_source: generate
         cloud_init:
             # /etc/pacman.conf is written into the rootfs by the cachyos pacstrap
-            # bootstrap (build.yml distro.cachyos.pacstrap.runtime_pacman_conf) —
+            # bootstrap (the embedded distro.cachyos.pacstrap.runtime_pacman_conf vocabulary) —
             # the single source for every cachyos pacstrap VM, so no per-VM
             # write_files block is needed here.
             runcmd:
@@ -1240,7 +1240,7 @@ cachyos-gpu-workstation-vm:
             key_source: generate
         cloud_init:
             # /etc/pacman.conf is written into the rootfs by the cachyos pacstrap
-            # bootstrap (build.yml distro.cachyos.pacstrap.runtime_pacman_conf) —
+            # bootstrap (the embedded distro.cachyos.pacstrap.runtime_pacman_conf vocabulary) —
             # the single source for every cachyos pacstrap VM. (A persistent
             # workstation can later harden SigLevel after pacman-key init.)
             runcmd:
