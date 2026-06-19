@@ -6,6 +6,6 @@ charly-selftest:
             - aur
     charly-selftest-candy:
         candy:
-            - '@github.com/overthinkos/overthink/candy/charly-mcp:v2026.170.1105'
-            - '@github.com/overthinkos/overthink/candy/container-nesting:v2026.170.1105'
-            - '@github.com/overthinkos/overthink/candy/claude-code:v2026.170.1105'
+            - '@github.com/overthinkos/overthink/candy/charly-mcp:v2026.170.2016'
+            - '@github.com/overthinkos/overthink/candy/container-nesting:v2026.170.2016'
+            - '@github.com/overthinkos/overthink/candy/claude-code:v2026.170.2016'

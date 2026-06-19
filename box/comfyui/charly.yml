@@ -5,6 +5,6 @@ comfyui:
             - linux/amd64
     comfyui-candy:
         candy:
-            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.170.1105'
-            - '@github.com/overthinkos/overthink/candy/comfyui:v2026.170.1105'
-            - '@github.com/overthinkos/overthink/candy/dbus:v2026.170.1105'
+            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.170.2016'
+            - '@github.com/overthinkos/overthink/candy/comfyui:v2026.170.2016'
+            - '@github.com/overthinkos/overthink/candy/dbus:v2026.170.2016'
