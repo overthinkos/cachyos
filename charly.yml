@@ -19,7 +19,7 @@
 #  Directly buildable: `charly box build cachyos` (from the parent repo:
 #  `charly -C box/cachyos box build cachyos`; anywhere:
 #  `charly --repo overthinkos/cachyos box build cachyos`).
-version: 2026.172.0002
+version: 2026.172.0004
 defaults:
     platform:
         - linux/amd64
@@ -47,8 +47,8 @@ discover:
 # deploy.yml). disposable: true is the sole authorization for the unattended
 # destroy+rebuild driven by `charly check run check-cachyos-vm`.
 check-cachyos-vm:
-    bundle:
-        vm: cachyos-vm
+    vm:
+        from: cachyos-vm
         disposable: true
         lifecycle: dev
         description: Sole proof of the CachyOS pacstrap-from-scratch bootstrap VM booting AND the charly toolchain installing as a native pac package (opencharly-git via makepkg + pacman -U), distinct from the Arch cloud-VM pac witness. Pacstrap-builds a CachyOS rootfs, boots it under UEFI, deploys the charly + dev-tools layers over SSH (the charly localpkg builds opencharly-git from the superproject pkg/arch), then runs the baked charly-binary/version + dev-tools command/file/package checks.
@@ -90,14 +90,14 @@ check-cachyos-vm:
 # anywhere. On a host with the cachyos-gpu-vm hostdev block added locally, the
 # same checks assert real GPU encode. See cachyos-gpu-vm in vm.yml.
 check-cachyos-gpu-vm:
-    bundle:
-        vm: cachyos-gpu-vm
+    vm:
+        from: cachyos-gpu-vm
         disposable: true
         lifecycle: dev
         description: Sole proof of the operator's dual-desktop GPU workstation config — a VFIO GPU-passthrough VM running BOTH a bare-metal KDE/SDDM seat AND a nested selkies-kde-nvidia streaming pod with real NVENC; the only bed exercising spice+wl+mcp + gpu-passthrough + preempt + nested + localpkg + multistage together. Pacstrap GPU-passthrough VM (preempts the preemptible nvidia-gpu holder) installs the KDE seat + nvidia driver/CDI + charly localpkg + npm AI CLIs, deploys a nested selkies-kde-nvidia quadlet, then over SSH runs ~14 command checks plus the inherited cachyos-gpu-desktop-check spice probes; GPU/NVENC checks N/A cleanly without a VFIO host.
     selkies-kde:
-        bundle:
-            box: selkies-kde-nvidia
+        pod:
+            image: selkies-kde-nvidia
     check-cachyos-gpu-vm-requires_exclusive:
         # Claims the single physical NVIDIA GPU. The resource arbiter
         # (charly/preempt.go) gracefully preempts any RUNNING preemptible holder of
@@ -381,46 +381,46 @@ check-cachyos-gpu-vm:
 # own. The GPU base (nvidia) and python-ml carry no service, so they are
 # proved by `charly check box` alone and need no pod bed.
 check-cachyos-jupyter-ml-pod:
-    bundle:
-        box: jupyter-ml
+    pod:
+        image: jupyter-ml
         disposable: true
         lifecycle: dev
         description: Sole proof the CachyOS GPU jupyter-ml image (JupyterLab + ML/spacy/quarto + jupyter MCP) composes on the Arch CUDA base — the cachyos-distro variant of the fedora jupyter-ml bed. Builds and deploys the jupyter-ml pod (cachyos.nvidia base) and runs the inherited jupyter-ml + notebook-templates + dbus baked checks — JupyterLab HTTP liveness, package/file/service probes, and jupyter MCP-server probes.
     check-cachyos-jupyter-ml-pod-requires_shared:
         requires_shared: [nvidia-gpu]
 check-cachyos-ollama-pod:
-    bundle:
-        box: ollama
+    pod:
+        image: ollama
         disposable: true
         lifecycle: dev
         description: Sole proof the CachyOS GPU ollama LLM-server image composes and serves on the Arch CUDA base. Builds and deploys the ollama pod and runs the inherited ollama + dbus baked checks — server HTTP/API liveness plus binary/service/port/file probes; GPU via CDI when present, portable otherwise.
 check-cachyos-comfyui-pod:
-    bundle:
-        box: comfyui
+    pod:
+        image: comfyui
         disposable: true
         lifecycle: dev
         description: Sole proof the CachyOS GPU comfyui image-generation server composes and serves on the Arch CUDA base. Builds and deploys the comfyui pod and runs the inherited comfyui + dbus baked checks — ComfyUI HTTP UI liveness plus service/port/file/command probes.
     check-cachyos-comfyui-pod-requires_shared:
         requires_shared: [nvidia-gpu]
 check-cachyos-unsloth-studio-pod:
-    bundle:
-        box: unsloth-studio
+    pod:
+        image: unsloth-studio
         disposable: true
         lifecycle: dev
         description: Sole proof the CachyOS GPU unsloth-studio fine-tuning notebook + API composes on the Arch CUDA base (no MCP candy, unlike jupyter-ml). Builds and deploys the unsloth-studio pod and runs the inherited unsloth-studio + notebook-finetuning + dbus baked checks — notebook/API HTTP liveness plus file/service/port/command probes.
     check-cachyos-unsloth-studio-pod-requires_shared:
         requires_shared: [nvidia-gpu]
 check-cachyos-immich-ml-pod:
-    bundle:
-        box: immich-ml
+    pod:
+        image: immich-ml
         disposable: true
         lifecycle: dev
         description: Sole proof the full 9-candy Immich photo stack (Immich + PostgreSQL + VectorChord + Redis + CUDA ML) composes and reaches steady-state together on the Arch CUDA base — the heaviest multi-service pod bed. Builds and deploys the immich-ml pod (nodejs + python-ml + supervisord + postgresql + vectorchord + redis + immich + immich-ml) via the build [pac, aur] + npm multistage, then runs the inherited multi-service HTTP/port/service/command/file/package liveness checks.
     check-cachyos-immich-ml-pod-requires_shared:
         requires_shared: [nvidia-gpu]
 check-selkies-kde-pod:
-    bundle:
-        box: selkies-kde
+    pod:
+        image: selkies-kde
         disposable: true
         lifecycle: dev
         description: Sole proof of the full KDE Plasma selkies streaming desktop (de-SDDM startplasma-wayland nested in pixelflux, VAAPI/x264 HW-encode) on the plain CachyOS base — the wl-probe-bearing compositor variant. Builds (pixi pixelflux Rust + AUR chrome/wlrctl multistage) and deploys the selkies-kde pod, then runs the inherited kde-selkies wl probes (compositor=kwin, toplevel, clipboard, type), the selkies HTTPS :3000 stream check, chrome-devtools-mcp probes, and the VAAPI H264 encode probe (HW-encodes on the AMD iGPU host).
@@ -435,20 +435,20 @@ check-selkies-kde-pod:
 # rest of the deploy surface. selkies-labwc's canonical home (relocated from
 # the retired overthinkos/selkies submodule, alongside its GPU sibling).
 check-selkies-labwc-pod:
-    bundle:
-        box: selkies-labwc
+    pod:
+        image: selkies-labwc
         disposable: true
         lifecycle: dev
         description: Sole proof of the CPU labwc selkies streaming desktop building from the cachyos→arch-builder pixi path — the labwc compositor variant (no wl probe) and the base box for android-emulator. Builds (pixi pixelflux + AUR chrome/wlrctl multistage) and deploys the selkies-labwc pod, then runs the inherited selkies-desktop baked checks — labwc/waybar/swaync/pavucontrol/chrome package+service probes, the selkies HTTPS :3000 UI probe, and chrome-devtools-mcp probes.
 check-selkies-labwc-nvidia-vm:
-    bundle:
-        vm: cachyos-gpu-vm
+    vm:
+        from: cachyos-gpu-vm
         disposable: true
         lifecycle: dev
         description: Sole proof the labwc selkies desktop reaches REAL NVENC frame production inside an RTX-4080 VFIO-passthrough VM via a nested GPU pod (cuda-arch-builder NVENC pixelflux build). Pacstrap GPU-passthrough VM (preempts the nvidia-gpu holder) with podman + nvidia driver/CDI deploys a nested --device nvidia.com/gpu=all selkies-labwc-nvidia pod, then asserts the selkies HTTPS :3000 stream (200) plus the in-guest nvidia-smi NVENC session probe plus chrome-devtools-mcp; the NVENC check N/As without a GPU.
     selkies-labwc-nvidia-pod:
-        bundle:
-            box: selkies-labwc-nvidia
+        pod:
+            image: selkies-labwc-nvidia
     check-selkies-labwc-nvidia-vm-requires_exclusive:
         requires_exclusive: [nvidia-gpu]
     check-selkies-labwc-nvidia-vm-add_candy:
@@ -492,14 +492,14 @@ check-selkies-labwc-nvidia-vm:
         context:
             - runtime
 check-selkies-kde-nvidia-vm:
-    bundle:
-        vm: cachyos-gpu-vm
+    vm:
+        from: cachyos-gpu-vm
         disposable: true
         lifecycle: dev
         description: Sole proof the full KDE Plasma selkies desktop reaches REAL NVENC inside an RTX-4080 VFIO-passthrough VM via a nested GPU pod — the KDE compositor variant of the labwc-nvidia bed (adds wl). Pacstrap GPU-passthrough VM (preempts the nvidia-gpu holder) with podman + nvidia driver/CDI deploys a nested selkies-kde-nvidia pod, then asserts the selkies HTTPS :3000 stream (200) plus the in-guest nvidia-smi NVENC probe plus the nested pod's kde-selkies wl and chrome-devtools-mcp probes; NVENC N/As without a GPU.
     selkies-kde-nvidia-pod:
-        bundle:
-            box: selkies-kde-nvidia
+        pod:
+            image: selkies-kde-nvidia
     check-selkies-kde-nvidia-vm-requires_exclusive:
         requires_exclusive: [nvidia-gpu]
     check-selkies-kde-nvidia-vm-add_candy:
@@ -539,8 +539,8 @@ check-selkies-kde-nvidia-vm:
         context:
             - runtime
 check-charly-selftest-pod:
-    bundle:
-        box: charly-selftest
+    pod:
+        image: charly-selftest
         disposable: true
         lifecycle: dev
         description: Sole proof the in-development charly toolchain (--dev-local-pkg) exposes and runs every command group correctly in-container on the full CachyOS toolchain image, plus the charly-mcp Kong MCP surface. Builds and deploys the charly-selftest pod (charly-mcp + container-nesting + claude-code) and runs ~13 in-container command checks across every charly command group (version/doctor/settings/secrets/vm/status/box/deploy/check/clean/migrate/feature/config) plus charly-mcp's mcp list-tools/call (box.build/box.list live).
@@ -670,16 +670,16 @@ check-charly-selftest-pod:
 # bringUpMembers (the shared deploy+check lifecycle, R3); it is an instrument,
 # never check-live'd itself.
 check-versa-pod:
-    bundle:
-        box: versa
+    pod:
+        image: versa
         disposable: true
         lifecycle: dev
         description: Sole proof the full OSM analytics + vector-tile pipeline (quackosm/tippecanoe/martin/maputnik + GPU geospatial extensions) plus the marimo MCP notebook surface composes and runs end-to-end on CachyOS. Builds (pixi/npm/cargo source builds — tippecanoe-from-source, martin Rust musl multistage) and deploys the versa pod, then runs notebook-render byte checks, martin /monaco tilejson HTTP probes, pipeline-artifact byte checks, GPU-extension import checks, and the marimo MCP read-only notebook-inspection tools.
     check-versa-pod-requires_shared:
         requires_shared: [nvidia-gpu]
 check-githubrunner-pod:
-    bundle:
-        box: githubrunner
+    pod:
+        image: githubrunner
         disposable: true
         lifecycle: dev
         # No port: — the runner has no listening service (host net, outbound only).
@@ -689,20 +689,20 @@ check-githubrunner-pod:
         # (functional binary runs + the rootless nested-podman proof).
         description: Sole proof of the rootless CachyOS GitHub Actions runner composition — actions-runner config.sh + cosign/skopeo/buildah/go + rootless nested podman at uid 1000 — WITHOUT GitHub registration. Builds and deploys the githubrunner pod (no token → guarded hooks no-op) and runs the inherited github-runner + container-nesting + charly + dbus baked checks — functional binary runs plus the rootless nested-podman proof (unmask=/proc/*, zero caps, newuidmap file-caps).
 check-android-emulator-pod:
-    bundle:
-        box: android-emulator
+    pod:
+        image: android-emulator
         disposable: true
         lifecycle: dev
         description: 'Sole proof Android is a first-class deploy substrate — an Android 16 (API 36) emulator pod with /dev/kvm passthrough plus two nested kind:android devices installing apps via the apk: package format over BOTH in-pod adb and a remote adb endpoint; the only adb+appium probe bed and the status-shows-android/nested witness. Builds and deploys the android-emulator pod (base selkies-labwc), deploys two nested kind:android devices (in-pod pixel9a-36 installing F-Droid via apkeep; remote-endpoint pixel9a-endpoint installing ApiDemos via goadb), and runs charly status --json (kind:android + nested array) plus the android-emulator-layer adb probes plus appium-server status plus selkies-inherited stream/mcp.'
     device:
-        bundle:
-            android: pixel9a-36
+        android:
+            from: pixel9a-36
         device-add_candy:
             add_candy:
                 - '@github.com/overthinkos/overthink/candy/android-test-apps:v2026.170.2016'
     device-net:
-        bundle:
-            android: pixel9a-endpoint
+        android:
+            from: pixel9a-endpoint
         device-net-add_candy:
             add_candy:
                 - '@github.com/overthinkos/overthink/candy/android-apidemos:v2026.170.2016'
@@ -735,8 +735,8 @@ check-android-emulator-pod:
 # openclaw package + the dbus/charly/socat/supervisord stack. The deploy-scope
 # probe confirms the openclaw CLI binary landed under ~/.npm-global/bin.
 check-openclaw-pod:
-    bundle:
-        box: openclaw
+    pod:
+        image: openclaw
         disposable: true
         lifecycle: dev
         description: Sole build+runtime witness for box:openclaw — the MINIMAL openclaw composition (agent-forwarding + openclaw + dbus); NOT redundant with check-openclaw-full-pod because the dbus candy is composed ONLY here, never in the 27-candy box:openclaw-full meta. Builds (npm) and deploys the minimal openclaw pod on the CachyOS (Arch) base, exercising the cachyos→arch-builder npm build of the openclaw package plus the dbus/charly/socat/supervisord layer stack, and runs the inherited agent-forwarding + openclaw + dbus baked checks — the gateway CLI binary under ~/.npm-global/bin, the supervised service, and the openclaw :18789 TCP reachability.
@@ -746,8 +746,8 @@ check-openclaw-pod:
 # Arch package coverage. The check: block asserts those migration-critical
 # artifacts are present on the running container.
 check-openclaw-full-pod:
-    bundle:
-        box: openclaw-full
+    pod:
+        image: openclaw-full
         disposable: true
         lifecycle: dev
         description: Sole proof the maximal headless openclaw-full non-browser gateway + tool stack (gogcli@latest go-install on Arch go 1.26.x, ffmpeg/sqlite) composes and runs on the CachyOS (Arch) base. Builds (npm + go install multistage) and deploys the openclaw-full pod, then runs the inherited agent-forwarding + openclaw-full baked checks asserting gogcli, ffmpeg, sqlite, and the gateway/tool stack present.
@@ -762,8 +762,8 @@ check-openclaw-full-pod:
 # cross-stack headline artifacts (AUR chrome, selkies HTTPS UI, the AI CLIs,
 # the ollama binary) actually landed on the running combined container.
 check-openclaw-desktop-pod:
-    bundle:
-        box: openclaw-desktop
+    pod:
+        image: openclaw-desktop
         disposable: true
         lifecycle: dev
         description: Sole proof of the all-in-one openclaw-desktop image fusing the selkies streaming desktop + openclaw-full gateway/AI-CLI stack + CPU ollama + full nested charly toolchain on one CachyOS image. Builds (AUR chrome + npm openclaw + go + ollama tarball multistage) and deploys the openclaw-desktop pod, then runs baked checks (nested-rootless posture, nested podman, libvirt-session, charly version/doctor, three services) plus deploy-scope probes — AUR chrome, the selkies HTTPS UI, the AI CLIs (claude-code/codex/gemini), the ollama binary, chrome-devtools-mcp.
@@ -775,8 +775,8 @@ check-openclaw-desktop-pod:
 # is allowed for strict R10 verification. Shares the name `charly-cachyos` with
 # the kind:local template it applies (cross-kind name reuse).
 charly-cachyos:
-    bundle:
-        local: charly-cachyos-app
+    local:
+        from: charly-cachyos-app
         host: local
         disposable: true
         description: Apply charly-cachyos to this workstation
@@ -808,12 +808,12 @@ charly-cachyos:
 # fonts-extended, desktop-media, cachyos-extras, kde-selkies — resolve only at
 # the post-landing tag).
 cachyos-gpu:
-    bundle:
-        vm: cachyos-gpu-workstation-vm
+    vm:
+        from: cachyos-gpu-workstation-vm
         description: Persistent GPU CachyOS KDE coder workstation VM (bare-metal SDDM Plasma seat on the monitors + nested selkies-kde-nvidia stream pod (real NVENC, :3000) + /workspace + autostart)
     selkies-kde:
-        bundle:
-            box: selkies-kde-nvidia
+        pod:
+            image: selkies-kde-nvidia
     cachyos-gpu-add_candy:
         add_candy:
             - wheel-nopasswd
