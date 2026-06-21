@@ -1,5 +1,5 @@
 openclaw-full:
-    box:
+    candy:
         enabled: true
         base: cachyos
     openclaw-full-candy:

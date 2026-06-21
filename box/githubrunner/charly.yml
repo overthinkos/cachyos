@@ -1,5 +1,5 @@
 githubrunner:
-    box:
+    candy:
         enabled: true
         base: cachyos
         build:

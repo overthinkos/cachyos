@@ -1,5 +1,5 @@
 cachyos-pacstrap-builder:
-    box:
+    candy:
         # base: arch.arch — the `arch` base from the overthinkos/arch submodule, via
         # the `arch` import namespace. Its only layer (pacstrap-builder) is pulled by
         # github reference (a main-repo candy, shared with arch-pacstrap-builder).

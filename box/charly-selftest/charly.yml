@@ -1,5 +1,5 @@
 charly-selftest:
-    box:
+    candy:
         base: cachyos
         build:
             - pac

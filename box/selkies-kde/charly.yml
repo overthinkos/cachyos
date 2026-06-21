@@ -1,5 +1,5 @@
 selkies-kde:
-    box:
+    candy:
         # Full KDE Plasma selkies flavor on the plain CachyOS base — run as a
         # headless pod (de-SDDM startplasma-wayland nested in pixelflux). Encoder
         # auto-selected at runtime: VAAPI on an AMD/Intel renderD (the selkies layer

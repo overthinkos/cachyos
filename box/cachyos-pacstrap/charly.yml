@@ -1,5 +1,5 @@
 cachyos-pacstrap:
-    box:
+    candy:
         # Bootstrap-from-scratch CachyOS rootfs via pacstrap inside a privileged
         # builder container. Retained for offline / air-gapped builds; the
         # Docker-Hub `cachyos` base is the faster default.

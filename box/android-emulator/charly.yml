@@ -1,5 +1,5 @@
 android-emulator:
-    box:
+    candy:
         base: selkies-labwc
         platform:
             - linux/amd64

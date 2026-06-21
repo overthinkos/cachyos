@@ -1,5 +1,5 @@
 comfyui:
-    box:
+    candy:
         base: nvidia
         platform:
             - linux/amd64

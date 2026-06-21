@@ -1,5 +1,5 @@
 openclaw-desktop:
-    box:
+    candy:
         # All-in-one CachyOS power image: the selkies streaming desktop + the
         # openclaw-full gateway/tool stack (claude-code/codex/gemini included) +
         # a CPU ollama + the full nested charly toolchain (build images, run nested

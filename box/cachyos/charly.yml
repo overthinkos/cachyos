@@ -1,5 +1,5 @@
 cachyos:
-    box:
+    candy:
         version: 2026.152.2025
         # Canonical CachyOS base: the upstream-published OCI image (cachyos-v3 —
         # x86_64_v3-optimized). The pacstrap-from-scratch variant is preserved as

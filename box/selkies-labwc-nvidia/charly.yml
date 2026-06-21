@@ -1,5 +1,5 @@
 selkies-labwc-nvidia:
-    box:
+    candy:
         # labwc selkies flavor on the CachyOS GPU base (cachyos.nvidia) with REAL
         # NVENC: builder.pixi → arch.cuda-arch-builder, whose nvcc + ffnvcodec NVENC
         # headers let the selkies layer's build.sh compile pixelflux's real nvenc-sys

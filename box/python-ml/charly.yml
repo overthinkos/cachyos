@@ -1,5 +1,5 @@
 python-ml:
-    box:
+    candy:
         base: nvidia
         platform:
             - linux/amd64

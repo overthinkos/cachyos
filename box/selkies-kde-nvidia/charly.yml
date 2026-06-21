@@ -1,5 +1,5 @@
 selkies-kde-nvidia:
-    box:
+    candy:
         # Full KDE Plasma selkies flavor on the CachyOS GPU base (cachyos.nvidia) with
         # REAL NVENC (builder.pixi → arch.cuda-arch-builder, same as selkies-labwc-nvidia).
         # Headless de-SDDM Plasma nested in pixelflux. chrome + wlrctl from the AUR.

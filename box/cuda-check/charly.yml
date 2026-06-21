@@ -1,5 +1,5 @@
 cuda-check:
-    box:
+    candy:
         # GPU compute-smoke image for the VFIO-passthrough check: cachyos.nvidia
         # (driver libs + nvidia-container-toolkit + CUDA) plus the locally-vendored
         # cuda-smoke layer (a baked nvcc-compiled vector-add that prints CUDA-OK).
