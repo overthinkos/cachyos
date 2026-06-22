@@ -55,40 +55,48 @@ versa:
     versa-martin-monaco:
         check: http=http://127.0.0.1:${HOST_PORT:3000}/monaco
         id: versa-martin-monaco
-        http: "http://127.0.0.1:${HOST_PORT:3000}/monaco"
-        status: 200
-        body:
-            - contains: "tilejson"
-            - contains: "vector_layers"
         context:
             - runtime
+        plugin: http
+        plugin_input:
+            http: "http://127.0.0.1:${HOST_PORT:3000}/monaco"
+            status: 200
+            body:
+                - contains: "tilejson"
+                - contains: "vector_layers"
     versa-martin-monaco-gpqtiles:
         check: http=http://127.0.0.1:${HOST_PORT:3000}/monaco-gpqtiles
         id: versa-martin-monaco-gpqtiles
-        http: "http://127.0.0.1:${HOST_PORT:3000}/monaco-gpqtiles"
-        status: 200
-        body:
-            - contains: "tilejson"
         context:
             - runtime
+        plugin: http
+        plugin_input:
+            http: "http://127.0.0.1:${HOST_PORT:3000}/monaco-gpqtiles"
+            status: 200
+            body:
+                - contains: "tilejson"
     versa-martin-monaco-duckdb-mvt:
         check: http=http://127.0.0.1:${HOST_PORT:3000}/monaco-duckdb-mvt
         id: versa-martin-monaco-duckdb-mvt
-        http: "http://127.0.0.1:${HOST_PORT:3000}/monaco-duckdb-mvt"
-        status: 200
-        body:
-            - contains: "tilejson"
         context:
             - runtime
+        plugin: http
+        plugin_input:
+            http: "http://127.0.0.1:${HOST_PORT:3000}/monaco-duckdb-mvt"
+            status: 200
+            body:
+                - contains: "tilejson"
     versa-martin-monaco-duckdb-freestiler:
         check: http=http://127.0.0.1:${HOST_PORT:3000}/monaco-duckdb-freestiler
         id: versa-martin-monaco-duckdb-freestiler
-        http: "http://127.0.0.1:${HOST_PORT:3000}/monaco-duckdb-freestiler"
-        status: 200
-        body:
-            - contains: "tilejson"
         context:
             - runtime
+        plugin: http
+        plugin_input:
+            http: "http://127.0.0.1:${HOST_PORT:3000}/monaco-duckdb-freestiler"
+            status: 200
+            body:
+                - contains: "tilejson"
     versa-versatiles-shortbread-tile:
         check: |
             command=curl -fsSI "http://127.0.0.1:${HOST_PORT:8090}/tiles/monaco-shortbread/0/0/0.pbf" \
