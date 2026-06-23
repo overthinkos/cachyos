@@ -30,15 +30,17 @@ cuda-smoke:
             [ -x "$NVCC" ] || NVCC="$(command -v nvcc)"
             "$NVCC" -ccbin /usr/bin/g++-15 -I/opt/cuda/include -o /usr/local/bin/cuda-smoke /tmp/cuda_smoke.cu
             rm -f /tmp/cuda_smoke.cu
-        command: |
-            # Invoke nvcc from its real CUDA root (/opt/cuda) — the /usr/bin/nvcc
-            # symlink makes nvcc detect root=/usr and miss /opt/cuda/include/crt/.
-            # Pin the host compiler to g++-15 (CUDA 13.2 doesn't support gcc 16).
-            NVCC=/opt/cuda/bin/nvcc
-            [ -x "$NVCC" ] || NVCC="$(command -v nvcc)"
-            "$NVCC" -ccbin /usr/bin/g++-15 -I/opt/cuda/include -o /usr/local/bin/cuda-smoke /tmp/cuda_smoke.cu
-            rm -f /tmp/cuda_smoke.cu
         run_as: root
+        plugin: command
+        plugin_input:
+            command: |
+                # Invoke nvcc from its real CUDA root (/opt/cuda) — the /usr/bin/nvcc
+                # symlink makes nvcc detect root=/usr and miss /opt/cuda/include/crt/.
+                # Pin the host compiler to g++-15 (CUDA 13.2 doesn't support gcc 16).
+                NVCC=/opt/cuda/bin/nvcc
+                [ -x "$NVCC" ] || NVCC="$(command -v nvcc)"
+                "$NVCC" -ccbin /usr/bin/g++-15 -I/opt/cuda/include -o /usr/local/bin/cuda-smoke /tmp/cuda_smoke.cu
+                rm -f /tmp/cuda_smoke.cu
     cuda-smoke-step-2:
         check: the nvcc-compiled cuda-smoke binary exists at /usr/local/bin/cuda-smoke
         file: /usr/local/bin/cuda-smoke

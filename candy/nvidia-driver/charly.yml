@@ -55,18 +55,22 @@ nvidia-driver:
         run: |
             command=systemctl daemon-reload || true
             systemctl enable charly-nvidia-cdi.service || true
-        command: |
-            systemctl daemon-reload || true
-            systemctl enable charly-nvidia-cdi.service || true
         run_as: root
+        plugin: command
+        plugin_input:
+            command: |
+                systemctl daemon-reload || true
+                systemctl enable charly-nvidia-cdi.service || true
     nvidia-driver-step-3:
         run: |
             command=u="$(getent passwd 1000 | cut -d: -f1)"
             [ -n "$u" ] && usermod -aG video,render "$u" || true
-        command: |
-            u="$(getent passwd 1000 | cut -d: -f1)"
-            [ -n "$u" ] && usermod -aG video,render "$u" || true
         run_as: root
+        plugin: command
+        plugin_input:
+            command: |
+                u="$(getent passwd 1000 | cut -d: -f1)"
+                [ -n "$u" ] && usermod -aG video,render "$u" || true
     nvidia-driver-step-4:
         check: the nouveau blacklist + nvidia-drm modeset config is installed
         file: /etc/modprobe.d/charly-nvidia.conf

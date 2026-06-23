@@ -33,21 +33,27 @@ cachyos:
     cachyos-os-release:
         check: command=cat /etc/os-release
         id: cachyos-os-release
-        command: cat /etc/os-release
         exit_status: 0
         stdout:
             - contains: "ID=cachyos"
+        plugin: command
+        plugin_input:
+            command: cat /etc/os-release
     cachyos-pacman:
         check: command=pacman --version
         id: cachyos-pacman
-        command: pacman --version
         exit_status: 0
         stdout:
             - contains: "Pacman v"
+        plugin: command
+        plugin_input:
+            command: pacman --version
     cachyos-v3-repo-configured:
         check: command=pacman-conf --repo-list
         id: cachyos-v3-repo-configured
-        command: pacman-conf --repo-list
         exit_status: 0
         stdout:
             - contains: "cachyos-v3"
+        plugin: command
+        plugin_input:
+            command: pacman-conf --repo-list

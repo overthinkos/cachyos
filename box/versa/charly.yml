@@ -33,25 +33,29 @@ versa:
               --include-outputs --sort topological \
               -o /tmp/notebook-run.ipynb -f
         id: versa-notebook-export
-        command: |
-            ${HOME}/.pixi/envs/default/bin/marimo export ipynb \
-              /workspace/notebooks/osm-monaco-viz.py \
-              --include-outputs --sort topological \
-              -o /tmp/notebook-run.ipynb -f
-        in_container: true
         exit_status: 0
         timeout: 600s
         context:
             - runtime
+        plugin: command
+        plugin_input:
+            command: |
+                ${HOME}/.pixi/envs/default/bin/marimo export ipynb \
+                  /workspace/notebooks/osm-monaco-viz.py \
+                  --include-outputs --sort topological \
+                  -o /tmp/notebook-run.ipynb -f
+            in_container: true
     versa-notebook-size:
         check: command=wc -c < /tmp/notebook-run.ipynb
         id: versa-notebook-size
-        command: wc -c < /tmp/notebook-run.ipynb
-        in_container: true
         stdout:
             - matches: "[1-9][0-9]{5,}" # >=100KB rendered ipynb (no anchors per /charly-check:check gotcha #6)
         context:
             - runtime
+        plugin: command
+        plugin_input:
+            command: wc -c < /tmp/notebook-run.ipynb
+            in_container: true
     versa-martin-monaco:
         check: http=http://127.0.0.1:${HOST_PORT:3000}/monaco
         id: versa-martin-monaco
@@ -102,50 +106,60 @@ versa:
             command=curl -fsSI "http://127.0.0.1:${HOST_PORT:8090}/tiles/monaco-shortbread/0/0/0.pbf" \
               | awk 'BEGIN{IGNORECASE=1} /^content-length:/ {gsub("\r",""); print $2}'
         id: versa-versatiles-shortbread-tile
-        command: |
-            curl -fsSI "http://127.0.0.1:${HOST_PORT:8090}/tiles/monaco-shortbread/0/0/0.pbf" \
-              | awk 'BEGIN{IGNORECASE=1} /^content-length:/ {gsub("\r",""); print $2}'
-        in_container: false
         stdout:
             - matches: "[1-9][0-9]+" # any positive byte count (PBF non-empty)
         context:
             - runtime
+        plugin: command
+        plugin_input:
+            command: |
+                curl -fsSI "http://127.0.0.1:${HOST_PORT:8090}/tiles/monaco-shortbread/0/0/0.pbf" \
+                  | awk 'BEGIN{IGNORECASE=1} /^content-length:/ {gsub("\r",""); print $2}'
+            in_container: false
     versa-artifact-parquet:
         check: command=wc -c < /workspace/tiles/work/monaco.parquet
         id: versa-artifact-parquet
-        command: wc -c < /workspace/tiles/work/monaco.parquet
-        in_container: true
         stdout:
             - matches: "[1-9][0-9]{5,}" # >=100KB
         context:
             - runtime
+        plugin: command
+        plugin_input:
+            command: wc -c < /workspace/tiles/work/monaco.parquet
+            in_container: true
     versa-artifact-pmtiles:
         check: command=wc -c < /workspace/tiles/pmtiles/monaco.pmtiles
         id: versa-artifact-pmtiles
-        command: wc -c < /workspace/tiles/pmtiles/monaco.pmtiles
-        in_container: true
         stdout:
             - matches: "[1-9][0-9]{5,}" # >=100KB
         context:
             - runtime
+        plugin: command
+        plugin_input:
+            command: wc -c < /workspace/tiles/pmtiles/monaco.pmtiles
+            in_container: true
     versa-artifact-gtfs:
         check: command=wc -c < /workspace/gtfs/raw/monaco.gtfs.zip
         id: versa-artifact-gtfs
-        command: wc -c < /workspace/gtfs/raw/monaco.gtfs.zip
-        in_container: true
         stdout:
             - matches: "[1-9][0-9]{5,}" # >=100KB
         context:
             - runtime
+        plugin: command
+        plugin_input:
+            command: wc -c < /workspace/gtfs/raw/monaco.gtfs.zip
+            in_container: true
     versa-artifact-shortbread:
         check: command=wc -c < /workspace/tiles/shortbread/monaco-shortbread.pmtiles
         id: versa-artifact-shortbread
-        command: wc -c < /workspace/tiles/shortbread/monaco-shortbread.pmtiles
-        in_container: true
         stdout:
             - matches: "[1-9][0-9]{5,}" # >=100KB
         context:
             - runtime
+        plugin: command
+        plugin_input:
+            command: wc -c < /workspace/tiles/shortbread/monaco-shortbread.pmtiles
+            in_container: true
     versa-graph-imports:
         check: |
             command=${HOME}/.pixi/envs/default/bin/python -c '
@@ -160,19 +174,6 @@ versa:
             print(f"cuda_devices={torch.cuda.device_count()}")
             '
         id: versa-graph-imports
-        command: |
-            ${HOME}/.pixi/envs/default/bin/python -c '
-            import cugraph, cuml, nx_cugraph, pylibcugraph
-            import torch_geometric, torch_scatter, torch_sparse, torch_cluster
-            import graphistry, torch
-            print(f"cugraph={cugraph.__version__}")
-            print(f"cuml={cuml.__version__}")
-            print(f"pyg={torch_geometric.__version__}")
-            print(f"torch_scatter={torch_scatter.__version__}")
-            print(f"graphistry={graphistry.__version__}")
-            print(f"cuda_devices={torch.cuda.device_count()}")
-            '
-        in_container: true
         stdout:
             - matches: "cugraph=[0-9]+"
             - matches: "cuml=[0-9]+"
@@ -182,6 +183,21 @@ versa:
             - matches: "cuda_devices=[1-9]"
         context:
             - runtime
+        plugin: command
+        plugin_input:
+            command: |
+                ${HOME}/.pixi/envs/default/bin/python -c '
+                import cugraph, cuml, nx_cugraph, pylibcugraph
+                import torch_geometric, torch_scatter, torch_sparse, torch_cluster
+                import graphistry, torch
+                print(f"cugraph={cugraph.__version__}")
+                print(f"cuml={cuml.__version__}")
+                print(f"pyg={torch_geometric.__version__}")
+                print(f"torch_scatter={torch_scatter.__version__}")
+                print(f"graphistry={graphistry.__version__}")
+                print(f"cuda_devices={torch.cuda.device_count()}")
+                '
+            in_container: true
     versa-graph-cugraph-pagerank:
         check: |
             command=${HOME}/.pixi/envs/default/bin/python -c '
@@ -192,20 +208,22 @@ versa:
             print(f"pr_top_node={max(pr, key=pr.get)}")
             '
         id: versa-graph-cugraph-pagerank
-        command: |
-            ${HOME}/.pixi/envs/default/bin/python -c '
-            import networkx as nx
-            G = nx.karate_club_graph()
-            pr = nx.pagerank(G, backend="cugraph")
-            print(f"pr_rows={len(pr)}")
-            print(f"pr_top_node={max(pr, key=pr.get)}")
-            '
-        in_container: true
         stdout:
             - matches: "pr_rows=[1-9][0-9]+"
             - matches: "pr_top_node=[0-9]+"
         context:
             - runtime
+        plugin: command
+        plugin_input:
+            command: |
+                ${HOME}/.pixi/envs/default/bin/python -c '
+                import networkx as nx
+                G = nx.karate_club_graph()
+                pr = nx.pagerank(G, backend="cugraph")
+                print(f"pr_rows={len(pr)}")
+                print(f"pr_top_node={max(pr, key=pr.get)}")
+                '
+            in_container: true
     versa-graph-notebook-export:
         check: |
             command=${HOME}/.pixi/envs/default/bin/marimo export ipynb \
@@ -213,22 +231,26 @@ versa:
               --include-outputs --sort topological \
               -o /tmp/gpu-demo.ipynb -f
         id: versa-graph-notebook-export
-        command: |
-            ${HOME}/.pixi/envs/default/bin/marimo export ipynb \
-              /workspace/notebooks/gpu-libraries-demo.py \
-              --include-outputs --sort topological \
-              -o /tmp/gpu-demo.ipynb -f
-        in_container: true
         exit_status: 0
         timeout: 600s
         context:
             - runtime
+        plugin: command
+        plugin_input:
+            command: |
+                ${HOME}/.pixi/envs/default/bin/marimo export ipynb \
+                  /workspace/notebooks/gpu-libraries-demo.py \
+                  --include-outputs --sort topological \
+                  -o /tmp/gpu-demo.ipynb -f
+            in_container: true
     versa-graph-notebook-size:
         check: command=wc -c < /tmp/gpu-demo.ipynb
         id: versa-graph-notebook-size
-        command: wc -c < /tmp/gpu-demo.ipynb
-        in_container: true
         stdout:
             - matches: "[1-9][0-9]{4,}" # >=10KB rendered ipynb (matches the 18KB observed live)
         context:
             - runtime
+        plugin: command
+        plugin_input:
+            command: wc -c < /tmp/gpu-demo.ipynb
+            in_container: true

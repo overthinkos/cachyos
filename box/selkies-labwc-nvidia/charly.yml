@@ -21,9 +21,11 @@ selkies-labwc-nvidia:
     pixelflux-nvenc-compiled:
         check: command=strings ${HOME}/.pixi/envs/default/lib/python3.*/site-packages/pixelflux/pixelflux_wayland*.so | grep -q NvEncodeAPICreateInstance && echo NVENC-COMPILED
         id: pixelflux-nvenc-compiled
-        command: strings ${HOME}/.pixi/envs/default/lib/python3.*/site-packages/pixelflux/pixelflux_wayland*.so | grep -q NvEncodeAPICreateInstance && echo NVENC-COMPILED
         exit_status: 0
         stdout:
             - contains: "NVENC-COMPILED"
         context:
             - build
+        plugin: command
+        plugin_input:
+            command: strings ${HOME}/.pixi/envs/default/lib/python3.*/site-packages/pixelflux/pixelflux_wayland*.so | grep -q NvEncodeAPICreateInstance && echo NVENC-COMPILED

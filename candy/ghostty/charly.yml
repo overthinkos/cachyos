@@ -17,10 +17,12 @@ ghostty:
         exists: true
     ghostty-step-1:
         check: ghostty reports its version
-        command: /usr/bin/ghostty --version
         exit_status: 0
         stdout:
             - matches: "^Ghostty"
+        plugin: command
+        plugin_input:
+            command: /usr/bin/ghostty --version
     ghostty-binary:
         check: file=/usr/bin/ghostty
         id: ghostty-binary
@@ -34,7 +36,9 @@ ghostty:
     ghostty-version:
         check: command=/usr/bin/ghostty --version
         id: ghostty-version
-        command: /usr/bin/ghostty --version
         exit_status: 0
         stdout:
             - matches: "^Ghostty"
+        plugin: command
+        plugin_input:
+            command: /usr/bin/ghostty --version
