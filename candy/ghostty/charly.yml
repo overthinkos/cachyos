@@ -31,8 +31,10 @@ ghostty:
     ghostty-package:
         check: package=ghostty
         id: ghostty-package
-        package: ghostty
-        installed: true
+        plugin: package
+        plugin_input:
+            package: ghostty
+            installed: true
     ghostty-version:
         check: command=/usr/bin/ghostty --version
         id: ghostty-version

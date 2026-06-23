@@ -85,12 +85,16 @@ cachyos-kde-settings:
             LockOnResume=false
     cachyos-kde-settings-step-4:
         check: the cachyos-settings package is installed
-        package: cachyos-settings
-        installed: true
+        plugin: package
+        plugin_input:
+            package: cachyos-settings
+            installed: true
     cachyos-kde-settings-step-5:
         check: the cachyos-kde-settings package is installed
-        package: cachyos-kde-settings
-        installed: true
+        plugin: package
+        plugin_input:
+            package: cachyos-kde-settings
+            installed: true
     cachyos-kde-settings-step-6:
         check: SDDM is configured to auto-login into the Plasma Wayland session
         file: /etc/sddm.conf.d/10-charly-autologin.conf
@@ -157,23 +161,31 @@ cachyos-kde-settings:
     cachyos-settings-installed:
         check: package=cachyos-settings
         id: cachyos-settings-installed
-        package: cachyos-settings
-        installed: true
+        plugin: package
+        plugin_input:
+            package: cachyos-settings
+            installed: true
     cachyos-kde-settings-installed:
         check: package=cachyos-kde-settings
         id: cachyos-kde-settings-installed
-        package: cachyos-kde-settings
-        installed: true
+        plugin: package
+        plugin_input:
+            package: cachyos-kde-settings
+            installed: true
     cachyos-wallpapers-installed:
         check: package=cachyos-wallpapers
         id: cachyos-wallpapers-installed
-        package: cachyos-wallpapers
-        installed: true
+        plugin: package
+        plugin_input:
+            package: cachyos-wallpapers
+            installed: true
     cachyos-themes-sddm-installed:
         check: package=cachyos-themes-sddm
         id: cachyos-themes-sddm-installed
-        package: cachyos-themes-sddm
-        installed: true
+        plugin: package
+        plugin_input:
+            package: cachyos-themes-sddm
+            installed: true
     kscreenlocker-autolock-disabled:
         check: file=/etc/xdg/kscreenlockerrc
         id: kscreenlocker-autolock-disabled

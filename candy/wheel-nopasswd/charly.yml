@@ -49,8 +49,10 @@ wheel-nopasswd:
                 }
     wheel-nopasswd-step-2:
         check: the sudo package is installed
-        package: sudo
-        installed: true
+        plugin: package
+        plugin_input:
+            package: sudo
+            installed: true
     wheel-nopasswd-step-3:
         check: the uid-1000 user has a passwordless sudo rule in effect
         exit_status: 0
@@ -68,8 +70,10 @@ wheel-nopasswd:
     sudo-package:
         check: package=sudo
         id: sudo-package
-        package: sudo
-        installed: true
+        plugin: package
+        plugin_input:
+            package: sudo
+            installed: true
     nopasswd-wheel-policy:
         check: |
             command=if [ "$(id -u)" = "0" ]; then

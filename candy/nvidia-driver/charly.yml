@@ -81,8 +81,10 @@ nvidia-driver:
         contains: "nvidia-ctk cdi generate"
     nvidia-driver-step-6:
         check: egl-wayland (the NVIDIA Wayland EGLStream platform) is installed
-        package: egl-wayland
-        installed: true
+        plugin: package
+        plugin_input:
+            package: egl-wayland
+            installed: true
     nvidia-modprobe-conf:
         check: file=/etc/modprobe.d/charly-nvidia.conf
         id: nvidia-modprobe-conf
@@ -96,10 +98,14 @@ nvidia-driver:
     egl-wayland-installed:
         check: package=egl-wayland
         id: egl-wayland-installed
-        package: egl-wayland
-        installed: true
+        plugin: package
+        plugin_input:
+            package: egl-wayland
+            installed: true
     opencl-nvidia-installed:
         check: package=opencl-nvidia
         id: opencl-nvidia-installed
-        package: opencl-nvidia
-        installed: true
+        plugin: package
+        plugin_input:
+            package: opencl-nvidia
+            installed: true
