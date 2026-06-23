@@ -9,6 +9,17 @@ cachyos-gpu-desktop-check:
             add_layer this, so the SAME monitor / SPICE / selkies / GPU checks run
             against both from one source (R3). Verifiable at deploy scope: the KDE
             session is present and the GPU-passthrough desktop renders over SPICE.
+    cachyos-gpu-desktop-check-require:
+        require:
+            # plugin-spice is the OUT-OF-TREE plugin serving the `spice:` cluster-display
+            # check verb (the Shells-com/spice library + its cgo opus/portaudio audio
+            # transitives live there, out of charly's core go.mod). This candy carries the
+            # `spice:` checks below, so it require:s the plugin — putting it in the GPU
+            # image closure (CollectRemoteRefs walks require edges), which loads its
+            # out-of-process grpcProvider on both the disposable bed AND the operator
+            # deploy. Mirrors how candy/k3s-server require:s plugin-kube. Remote @github
+            # ref (plugin-spice lives in the main repo, not this submodule).
+            - '@github.com/overthinkos/overthink/candy/plugin-spice:v2026.174.2112'
     cachyos-gpu-desktop-check-distro:
         # Shared desktop/GPU-stream verification layer for the CachyOS GPU workstation.
         # It carries NO install beyond the desktop-interaction TEST TOOLS (R9) and a
