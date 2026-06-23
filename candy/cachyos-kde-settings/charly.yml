@@ -97,17 +97,21 @@ cachyos-kde-settings:
             installed: true
     cachyos-kde-settings-step-6:
         check: SDDM is configured to auto-login into the Plasma Wayland session
-        file: /etc/sddm.conf.d/10-charly-autologin.conf
-        contains: "Session=plasma.desktop"
         context:
             - runtime
+        plugin: file
+        plugin_input:
+            file: /etc/sddm.conf.d/10-charly-autologin.conf
+            contains: "Session=plasma.desktop"
     sddm-autologin-configured:
         check: file=/etc/sddm.conf.d/10-charly-autologin.conf
         id: sddm-autologin-configured
-        file: /etc/sddm.conf.d/10-charly-autologin.conf
-        contains: "Session=plasma.desktop"
         context:
             - runtime
+        plugin: file
+        plugin_input:
+            file: /etc/sddm.conf.d/10-charly-autologin.conf
+            contains: "Session=plasma.desktop"
     kde-panel-autostart-installed:
         check: |
             command=test -x /usr/local/bin/charly-kde-panels-all-screens.sh || { echo "FAIL: panel ensure-script missing or not executable"; exit 1; }
@@ -189,10 +193,12 @@ cachyos-kde-settings:
     kscreenlocker-autolock-disabled:
         check: file=/etc/xdg/kscreenlockerrc
         id: kscreenlocker-autolock-disabled
-        file: /etc/xdg/kscreenlockerrc
-        contains: "Autolock=false"
         context:
             - runtime
+        plugin: file
+        plugin_input:
+            file: /etc/xdg/kscreenlockerrc
+            contains: "Autolock=false"
     display-keepalive-active:
         check: |
             command=pgrep -f 'kde-inhibit .*screenSaver' >/dev/null 2>&1 && echo KEEPALIVE-OK || { echo "FAIL: charly-display-keepalive (kde-inhibit) not running — idle screen-off not inhibited"; exit 1; }

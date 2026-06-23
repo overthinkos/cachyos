@@ -13,8 +13,10 @@ ghostty:
                     - ghostty
     ghostty-step-0:
         check: the ghostty binary is installed at /usr/bin/ghostty
-        file: /usr/bin/ghostty
-        exists: true
+        plugin: file
+        plugin_input:
+            file: /usr/bin/ghostty
+            exists: true
     ghostty-step-1:
         check: ghostty reports its version
         exit_status: 0
@@ -26,8 +28,10 @@ ghostty:
     ghostty-binary:
         check: file=/usr/bin/ghostty
         id: ghostty-binary
-        file: /usr/bin/ghostty
-        exists: true
+        plugin: file
+        plugin_input:
+            file: /usr/bin/ghostty
+            exists: true
     ghostty-package:
         check: package=ghostty
         id: ghostty-package

@@ -43,12 +43,16 @@ cuda-smoke:
                 rm -f /tmp/cuda_smoke.cu
     cuda-smoke-step-2:
         check: the nvcc-compiled cuda-smoke binary exists at /usr/local/bin/cuda-smoke
-        file: /usr/local/bin/cuda-smoke
-        exists: true
+        plugin: file
+        plugin_input:
+            file: /usr/local/bin/cuda-smoke
+            exists: true
     cuda-smoke-step-3:
         agent-check: on a GPU-passthrough guest, cuda-smoke runs the kernel and prints CUDA-OK
     cuda-smoke-binary:
         check: file=/usr/local/bin/cuda-smoke
         id: cuda-smoke-binary
-        file: /usr/local/bin/cuda-smoke
-        exists: true
+        plugin: file
+        plugin_input:
+            file: /usr/local/bin/cuda-smoke
+            exists: true

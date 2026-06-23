@@ -73,12 +73,16 @@ nvidia-driver:
                 [ -n "$u" ] && usermod -aG video,render "$u" || true
     nvidia-driver-step-4:
         check: the nouveau blacklist + nvidia-drm modeset config is installed
-        file: /etc/modprobe.d/charly-nvidia.conf
-        contains: "blacklist nouveau"
+        plugin: file
+        plugin_input:
+            file: /etc/modprobe.d/charly-nvidia.conf
+            contains: "blacklist nouveau"
     nvidia-driver-step-5:
         check: the boot-time CDI-generation service is installed
-        file: /etc/systemd/system/charly-nvidia-cdi.service
-        contains: "nvidia-ctk cdi generate"
+        plugin: file
+        plugin_input:
+            file: /etc/systemd/system/charly-nvidia-cdi.service
+            contains: "nvidia-ctk cdi generate"
     nvidia-driver-step-6:
         check: egl-wayland (the NVIDIA Wayland EGLStream platform) is installed
         plugin: package
@@ -88,13 +92,17 @@ nvidia-driver:
     nvidia-modprobe-conf:
         check: file=/etc/modprobe.d/charly-nvidia.conf
         id: nvidia-modprobe-conf
-        file: /etc/modprobe.d/charly-nvidia.conf
-        contains: "blacklist nouveau"
+        plugin: file
+        plugin_input:
+            file: /etc/modprobe.d/charly-nvidia.conf
+            contains: "blacklist nouveau"
     nvidia-cdi-service:
         check: file=/etc/systemd/system/charly-nvidia-cdi.service
         id: nvidia-cdi-service
-        file: /etc/systemd/system/charly-nvidia-cdi.service
-        contains: "nvidia-ctk cdi generate"
+        plugin: file
+        plugin_input:
+            file: /etc/systemd/system/charly-nvidia-cdi.service
+            contains: "nvidia-ctk cdi generate"
     egl-wayland-installed:
         check: package=egl-wayland
         id: egl-wayland-installed
