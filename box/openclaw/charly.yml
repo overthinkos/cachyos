@@ -4,6 +4,6 @@ openclaw:
         base: cachyos
     openclaw-candy:
         candy:
-            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.170.2016'
-            - '@github.com/overthinkos/overthink/candy/openclaw:v2026.170.2016'
-            - '@github.com/overthinkos/overthink/candy/dbus:v2026.170.2016'
+            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.174.0425'
+            - '@github.com/overthinkos/overthink/candy/openclaw:v2026.174.0425'
+            - '@github.com/overthinkos/overthink/candy/dbus:v2026.174.0425'

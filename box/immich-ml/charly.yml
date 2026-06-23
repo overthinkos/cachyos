@@ -11,13 +11,13 @@ immich-ml:
             - linux/amd64
     immich-ml-candy:
         candy:
-            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.170.2016'
-            - '@github.com/overthinkos/overthink/candy/nodejs:v2026.170.2016'
-            - '@github.com/overthinkos/overthink/candy/python-ml:v2026.170.2016'
-            - '@github.com/overthinkos/overthink/candy/supervisord:v2026.170.2016'
-            - '@github.com/overthinkos/overthink/candy/postgresql:v2026.170.2016'
-            - '@github.com/overthinkos/overthink/candy/vectorchord:v2026.170.2016'
-            - '@github.com/overthinkos/overthink/candy/redis:v2026.170.2016'
-            - '@github.com/overthinkos/overthink/candy/immich:v2026.170.2016'
-            - '@github.com/overthinkos/overthink/candy/immich-ml:v2026.170.2016'
-            - '@github.com/overthinkos/overthink/candy/dbus:v2026.170.2016'
+            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.174.0425'
+            - '@github.com/overthinkos/overthink/candy/nodejs:v2026.174.0425'
+            - '@github.com/overthinkos/overthink/candy/python-ml:v2026.174.0425'
+            - '@github.com/overthinkos/overthink/candy/supervisord:v2026.174.0425'
+            - '@github.com/overthinkos/overthink/candy/postgresql:v2026.174.0425'
+            - '@github.com/overthinkos/overthink/candy/vectorchord:v2026.174.0425'
+            - '@github.com/overthinkos/overthink/candy/redis:v2026.174.0425'
+            - '@github.com/overthinkos/overthink/candy/immich:v2026.174.0425'
+            - '@github.com/overthinkos/overthink/candy/immich-ml:v2026.174.0425'
+            - '@github.com/overthinkos/overthink/candy/dbus:v2026.174.0425'

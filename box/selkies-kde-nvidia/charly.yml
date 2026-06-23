@@ -13,9 +13,9 @@ selkies-kde-nvidia:
             - linux/amd64
     selkies-kde-nvidia-candy:
         candy:
-            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.170.2016'
-            - '@github.com/overthinkos/overthink/candy/selkies-kde-desktop:v2026.170.2016'
-            - '@github.com/overthinkos/overthink/candy/dbus:v2026.170.2016'
+            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.174.0425'
+            - '@github.com/overthinkos/overthink/candy/selkies-kde-desktop:v2026.174.0425'
+            - '@github.com/overthinkos/overthink/candy/dbus:v2026.174.0425'
     pixelflux-nvenc-compiled:
         check: command=strings ${HOME}/.pixi/envs/default/lib/python3.*/site-packages/pixelflux/pixelflux_wayland*.so | grep -q NvEncodeAPICreateInstance && echo NVENC-COMPILED
         id: pixelflux-nvenc-compiled

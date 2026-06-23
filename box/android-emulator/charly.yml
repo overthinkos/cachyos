@@ -26,11 +26,11 @@ android-emulator:
         # emulator-service-running), so one check covers every box composing them.
     android-emulator-candy:
         candy:
-            - '@github.com/overthinkos/overthink/candy/nodejs:v2026.170.2016'
-            - '@github.com/overthinkos/overthink/candy/java-openjdk:v2026.170.2016'
-            - '@github.com/overthinkos/overthink/candy/android-sdk:v2026.170.2016'
-            - '@github.com/overthinkos/overthink/candy/appium-server:v2026.170.2016'
-            - '@github.com/overthinkos/overthink/candy/android-emulator-layer:v2026.170.2016'
+            - '@github.com/overthinkos/overthink/candy/nodejs:v2026.174.0425'
+            - '@github.com/overthinkos/overthink/candy/java-openjdk:v2026.174.0425'
+            - '@github.com/overthinkos/overthink/candy/android-sdk:v2026.174.0425'
+            - '@github.com/overthinkos/overthink/candy/appium-server:v2026.174.0425'
+            - '@github.com/overthinkos/overthink/candy/android-emulator-layer:v2026.174.0425'
     android-emulator-env:
         env:
             - EMULATOR_NAME=charly_avd_36

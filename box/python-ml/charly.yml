@@ -5,5 +5,5 @@ python-ml:
             - linux/amd64
     python-ml-candy:
         candy:
-            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.170.2016'
-            - '@github.com/overthinkos/overthink/candy/python-ml:v2026.170.2016'
+            - '@github.com/overthinkos/overthink/candy/agent-forwarding:v2026.174.0425'
+            - '@github.com/overthinkos/overthink/candy/python-ml:v2026.174.0425'
