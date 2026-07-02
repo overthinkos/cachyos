@@ -354,7 +354,8 @@ check-cachyos-gpu-vm:
             command=f="$HOME/.config/opencharly/env.d/nodejs.env"
             test -f "$f" || { echo "FAIL: $f missing"; exit 1; }
             grep -q "$HOME/.npm-global" "$f" || { echo "FAIL: env.d NPM prefix not the guest home"; cat "$f"; exit 1; }
-            grep -q "/home/atrawog" "$f" && { echo "FAIL: env.d baked the HOST operator home (the \$HOME bug)"; cat "$f"; exit 1; }
+            foreign=$(grep -oE '/home/[^/[:space:]"]+' "$f" | sort -u | grep -vxF "$HOME")
+            [ -z "$foreign" ] || { echo "FAIL: env.d baked a foreign home path (the \$HOME bug): $foreign"; cat "$f"; exit 1; }
             echo ENVD-GUEST-HOME
         id: envd-guest-home
         stdout:
@@ -367,7 +368,8 @@ check-cachyos-gpu-vm:
                 f="$HOME/.config/opencharly/env.d/nodejs.env"
                 test -f "$f" || { echo "FAIL: $f missing"; exit 1; }
                 grep -q "$HOME/.npm-global" "$f" || { echo "FAIL: env.d NPM prefix not the guest home"; cat "$f"; exit 1; }
-                grep -q "/home/atrawog" "$f" && { echo "FAIL: env.d baked the HOST operator home (the \$HOME bug)"; cat "$f"; exit 1; }
+                foreign=$(grep -oE '/home/[^/[:space:]"]+' "$f" | sort -u | grep -vxF "$HOME")
+                [ -z "$foreign" ] || { echo "FAIL: env.d baked a foreign home path (the \$HOME bug): $foreign"; cat "$f"; exit 1; }
                 echo ENVD-GUEST-HOME
     envd-on-login-path:
         check: |
